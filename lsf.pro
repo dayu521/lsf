@@ -4,6 +4,7 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
+        fp.cpp \
         kmp.cpp \
         main.cpp
 
