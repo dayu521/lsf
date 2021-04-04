@@ -31,16 +31,17 @@ public:
     wchar_t next_char();
     wchar_t current_char()const;
     std::wstring current_token();
-    void discard();
+    void discard_token();
     void roll_back();
     bool is_eof()const;
     static constexpr auto Eof=WEOF;
+    static constexpr  int BuffLen=1024;
 private:
     int fence_ {0};
     int lexeme_begin_ {0};
     int forward_ {0};
 
-    static constexpr  int MaxTokenLen=1024;
+    //2*BuffLen
     std::shared_ptr<wchar_t []> buff_{};
 
     std::wifstream f_ {};
@@ -52,8 +53,9 @@ private:
     // | fence forward        S2
     //forward | fence         S3
     State state_{State::S0};
+
 private:
-    void read(int begin, int length=MaxTokenLen);
+    void read(int begin, int length=BuffLen);
 };
 
 #endif // KMP_H
