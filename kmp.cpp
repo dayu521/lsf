@@ -50,7 +50,9 @@ void KMP::piFunc()
     std::cout<<std::endl;
 }
 
-MBuff::MBuff():buff_(std::make_shared<wchar_t [2*MaxTokenLen]>(2*MaxTokenLen)),
+MBuff::MBuff():
+//    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
+    buff_(new wchar_t[2*MaxTokenLen],[](auto p){delete [] p;}),
     state_(State::S0)
 {
 
@@ -61,7 +63,16 @@ MBuff::~MBuff()
 }
 
 MBuff::MBuff(const std::string &file_name):
-    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
+    /* 根本原因就是当前库未实现.
+     * 根据大佬推测，库只是分配了一个指向数组的指针，所以当把这个这个指针作为数组读写时，
+     * 造成之后其他对象分配的数据空间遭到破坏.于是错误反而在其他对象的数据析构时才发现，
+     * 于是可能会被误导为其他对象出了问题
+     *
+     * 总结:要看各个发行注记,包括相关各种提案P0674R1
+     * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0674r1.html
+     */
+//    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
+    buff_(new wchar_t[2*MaxTokenLen],[](auto p){delete [] p;}),
     f_(file_name),
     state_(State::S0)
 {
@@ -84,7 +95,7 @@ wchar_t MBuff::next_char()
 {
     switch (state_) {
         case State::S0:{
-            forward_=fence_=0;
+            lexeme_begin_=forward_=fence_=0;
             read(forward_);
             state_=State::S1;
         }
@@ -154,6 +165,11 @@ std::wstring MBuff::current_token()
     return L"";
 }
 
+void MBuff::discard()
+{
+    lexeme_begin_=forward_++;
+}
+
 void MBuff::roll_back()
 {
     switch (state_) {
@@ -188,19 +204,15 @@ void MBuff::roll_back()
 
 bool MBuff::is_eof() const
 {
-    return (buff_.get())[forward_]==Eof;
+    return buff_[forward_]==Eof;
 }
 
 /// 调用之前必须先打开,否则未定义
 void MBuff::read(int begin, int length)
 {
-    auto pb=(buff_.get())+begin;
+    auto pb=&buff_[0]+begin;
     f_.read(pb,length);
     auto c=f_.gcount();
-//    if(f_.eof()){
-//        if(c<length)
-//            pb[c]=WEOF;
-//    }
     if(c<length)
         pb[c]=WEOF;
 }

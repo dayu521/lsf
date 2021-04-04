@@ -6,7 +6,8 @@ CONFIG -= qt
 SOURCES += \
         fp.cpp \
         kmp.cpp \
-        main.cpp
+        main.cpp \
+        test.cpp
 
 HEADERS += \
     kmp.h

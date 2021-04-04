@@ -31,6 +31,7 @@ public:
     wchar_t next_char();
     wchar_t current_char()const;
     std::wstring current_token();
+    void discard();
     void roll_back();
     bool is_eof()const;
     static constexpr auto Eof=WEOF;
@@ -43,7 +44,7 @@ private:
     std::shared_ptr<wchar_t []> buff_{};
 
     std::wifstream f_ {};
-//    wchar_t buff_[2*MaxTokenLen]{4};
+
     enum class State{S0,S1,S2,S3};
     //fence,forward分别代表fence和forward
     //fence forward |         S0
