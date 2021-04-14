@@ -97,7 +97,7 @@ void MBuff::open(const std::string &file_name)
 wchar_t MBuff::next_char()
 {
     //无法达到2*BuffLen，因为在这之前已经被转移到下一状态了，从而forward_和lexeme_begin_被重置了
-    if(forward_-lexeme_begin_>=2*BuffLen-1)
+    [[unlikely]]if(forward_-lexeme_begin_>=2*BuffLen-1)
         throw std::runtime_error("exceed the max length of token,should not peek next char");
     switch (state_) {
         case State::S0:{
@@ -146,7 +146,7 @@ wchar_t MBuff::current_char() const
     return buff_[(forward_+BuffLen*2)%(BuffLen*2)];
 }
 
-std::wstring MBuff::current_token()
+std::wstring MBuff::current_chars()
 {
     switch (state_) {
         case State::S0:throw std::out_of_range("there is not currently token,current S0");break;
@@ -175,8 +175,14 @@ void MBuff::discard_token()
     lexeme_begin_=forward_+1;
 }
 
+int MBuff::get_char_count() const
+{
+    return forward_-lexeme_begin_+1;
+}
+
 //回滚不超过1个token
-void MBuff::roll_back()
+//溢出未考虑，留给调用者自己决定
+void MBuff::roll_back_char(int len)
 {
     switch (state_) {
         case State::S0:{
@@ -186,10 +192,10 @@ void MBuff::roll_back()
         case State::S1:
         case State::S2:
         case State::S3:{
-            if(forward_-1<lexeme_begin_){
+            if(forward_-len<lexeme_begin_){
                 throw std::out_of_range("roolback fail,current S2");
             }
-            forward_--;
+            forward_-=len;
         }
         break;
     }

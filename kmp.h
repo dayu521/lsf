@@ -28,29 +28,34 @@ public:
     MBuff(const std::string &file_name);
     MBuff(const MBuff & )=delete;
     void open(const std::string & file_name);
+
     wchar_t next_char();
-    wchar_t current_char()const;
-    std::wstring current_token();
+    std::wstring current_chars();
+    void roll_back_char(int len=1);
     void discard_token();
-    void roll_back();
+    int get_char_count() const;
+
+    wchar_t current_char()const;
     bool is_eof()const;
     static constexpr auto Eof=WEOF;
     static constexpr  int BuffLen=1024;
 private:
     int fence_ {0};
     int lexeme_begin_ {0};
-    int forward_ {0};
+    int forward_ {-1};
 
     //2*BuffLen
     std::shared_ptr<wchar_t []> buff_{};
+
+    std::wstring sbuff{};
 
     std::wifstream f_ {};
 
     enum class State{S0,S1,S2,S3};
     //fence,forward分别代表fence和forward
-    //fence forward |         S0
-    //fence | forward         S1
-    // | fence forward        S2
+    //  init state            S0
+    //fence forward |         S1
+    //fence | forward         S2
     //forward | fence         S3
     State state_{State::S0};
 
