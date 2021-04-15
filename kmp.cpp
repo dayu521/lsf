@@ -49,6 +49,7 @@ void KMP::piFunc()
         std::cout<<pi[i]<<" ";
     std::cout<<std::endl;
 }
+namespace lsf {
 
 MBuff::MBuff():
 //    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
@@ -93,7 +94,8 @@ void MBuff::open(const std::string &file_name)
         throw std::runtime_error("failed to open file:"+file_name);
 }
 
-//不能一直调用此函数,需要调用current_token或discard
+///不能一直调用此函数,需要调用current_token或discard来消耗当前已分析的字符，
+/// 否则当前已分析的这些字符被新读取的字符覆盖,而且lexeme_begin_也表示的是原先分析的字符的开始处
 wchar_t MBuff::next_char()
 {
     //无法达到2*BuffLen，因为在这之前已经被转移到下一状态了，从而forward_和lexeme_begin_被重置了
@@ -152,14 +154,14 @@ std::wstring MBuff::current_chars()
         case State::S0:throw std::out_of_range("there is not currently token,current S0");break;
         case State::S1:
         case State::S2:{
-            std::wstring s=std::wstring(buff_.get()+lexeme_begin_,forward_-lexeme_begin_);
+            std::wstring s=std::wstring(buff_.get()+lexeme_begin_,forward_-lexeme_begin_+1);
             lexeme_begin_=forward_+1;
             return s;
         }
         case State::S3:{
             std::wstring s{};
             if(lexeme_begin_>=0||forward_<0)
-                s=std::wstring(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),forward_-lexeme_begin_);
+                s=std::wstring(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),forward_-lexeme_begin_+1);
             else
                 s=std::wstring(buff_.get()+lexeme_begin_+BuffLen*2,BuffLen)+std::wstring(buff_.get(),forward_+1);
             lexeme_begin_=forward_+1;
@@ -180,8 +182,8 @@ int MBuff::get_char_count() const
     return forward_-lexeme_begin_+1;
 }
 
-//回滚不超过1个token
-//溢出未考虑，留给调用者自己决定
+///回滚不超过1个token
+///溢出未考虑，留给调用者自己决定
 void MBuff::roll_back_char(int len)
 {
     switch (state_) {
@@ -214,4 +216,6 @@ void MBuff::read(int begin, int length)
     auto c=f_.gcount();
     if(c<length)
         pb[c]=WEOF;
+}
+
 }

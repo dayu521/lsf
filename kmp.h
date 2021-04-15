@@ -19,6 +19,7 @@ private:
     int pattern_len{0};
     std::vector<int> pi{};
 };
+namespace lsf {
 
 class MBuff
 {
@@ -63,4 +64,5 @@ private:
     void read(int begin, int length=BuffLen);
 };
 
+}
 #endif // KMP_H

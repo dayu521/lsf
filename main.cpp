@@ -2,7 +2,8 @@
 #include <fstream>
 #include <memory>
 #include"kmp.h"
-#include <json/json.h>
+//#include <json/json.h>
+#include "lexer.h"
 using namespace std;
 template<class T1, class T2>
 struct P {
@@ -14,7 +15,7 @@ int main()
 {
 //    setlocale(LC_ALL,"zh_CN.UTF-8");
     //std::locale("").name().c_str()
-//    std::locale::global(std::locale(""));
+    std::locale::global(std::locale(""));
 //    MBuff m("文本文件.txt");
 //    m.next_char();
 //    while (!m.is_eof()) {
@@ -30,13 +31,13 @@ int main()
 //    wcout<<L'\x4F60'<<endl;
 //    wcout<<wchar_t(0x4F60)<<endl;
 //    char c2[]="\x50\n";
-    Json::Value root;
-//    cin>>root["ha"];
-    root["ha"]="你";
-    cout<<root;
-    constexpr auto xx=-1>>1;
-    constexpr auto x1=-5>>11;
-    constexpr auto x2=-1/2;
+    lsf::Lexer lex(std::make_unique<lsf::MBuff>("文本文件.txt"));
+    auto tok=lex.next();
+    auto end=lsf::Token{lsf::Type::END};
+    while (tok!=end) {
+        std::wcout<<tok.value_<<std::endl;
+        tok=lex.next();
+    }
     return 0;
 }
 
