@@ -15,6 +15,7 @@
 //wchar_t w;
 //mbtowc(&w,s,3);
 //宽字符与utf8编码 ，他们都是"你"的utf8编码
+//https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Surrogates
 #include <string>
 #include <set>
 #include <vector>
@@ -38,9 +39,13 @@ struct Token
 {
     Type type_;
     std::wstring value_{};
-    bool operator !=(const Token & c)
+//    bool operator !=(const Token & c)
+//    {
+//        return type_!=c.type_||value_!=c.value_;
+//    }
+    bool operator ==(const Token & c)const
     {
-        return type_!=c.type_&&value_!=c.value_;
+        return type_==c.type_&&value_==c.value_;
     }
 };
 
@@ -69,8 +74,8 @@ class Lexer
 {
 public:
     Lexer(std::unique_ptr<MBuff> input);
-    Token next();
-    bool has_error();
+    bool run();
+    Token & get_token();
 private:
     void init_dfa_table_partial();
     bool get_string();
@@ -79,6 +84,7 @@ private:
     std::unique_ptr<MBuff> input_;
     std::set<std::wstring> symbol_;
     bool error{false};
+    Token current_token_{};
 //    std::vector<std::map<>> number_table_;
 };
 

@@ -31,13 +31,19 @@ int main()
 //    wcout<<L'\x4F60'<<endl;
 //    wcout<<wchar_t(0x4F60)<<endl;
 //    char c2[]="\x50\n";
-    lsf::Lexer lex(std::make_unique<lsf::MBuff>("文本文件.txt"));
-    auto tok=lex.next();
+    lsf::Lexer lex(std::make_unique<lsf::MBuff>("2.txt"));
+    auto ok=lex.run();
     auto end=lsf::Token{lsf::Type::END};
-    while (tok!=end) {
-        std::wcout<<tok.value_<<std::endl;
-        tok=lex.next();
+    while (ok) {
+        std::wcout<<lex.get_token().value_<<std::endl;
+        ok=lex.run();
+        if(end==lex.get_token())
+            break;
     }
+//    std::ifstream f("2.txt");
+//    std::string s;
+//    f>>s;
+    std::wstring s(5,L'0');
     return 0;
 }
 

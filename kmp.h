@@ -31,15 +31,17 @@ public:
     void open(const std::string & file_name);
 
     wchar_t next_char();
-    std::wstring current_chars();
+    std::wstring current_token();
     void roll_back_char(int len=1);
     void discard_token();
     int get_char_count() const;
 
     wchar_t current_char()const;
     bool is_eof()const;
+
+    void init();
     static constexpr auto Eof=WEOF;
-    static constexpr  int BuffLen=1024;
+    static constexpr  int BuffLen=512;
 private:
     int fence_ {0};
     int lexeme_begin_ {0};
@@ -47,8 +49,6 @@ private:
 
     //2*BuffLen
     std::shared_ptr<wchar_t []> buff_{};
-
-    std::wstring sbuff{};
 
     std::wifstream f_ {};
 

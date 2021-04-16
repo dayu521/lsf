@@ -1,0 +1,76 @@
+rfc5234
+
+Augmented BNF for Syntax Specifications: ABNF 
+
+2.  Rule Definition(规则定义)
+2.1 Rule Naming
+规则名就是名字自身:即由字符序列组成，以一个字母字符开始，后面再跟随任何字母，数字和连字符(-).
+规则名大小写不敏感.
+
+和原始BNF不同，规则名可省略包围它的尖括号(即<rulename>).
+
+2.2 Rule Form
+规则的定义:
+    name =  elements crlf
+<name>是规则名，<elements>是一个或多个规则名或终止符(terminal specifications),<crlf>是
+行结束指示符号.等号分割规则名和它的定义.
+
+For visual ease,规则定义左对齐，如果规则需要多行，后续行要被缩进.左对齐和缩进是相对于ABNF规则
+的第一行.
+
+2.3.  Terminal Values
+规则被解析成一连串终止值，终止值也可称作字符.ABNF中，字符只是非负整数.一些上下文中，
+到某个字符集的这些值的映射也需要指定.
+
+可以紧凑地表示这样的值的序列，即使用.句号来表示字符间的分割:
+    CRLF =  %d13.10
+等价于:
+    CRLF =  %d13 %10
+因为ABNF是大小写不敏感的，所以可使用%dxx的形表示大小写敏感的字母.
+
+3.  Operators
+3.1 Concatenation(连接): Rule1 Rule2
+规则可以定义一个简单有序的值序列，通过列出规则名的序列:
+    foo=  %x61  ; a
+    bar=  %x62  ; b
+    mumble=  foo bar foo
+<mumble>匹配小写字母字符串"aba"
+
+3.2 Alternatives(替代): Rule1 / Rule2
+由正斜杠分割的元素可以相互之间替换:
+    foo / bar
+接受<foo>或<bar>
+
+3.4.  Value Range Alternatives:  %c##-##
+使用连字符"-"来表示可替代的值是某个范围:
+    DIGIT =  %x30-39
+等价于:
+    DIGIT =  "0" / "1" / "2" / "3" / "4" / "5" / "6" /
+             "7" / "8" / "9"
+
+3.6.Variable Repetition不定次数的重复:  *Rule
+完整语法是:<a>*<b>element,<a>和<b>是可选的十进制值,表示元素最少<a>次,最多<b>次出现.
+默认不存在<a>和<b>时是0到无限，包含0次;3*3<element>精确只允许三次
+
+3.7.Specific Repetition:  nRule
+规则形式是:<n>element,等价于<n>*<n>element
+
+3.8.Optional Sequence:  [RULE]
+方括号包含可选的元素序列:
+    [foo bar]
+等价于
+    *1(foo bar)
+    
+3.9.Comment:  ; Comment
+分号表示开始注释，一直持续要行尾
+
+3.10.Operator Precedence 操作符优先级
+以上描述的各种机制有如下优先顺序,从上到下，优先级由高到低:
+      Rule name, prose-val, Terminal value
+      Comment
+      Value range
+      Repetition
+      Grouping, Optional
+      Concatenation
+      Alternative
+混合连接操作符使用替代操作符时可能会产生困惑,建议使用分组操作符来使连接分组更容易明显辨别

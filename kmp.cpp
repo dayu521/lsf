@@ -148,7 +148,7 @@ wchar_t MBuff::current_char() const
     return buff_[(forward_+BuffLen*2)%(BuffLen*2)];
 }
 
-std::wstring MBuff::current_chars()
+std::wstring MBuff::current_token()
 {
     switch (state_) {
         case State::S0:throw std::out_of_range("there is not currently token,current S0");break;
@@ -159,11 +159,13 @@ std::wstring MBuff::current_chars()
             return s;
         }
         case State::S3:{
-            std::wstring s{};
+            std::wstring s(forward_-lexeme_begin_+1,L' ');
             if(lexeme_begin_>=0||forward_<0)
                 s=std::wstring(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),forward_-lexeme_begin_+1);
-            else
-                s=std::wstring(buff_.get()+lexeme_begin_+BuffLen*2,BuffLen)+std::wstring(buff_.get(),forward_+1);
+            else{
+                s+=std::wstring(buff_.get()+lexeme_begin_+BuffLen*2,BuffLen);
+                s+=std::wstring(buff_.get(),forward_+1);
+            }
             lexeme_begin_=forward_+1;
             return s;
         }
@@ -206,6 +208,13 @@ void MBuff::roll_back_char(int len)
 bool MBuff::is_eof() const
 {
     return buff_[forward_]==Eof;
+}
+
+void MBuff::init()
+{
+    state_=State::S0;
+    forward_=-1;
+    lexeme_begin_=fence_=0;
 }
 
 /// 调用之前必须先打开,否则未定义
