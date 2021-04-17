@@ -79,6 +79,8 @@ public:
 private:
     void init_dfa_table_partial();
     bool get_string();
+    bool try_number(wchar_t c);
+    bool try_float_part(wchar_t c);
 //    void get_string();
 private:
     std::unique_ptr<MBuff> input_;

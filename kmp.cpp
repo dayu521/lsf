@@ -148,28 +148,35 @@ wchar_t MBuff::current_char() const
     return buff_[(forward_+BuffLen*2)%(BuffLen*2)];
 }
 
-std::wstring MBuff::current_token()
+std::wstring MBuff::current_chars()
 {
     switch (state_) {
         case State::S0:throw std::out_of_range("there is not currently token,current S0");break;
         case State::S1:
         case State::S2:{
             std::wstring s=std::wstring(buff_.get()+lexeme_begin_,forward_-lexeme_begin_+1);
-            lexeme_begin_=forward_+1;
+//            lexeme_begin_=forward_+1;
             return s;
         }
         case State::S3:{
-            std::wstring s(forward_-lexeme_begin_+1,L' ');
+            std::wstring s(forward_-lexeme_begin_+1,wchar_t());
             if(lexeme_begin_>=0||forward_<0)
-                s=std::wstring(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),forward_-lexeme_begin_+1);
+                s.assign(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),forward_-lexeme_begin_+1);
             else{
-                s+=std::wstring(buff_.get()+lexeme_begin_+BuffLen*2,BuffLen);
-                s+=std::wstring(buff_.get(),forward_+1);
+                s.assign(buff_.get()+lexeme_begin_+BuffLen*2,BuffLen);
+                s.append(buff_.get(),forward_+1);
             }
-            lexeme_begin_=forward_+1;
+//            lexeme_begin_=forward_+1;
             return s;
         }
     }
+}
+
+std::wstring MBuff::current_token()
+{
+    auto s=current_chars();
+    lexeme_begin_=forward_+1;
+    return s;
 }
 
 void MBuff::discard_token()

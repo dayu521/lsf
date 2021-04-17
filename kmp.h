@@ -31,6 +31,7 @@ public:
     void open(const std::string & file_name);
 
     wchar_t next_char();
+    std::wstring current_chars();
     std::wstring current_token();
     void roll_back_char(int len=1);
     void discard_token();

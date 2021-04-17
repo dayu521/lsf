@@ -31,7 +31,9 @@ int main()
 //    wcout<<L'\x4F60'<<endl;
 //    wcout<<wchar_t(0x4F60)<<endl;
 //    char c2[]="\x50\n";
-    lsf::Lexer lex(std::make_unique<lsf::MBuff>("2.txt"));
+    auto f1="2.txt";
+    auto f2="文本文件.txt";
+    lsf::Lexer lex(std::make_unique<lsf::MBuff>("文本文件.txt"));
     auto ok=lex.run();
     auto end=lsf::Token{lsf::Type::END};
     while (ok) {
@@ -43,7 +45,8 @@ int main()
 //    std::ifstream f("2.txt");
 //    std::string s;
 //    f>>s;
-    std::wstring s(5,L'0');
+
+
     return 0;
 }
 

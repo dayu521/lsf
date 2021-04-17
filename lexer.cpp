@@ -9,6 +9,8 @@ bool deal_unicode_code_point(unsigned int &d, const std::wstring &s, unsigned lo
 
 bool cp_to_utf8(unsigned int cp,wchar_t & u8);
 
+bool wstring_to_double(const std::wstring & s,double & d);
+
 bool deal_escape_char(const std::wstring &s,std::wstring & d)
 {
     decltype (s.length()) i=0;
@@ -47,10 +49,10 @@ bool deal_escape_char(const std::wstring &s,std::wstring & d)
                 wchar_t ec = L'\0';
                 unsigned int code_point=0;
                 if(deal_unicode_code_point(code_point,s,i)){
-                    if(cp_to_utf8(code_point,ec))
-                        d+=ec;
-                    else
-                        return false;
+                    //必定是合法的utf码点，因此下面的转换一定成功
+//                    if(cp_to_utf8(code_point,ec))
+//                        d+=ec;
+                    d+=code_point;
                 }
                 else
                     return false;
@@ -164,8 +166,7 @@ lsf::Lexer::Lexer(std::unique_ptr<MBuff> input):input_(std::move(input))
 bool Lexer::run()
 {
     auto c=input_->next_char();
-    input_->discard_token();
-L:  if(input_->is_eof()){
+Begin:  if(input_->is_eof()){
         current_token_=Token{Type::END};
         return true;
     }
@@ -205,26 +206,32 @@ L:  if(input_->is_eof()){
         return true;
     }else if(c==L'{'){
         current_token_=Token{Type::LBRACE,L"{"};
+         input_->discard_token();
         goto T;
     }
     else if(c==L'}'){
         current_token_=Token{Type::RBRACE,L"}"};
+         input_->discard_token();
         goto T;
     }
     else if(c==L'['){
         current_token_=Token{Type::LSQUARE,L"["};
+         input_->discard_token();
         goto T;
     }
     else if(c==L']'){
         current_token_=Token{Type::RSQUARE,L"]"};
+         input_->discard_token();
         goto T;
     }
     else if(c==L':'){
         current_token_=Token{Type::COLON,L":"};
+         input_->discard_token();
         goto T;
     }
     else if(c==L','){
         current_token_=Token{Type::COMMA,L","};
+         input_->discard_token();
         goto T;
     }
     else if(c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009'){
@@ -232,9 +239,11 @@ L:  if(input_->is_eof()){
             c=input_->next_char();
             input_->discard_token();
         }
-        goto L;
+        goto Begin;
+    }else if((c>=L'0'&&c<=L'9')||c==L'-'){
+        return try_number(c);
     }else
-        goto F;//出错
+        goto F;
 
 F:  return false;
 T:  return true;
@@ -246,6 +255,78 @@ Token &Lexer::get_token()
 }
 
 bool Lexer::get_string()
+{
+
+}
+
+bool Lexer::try_number(wchar_t c)
+{
+    auto end=0;
+    if(c==L'-'){
+        c=input_->next_char();
+//        end++;
+    }
+    if(c>=L'0'&&c<=L'9'){
+        if(c==L'0'){
+            c=input_->next_char();
+//            end++;
+        }
+        else{
+            do{
+                c=input_->next_char();
+//                end++;
+            }while (c>=L'0'&&c<=L'9');
+        }
+        input_->roll_back_char();
+        current_token_=Token{Type::Number,input_->current_chars()};
+        input_->next_char();
+        end=0;
+        if(c==L'.'){
+            c=input_->next_char();
+            end++;
+            if(c>=L'0'&&c<=L'9'){
+                do{
+                    c=input_->next_char();
+                    end++;
+                }while(c>=L'0'&&c<=L'9');
+                input_->roll_back_char();
+                current_token_=Token{Type::Number,input_->current_chars()};
+                input_->next_char();
+                end=0;
+                if(c==L'e'||c==L'E'){
+                    c=input_->next_char();
+                    end++;
+                    if(c==L'+'||c==L'-'){
+                        c=input_->next_char();
+                        end++;
+                    }
+                    if(c>=L'0'&&c<=L'9'){
+                        do{
+                            c=input_->next_char();
+                            end++;
+                        }while(c>=L'0'&&c<=L'9');
+                        input_->roll_back_char();
+                        current_token_=Token{Type::Number,input_->current_token()};
+                        return true;
+                    }else
+                        goto T;
+                }else{
+                    goto T;
+                }
+            }else
+                goto T;
+        }else
+            goto T;
+    }else
+        goto F;
+
+F: return false;
+T: input_->roll_back_char(end);
+    input_->discard_token();
+    return true;
+}
+
+bool Lexer::try_float_part(wchar_t c)
 {
 
 }
