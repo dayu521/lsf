@@ -236,8 +236,8 @@ Begin:  if(input_->is_eof()){
     }
     else if(c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009'){
         while (c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009') {
-            c=input_->next_char();
             input_->discard_token();
+            c=input_->next_char();
         }
         goto Begin;
     }else if((c>=L'0'&&c<=L'9')||c==L'-'){
@@ -277,10 +277,8 @@ bool Lexer::try_number(wchar_t c)
 //                end++;
             }while (c>=L'0'&&c<=L'9');
         }
-        input_->roll_back_char();
-        current_token_=Token{Type::Number,input_->current_chars()};
-        input_->next_char();
-        end=0;
+        //可接受状态
+        end=1;
         if(c==L'.'){
             c=input_->next_char();
             end++;
@@ -289,10 +287,8 @@ bool Lexer::try_number(wchar_t c)
                     c=input_->next_char();
                     end++;
                 }while(c>=L'0'&&c<=L'9');
-                input_->roll_back_char();
-                current_token_=Token{Type::Number,input_->current_chars()};
-                input_->next_char();
-                end=0;
+                //可接受状态
+                end=1;
                 if(c==L'e'||c==L'E'){
                     c=input_->next_char();
                     end++;
@@ -320,15 +316,11 @@ bool Lexer::try_number(wchar_t c)
     }else
         goto F;
 
-F: return false;
-T: input_->roll_back_char(end);
+F:  return false;
+T:  input_->roll_back_char(end);
+    current_token_=Token{Type::Number,input_->current_chars()};
     input_->discard_token();
     return true;
-}
-
-bool Lexer::try_float_part(wchar_t c)
-{
-
 }
 
 }
