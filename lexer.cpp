@@ -1,6 +1,5 @@
 #include "lexer.h"
-#include <tuple>
-#include <iostream>
+
 namespace lsf {
 
 namespace Private {
@@ -59,7 +58,6 @@ bool deal_escape_char(const std::wstring &s,std::wstring & d)
                 break;
             }
             default:
-                std::wcout<<L"错误"<<std::endl;//错误
                 return false;
             }
         }
@@ -118,6 +116,7 @@ bool deal_unicode_code_point(unsigned int & d, const std::wstring & s, unsigned 
     return true;
 }
 
+//用不着
 bool cp_to_utf8(unsigned int cp,wchar_t & u8)
 {
     if(cp<=0x007f){
@@ -163,28 +162,23 @@ lsf::Lexer::Lexer(std::unique_ptr<MBuff> input):input_(std::move(input))
         symbol_.insert(key_word);
 }
 
+void Lexer::set_file(const std::string &name)
+{
+    input_->open(name);
+    input_->init();
+}
+
 bool Lexer::run()
 {
     auto c=input_->next_char();
-Begin:  if(input_->is_eof()){
+    if(input_->is_eof()){
         current_token_=Token{Type::END};
         return true;
     }
     if(c==L'/'){//注释
-        c=input_->next_char();
-        if(c==L'*'){
-            input_->discard_token();
-        }else if(c==L'/'){
-            while (c!=L'\n'&&c!=L'\t'&&c!=L'\r') {
-                c=input_->next_char();
-            }
-        }else{
-            std::wcout<<L"错误"<<std::endl;//错误
-            return false;
-        }
-        input_->discard_token();
-    }
-    if(c==L'\"'){//字符串
+        return try_comment(c);
+
+    }else if(c==L'\"'){//字符串
         std::wstring s{};
         c=input_->next_char();
         while (c!=L'\"') {
@@ -192,8 +186,7 @@ Begin:  if(input_->is_eof()){
                 s+=c;
                 c=input_->next_char();
 
-            }else{
-                std::wcout<<L"错误"<<std::endl;//错误 回滚
+            }else{               
                 return false;
             }
         }
@@ -235,11 +228,15 @@ Begin:  if(input_->is_eof()){
         goto T;
     }
     else if(c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009'){
-        while (c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009') {
-            input_->discard_token();
+        std::wstring s{};
+        do{
+            s+=c;
             c=input_->next_char();
-        }
-        goto Begin;
+        }while (c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009');
+        input_->roll_back_char();
+        input_->discard_token();
+        current_token_=Token{Type::WHITESPACE,s};
+        goto T;
     }else if((c>=L'0'&&c<=L'9')||c==L'-'){
         return try_number(c);
     }else
@@ -252,11 +249,6 @@ T:  return true;
 Token &Lexer::get_token()
 {
     return current_token_;
-}
-
-bool Lexer::get_string()
-{
-
 }
 
 bool Lexer::try_number(wchar_t c)
@@ -321,6 +313,54 @@ T:  input_->roll_back_char(end);
     current_token_=Token{Type::Number,input_->current_chars()};
     input_->discard_token();
     return true;
+}
+
+bool Lexer::try_comment(wchar_t c)
+{
+    std::wstring s{};
+    s+=c;
+    c=input_->next_char();
+    if(c==L'*'){
+        s+=c;
+        c=input_->next_char();
+        while (c!=MBuff::Eof) {
+            while (c!=L'*'&&c!=MBuff::Eof) {
+                s+=c;
+                c=input_->next_char();
+            }
+            if(c==MBuff::Eof)
+                break;
+            do {
+                s+=c;
+                c=input_->next_char();
+            } while (c==L'*');
+            if(c==L'/')
+                break;
+            c=input_->next_char();
+        }
+        if(c==MBuff::Eof)
+            return false;
+        s+=c;
+        current_token_=Token{Type::Comment,s};
+        input_->discard_token();
+        return true;
+    }else if(c==L'/'){
+        s+=c;
+        c=input_->next_char();
+        while (c!=L'\n'&&c!=L'\t'&&c!=L'\r') {
+            if(c==MBuff::Eof)
+                return false;
+            s+=c;
+            c=input_->next_char();
+        }
+        s+=c;
+        current_token_=Token{Type::Comment,s};
+        input_->discard_token();
+        return true;
+    }else{
+//        input_->discard_token();
+        return false;
+    }
 }
 
 }

@@ -1,52 +1,40 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
-#include"kmp.h"
 //#include <json/json.h>
 #include "lexer.h"
 using namespace std;
-template<class T1, class T2>
-struct P {
- T1 x1;
- T2 x2;
- friend auto operator<=>(const P&, const P&) = default;
-};
+
+std::string to_cstring(const std::wstring & s)
+{
+    char cc[MB_CUR_MAX];
+    std::string r{};
+    for(const auto c:s){
+        auto l=wctomb(cc,c);
+        r.append(cc,l);
+    }
+    return r;
+}
+
 int main()
 {
 //    setlocale(LC_ALL,"zh_CN.UTF-8");
     //std::locale("").name().c_str()
-    std::locale::global(std::locale(""));
-//    MBuff m("文本文件.txt");
-//    m.next_char();
-//    while (!m.is_eof()) {
-//        auto ss=m.current_char();
-//        std::wcout<<ss;
-//        m.next_char();
-//    }
-//    std::wcout.flush();
-//    char s[]="\xe4\xbd\xa0";
-//    wchar_t w;
-//    mbtowc(&w,s,3);
-//    wcout<<w<<endl;
-//    wcout<<L'\x4F60'<<endl;
-//    wcout<<wchar_t(0x4F60)<<endl;
-//    char c2[]="\x50\n";
+//    std::locale::global(std::locale(""));
     auto f1="2.txt";
     auto f2="文本文件.txt";
-    lsf::Lexer lex(std::make_unique<lsf::MBuff>("文本文件.txt"));
+    auto old=std::setlocale(LC_ALL,nullptr);
+    std::setlocale(LC_ALL,std::locale("").name().c_str());
+    lsf::Lexer lex(std::make_unique<lsf::MBuff>(f2));
     auto ok=lex.run();
     auto end=lsf::Token{lsf::Type::END};
     while (ok) {
-        std::wcout<<lex.get_token().value_<<std::endl;
+        std::cout<<to_cstring(lex.get_token().value_);
         ok=lex.run();
         if(end==lex.get_token())
             break;
     }
-//    std::ifstream f("2.txt");
-//    std::string s;
-//    f>>s;
-
-
+    std::setlocale(LC_ALL,old);
     return 0;
 }
 

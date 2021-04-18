@@ -18,7 +18,6 @@
 //https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Surrogates
 #include <string>
 #include <set>
-#include <vector>
 #include "kmp.h"
 namespace lsf {
 
@@ -26,6 +25,7 @@ enum class Type{
     String,
     Number,
     KeyWord,
+    Comment,
     LBRACE, RBRACE,     //{,}
     LSQUARE, RSQUARE,   //[,]
 //    LPAREN, RPAREN,     //(,)
@@ -39,53 +39,30 @@ struct Token
 {
     Type type_;
     std::wstring value_{};
-//    bool operator !=(const Token & c)
-//    {
-//        return type_!=c.type_||value_!=c.value_;
-//    }
     bool operator ==(const Token & c)const
     {
-        return type_==c.type_&&value_==c.value_;
+        return type_==c.type_;
     }
 };
-
-enum class CharCategory{
-    Common,
-    Zero,
-    OneToNine,
-};
-template<auto T,typename C=wchar_t>
-struct CharCat
-{
-    CharCategory category_;
-    C char_;
-};
-
-//template<typename OutChar>
-//class CharInput
-//{
-//public:
-//    virtual OutChar next();
-//    virtual void rollback(int len);
-//    virtual OutChar current_char();
-//};
 
 class Lexer
 {
 public:
     Lexer(std::unique_ptr<MBuff> input);
+    void set_file(const std::string & name);
     bool run();
     Token & get_token();
 private:
     void init_dfa_table_partial();
-    bool get_string();
     bool try_number(wchar_t c);
+    bool try_comment(wchar_t c);
 private:
     std::unique_ptr<MBuff> input_;
     std::set<std::wstring> symbol_;
     bool error{false};
     Token current_token_{};
-//    std::vector<std::map<>> number_table_;
+
+    std::string error_{};
 };
 
 }

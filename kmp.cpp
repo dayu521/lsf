@@ -56,7 +56,7 @@ MBuff::MBuff():
     buff_(new wchar_t[2*BuffLen],[](auto p){delete [] p;}),
     state_(State::S0)
 {
-
+    f_.imbue(std::locale(""));
 }
 
 MBuff::~MBuff()
@@ -80,6 +80,7 @@ MBuff::MBuff(const std::string &file_name):
     f_(file_name),
     state_(State::S0)
 {
+    f_.imbue(std::locale(""));
     if(!f_.is_open())
         throw std::runtime_error("failed to open file:"+file_name);
 }
@@ -203,7 +204,7 @@ void MBuff::roll_back_char(int len)
         case State::S1:
         case State::S2:
         case State::S3:{
-            if(forward_-len<lexeme_begin_){
+            if(forward_-len<lexeme_begin_-1){
                 throw std::out_of_range("roolback fail,current S2");
             }
             forward_-=len;
