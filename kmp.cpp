@@ -95,8 +95,8 @@ void MBuff::open(const std::string &file_name)
         throw std::runtime_error("failed to open file:"+file_name);
 }
 
-///不能一直调用此函数,需要调用current_token或discard来消耗当前已分析的字符，
-/// 否则当前已分析的这些字符被新读取的字符覆盖,而且lexeme_begin_也表示的是原先分析的字符的开始处
+/// 不能一直调用此函数,需要调用current_token或discard来消耗当前已分析的字符，
+/// 否则当缓冲区重新填充时，当前已分析的这些字符被新读取的字符覆盖,且lexeme_begin_也表示的是原先分析的字符的开始处
 wchar_t MBuff::next_char()
 {
     //无法达到2*BuffLen，因为在这之前已经被转移到下一状态了，从而forward_和lexeme_begin_被重置了
@@ -232,7 +232,7 @@ void MBuff::read(int begin, int length)
     f_.read(pb,length);
     auto c=f_.gcount();
     if(c<length)
-        pb[c]=WEOF;
+        pb[c]=Eof;
 }
 
 }

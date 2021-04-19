@@ -193,8 +193,6 @@ bool Lexer::run()
         input_->discard_token();
         std::wstring d{};
         Private::deal_escape_char(s,d);
-        if(symbol_.contains(d))
-            current_token_=Token{Type::KeyWord,d};
         current_token_=Token({Type::String,d});
         return true;
     }else if(c==L'{'){
@@ -239,6 +237,23 @@ bool Lexer::run()
         goto T;
     }else if((c>=L'0'&&c<=L'9')||c==L'-'){
         return try_number(c);
+    }else if((c>=L'a'&&c<=L'z')||(c>=L'A'&&c<=L'Z')||c==L'_'){
+        std::wstring s{};
+        if(c==L'_'){
+            s+=c;
+            c=input_->next_char();
+        }
+        while ((c>=L'a'&&c<=L'z')||(c>=L'A'&&c<=L'Z')||c==L'_') {
+            s+=c;
+            c=input_->next_char();
+        }
+        input_->roll_back_char();
+        if(symbol_.contains(s)){
+            current_token_=Token{Type::KeyWord,s};
+            goto T;
+        }
+        else
+            goto F;
     }else
         goto F;
 
@@ -323,23 +338,18 @@ bool Lexer::try_comment(wchar_t c)
     if(c==L'*'){
         s+=c;
         c=input_->next_char();
-        while (c!=MBuff::Eof) {
-            while (c!=L'*'&&c!=MBuff::Eof) {
-                s+=c;
-                c=input_->next_char();
-            }
+        while (true) {
             if(c==MBuff::Eof)
-                break;
-            do {
+                return false;
+            if(c==L'*'){
                 s+=c;
                 c=input_->next_char();
-            } while (c==L'*');
-            if(c==L'/')
-                break;
+                if(c==L'/')
+                    break;
+            }
+            s+=c;
             c=input_->next_char();
         }
-        if(c==MBuff::Eof)
-            return false;
         s+=c;
         current_token_=Token{Type::Comment,s};
         input_->discard_token();
@@ -347,12 +357,15 @@ bool Lexer::try_comment(wchar_t c)
     }else if(c==L'/'){
         s+=c;
         c=input_->next_char();
-        while (c!=L'\n'&&c!=L'\t'&&c!=L'\r') {
+        while (true) {
             if(c==MBuff::Eof)
                 return false;
+            if(c==L'\n'||c==L'\t'||c==L'\r')
+                break;;
             s+=c;
             c=input_->next_char();
         }
+
         s+=c;
         current_token_=Token{Type::Comment,s};
         input_->discard_token();
