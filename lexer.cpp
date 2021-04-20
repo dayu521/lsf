@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "kmp.h"
 
 namespace lsf {
 

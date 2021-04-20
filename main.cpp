@@ -1,9 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
-//#include <json/json.h>
 #include "lexer.h"
 #include "jsonparser.h"
+#include "kmp.h"
 using namespace std;
 
 std::string to_cstring(const std::wstring & s)
@@ -27,7 +27,7 @@ int main()
     auto f3="3.txt";
     auto old=std::setlocale(LC_ALL,nullptr);
     std::setlocale(LC_ALL,std::locale("").name().c_str());
-    lsf::Lexer lex(std::make_unique<lsf::MBuff>(f2));
+    lsf::Lexer lex(std::make_unique<lsf::MBuff>(f1));
 //    auto ok=lex.run();
 //    auto end=lsf::Token{lsf::Type::END};
 //    while (ok) {
@@ -37,12 +37,16 @@ int main()
 //            break;
 //    }
     bool ok=false;
-    lsf::JsonParser parser({[&lex,&ok]()->void{ok=lex.run();},
-                            [&lex,&ok]()->const lsf::Token &{if(!ok){
-                                                                    static auto t=lsf::Token{lsf::Type::END};
-                                                                    return t;
-                                                                }
-                                                                return lex.get_token();}});
+    lsf::JsonParser parser({[&lex,&ok]()->void{
+                                ok=lex.run();
+                            },
+                            [&lex,&ok]()->const lsf::Token &
+                            {if(!ok){
+                                 static auto t=lsf::Token{lsf::Type::END};
+                                 return t;
+                             }
+                             return lex.get_token();}
+                           });
     if(!parser.parser()){
         std::cout<<"不合法json"<<endl;
         return -1;

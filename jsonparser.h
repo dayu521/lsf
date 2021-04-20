@@ -11,11 +11,8 @@ class Token;
 
 class Visitor
 {
-    void visit_obj(Token *);
-    void visit_array(Token *);
-    void visit_keyword(Token *);
-    void visit_string(Token *);
-    void visit_number(Token *);
+    template<lsf::Type T>
+    void visit();
 };
 
 struct GenToken
@@ -43,7 +40,7 @@ private:
     bool arr_ws();
     bool arr_ws_r();
     bool elementsL();
-    bool ws();
+    bool unuse();
 
     bool isTerminator(TType type);
 private:

@@ -23,21 +23,10 @@ bool JsonParser::json()
 
 bool JsonParser::element()
 {
-    auto x=gen_.current_();
-    switch (gen_.current_().type_) {
-    case Type::WHITESPACE:
-    case Type::LBRACE:
-    case Type::LSQUARE:
-    case Type::String:
-    case Type::Number:
-    case Type::KeyWord:
-        ws();
-        if(value())
-            return ws();
-        return false;
-    default:
-        return false;
-    }
+    unuse();
+    if(value())
+        return unuse();
+    return false;
 }
 
 bool JsonParser::value()
@@ -71,7 +60,7 @@ bool JsonParser::obj()
 
 bool JsonParser::mb_ws()
 {
-    ws();
+    unuse();
     return mb_ws_r();
 }
 
@@ -79,7 +68,7 @@ bool JsonParser::mb_ws_r()
 {
     if(isTerminator(TType::String)){
         gen_.next_();
-        ws();
+        unuse();
         if(isTerminator(TType::COLON)){
             gen_.next_();
             if(element())
@@ -111,15 +100,13 @@ bool JsonParser::memberL()
 
 bool JsonParser::member()
 {
-    if(isTerminator(TType::WHITESPACE)){
-        ws();
-        if(isTerminator(TType::String)){
+    unuse();
+    if(isTerminator(TType::String)){
+        gen_.next_();
+        unuse();
+        if(isTerminator(TType::COLON)){
             gen_.next_();
-            ws();
-            if(isTerminator(TType::COLON)){
-                gen_.next_();
-                return element();
-            }
+            return element();
         }
     }
     return false;
@@ -139,11 +126,8 @@ bool JsonParser::array()
 
 bool JsonParser::arr_ws()
 {
-    if(isTerminator(TType::WHITESPACE)){
-        ws();
-        return arr_ws_r();
-    }
-    return false;
+    unuse();
+    return arr_ws_r();
 }
 
 bool JsonParser::arr_ws_r()
@@ -155,7 +139,7 @@ bool JsonParser::arr_ws_r()
     case TType::Number:
     case TType::KeyWord:{
         if(value()){
-            ws();
+            unuse();
             return elementsL();
         }
         return false;
@@ -180,9 +164,11 @@ bool JsonParser::elementsL()
         return false;
 }
 
-bool JsonParser::ws()
+//Unuse -> WC Unuse | e
+//WC -> white_space | comment
+bool JsonParser::unuse()
 {
-    if(isTerminator(TType::WHITESPACE)){
+    while (isTerminator(TType::WHITESPACE)||isTerminator(TType::Comment)) {
         gen_.next_();
     }
     return true;

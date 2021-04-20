@@ -5,6 +5,7 @@
 #include <fstream>
 #include <memory>
 
+//本来以为用得着kmp算法，但没想到没用
 class KMP
 {
 public:

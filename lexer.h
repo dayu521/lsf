@@ -18,7 +18,7 @@
 //https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Surrogates
 #include <string>
 #include <set>
-#include "kmp.h"
+#include <memory>
 #include "constant.h"
 namespace lsf {
 
@@ -31,6 +31,8 @@ struct Token
         return type_==c.type_;
     }
 };
+
+class MBuff;
 
 class Lexer
 {

@@ -1,5 +1,6 @@
 #include "kmp.h"
 #include<iostream>
+#include<assert.h>
 
 KMP::KMP(const std::wstring &p_):pattern(p_)
 {
@@ -182,8 +183,8 @@ std::wstring MBuff::current_token()
 
 void MBuff::discard_token()
 {
-    if(state_==State::S0)
-        throw std::runtime_error("can not discard,we are in S0");
+    //can not discard,we are in S0
+    assert(state_!=State::S0);
     lexeme_begin_=forward_+1;
 }
 
@@ -230,6 +231,8 @@ void MBuff::read(int begin, int length)
 {
     auto pb=&buff_[0]+begin;
     f_.read(pb,length);
+    if(f_.fail())
+        throw std::runtime_error("read file failed!");
     auto c=f_.gcount();
     if(c<length)
         pb[c]=Eof;

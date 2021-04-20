@@ -11,10 +11,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 #add_subdirectory(ccpp)
 #message(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(${PROJECT_NAME} main.cpp
-                                fp.cpp
                                 kmp.cpp
                                 test.cpp
-                                fp.cpp
                                 lexer.cpp
                                 jsonparser.cpp)
-target_link_libraries(${PROJECT_NAME} jsoncpp)
+#target_link_libraries(${PROJECT_NAME} jsoncpp)
