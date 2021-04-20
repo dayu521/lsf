@@ -3,6 +3,7 @@
 
 #include<memory>
 #include<functional>
+#include"constant.h"
 
 namespace lsf {
 
@@ -29,19 +30,22 @@ public:
     JsonParser(GenToken gen);
     bool parser();
 private:
+    using TType=lsf::Type;
     bool json();
     bool element();
     bool value();
     bool obj();
     bool mb_ws();
-    bool members();
-    bool membersL();
+    bool mb_ws_r();
+    bool memberL();
     bool member();
     bool array();
     bool arr_ws();
-    bool elements();
+    bool arr_ws_r();
     bool elementsL();
     bool ws();
+
+    bool isTerminator(TType type);
 private:
     GenToken gen_;
     Token * c_token_{nullptr};

@@ -19,21 +19,8 @@
 #include <string>
 #include <set>
 #include "kmp.h"
+#include "constant.h"
 namespace lsf {
-
-enum class Type{
-    String,
-    Number,
-    KeyWord,
-    Comment,
-    LBRACE, RBRACE,     //{,}
-    LSQUARE, RSQUARE,   //[,]
-//    LPAREN, RPAREN,     //(,)
-    COLON,               //:
-    COMMA,              //,
-    WHITESPACE,         //
-    END
-};
 
 struct Token
 {
