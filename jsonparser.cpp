@@ -1,3 +1,4 @@
+#include <cassert>
 #include "jsonparser.h"
 #include "lexer.h"
 
@@ -10,20 +11,19 @@ JsonParser::JsonParser(GenToken gen):gen_(gen)
 
 void JsonParser::parser()
 {
-    if(!gen_.next_||!gen_.current_)
-        throw std::runtime_error("语法分析错误");
+    assert(gen_.next_||gen_.current_);
     gen_.next_();
     json();
 }
 
 //json -> element
-bool JsonParser::json()
+void JsonParser::json()
 {
     return element();
 }
 
 //element -> unuse value unuse
-bool JsonParser::element()
+void JsonParser::element()
 {
     unuse();
     if(value())
@@ -32,7 +32,7 @@ bool JsonParser::element()
 }
 
 //value -> obj | array | String | Number | KeyWord
-bool JsonParser::value()
+void JsonParser::value()
 {
     switch (gen_.current_().type_) {
     case Type::LBRACE:
@@ -50,7 +50,7 @@ bool JsonParser::value()
 }
 
 //obj -> '{' mb_ws '}'
-bool JsonParser::obj()
+void JsonParser::obj()
 {
     if(isTerminator(lsf::Type::LBRACE)){
         gen_.next_();
@@ -63,14 +63,14 @@ bool JsonParser::obj()
 }
 
 //mb_ws -> unuse mb_ws_r
-bool JsonParser::mb_ws()
+void JsonParser::mb_ws()
 {
     unuse();
     return mb_ws_r();
 }
 
 //mb_ws_r -> String unuse ':' element memberL | e
-bool JsonParser::mb_ws_r()
+void JsonParser::mb_ws_r()
 {
     if(isTerminator(TType::String)){
         gen_.next_();
@@ -88,7 +88,7 @@ bool JsonParser::mb_ws_r()
 }
 
 //memberL -> ',' member memberL | e
-bool JsonParser::memberL()
+void JsonParser::memberL()
 {
     if(isTerminator(TType::RBRACE)){
         return true;
@@ -106,7 +106,7 @@ bool JsonParser::memberL()
 }
 
 //member -> unuse String unuse ':' element
-bool JsonParser::member()
+void JsonParser::member()
 {
     unuse();
     if(isTerminator(TType::String)){
@@ -121,7 +121,7 @@ bool JsonParser::member()
 }
 
 //array -> '[' arr_ws ']'
-bool JsonParser::array()
+void JsonParser::array()
 {
     if(isTerminator(TType::LSQUARE)){
         gen_.next_();
@@ -134,14 +134,14 @@ bool JsonParser::array()
 }
 
 //arr_ws -> unuse | arr_ws_r
-bool JsonParser::arr_ws()
+void JsonParser::arr_ws()
 {
     unuse();
     return arr_ws_r();
 }
 
 //arr_ws_r -> value unuse elementsL
-bool JsonParser::arr_ws_r()
+void JsonParser::arr_ws_r()
 {
     switch (gen_.current_().type_) {
     case TType::LBRACE:
@@ -163,7 +163,7 @@ bool JsonParser::arr_ws_r()
 }
 
 //elementsL -> ',' element elementsL | e
-bool JsonParser::elementsL()
+void JsonParser::elementsL()
 {
     if(isTerminator(Type::RSQUARE))
         return true;
@@ -181,12 +181,11 @@ bool JsonParser::elementsL()
 
 //unuse -> wc unuse | e
 //wc -> WhiteSpace | Comment
-bool JsonParser::unuse()
+void JsonParser::unuse()
 {
     while (isTerminator(TType::WHITESPACE)||isTerminator(TType::Comment)) {
         gen_.next_();
     }
-    return true;
 }
 
 bool JsonParser::isTerminator(JsonParser::TType type)

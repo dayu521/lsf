@@ -29,6 +29,12 @@ struct GenToken
     std::function<const Token & ()> current_;
 };
 
+class ParserError: public std::runtime_error
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
 class JsonParser
 {
 public:
@@ -36,19 +42,19 @@ public:
     void parser();
 private:
     using TType=lsf::Type;
-    bool json();
-    bool element();
-    bool value();
-    bool obj();
-    bool mb_ws();
-    bool mb_ws_r();
-    bool memberL();
-    bool member();
-    bool array();
-    bool arr_ws();
-    bool arr_ws_r();
-    bool elementsL();
-    bool unuse();
+    void json();
+    void element();
+    void value();
+    void obj();
+    void mb_ws();
+    void mb_ws_r();
+    void memberL();
+    void member();
+    void array();
+    void arr_ws();
+    void arr_ws_r();
+    void elementsL();
+    void unuse();
 
     bool isTerminator(TType type);
 private:

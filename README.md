@@ -6,7 +6,7 @@
 
 - 详细文档都会开放，其实也没什么，大家都能找到
 
-    - 标准来自rfc8259和https://www.json.org/json-zh.html网站
+    - 标准来自rfc8259和https://www.json.org/json-zh.html 网站
 
     - 处理各个词法单元的自动机，词法分析器是手写的
     

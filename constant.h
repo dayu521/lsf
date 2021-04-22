@@ -20,29 +20,29 @@ inline const char * tokentype_to_string(Type type)
 {
     switch (type) {
     case Type::String:
-        return "String";
+        return "<String>";
     case Type::Number:
-        return "Number";
+        return "<Number>";
     case Type::KeyWord:
-        return "KeyWord";
+        return "<KeyWord>";
     case Type::Comment:
-        return "Comment";
+        return "<Comment>";
     case Type::LBRACE:
-        return "LBRACE";
+        return "<LBRACE>";
     case Type::RBRACE:
-        return "RBRACE";
+        return "<RBRACE>";
     case Type::LSQUARE:
-        return "LSQUARE";
+        return "<LSQUARE>";
     case Type::RSQUARE:
-        return "RSQUARE";
+        return "<RSQUARE>";
     case Type::COLON:
-        return "COLON";
+        return "<COLON>";
     case Type::COMMA:
-        return "COMMA";
+        return "<COMMA>";
     case Type::WHITESPACE:
-        return "WHITESPACE";
+        return "<WHITESPACE>";
     case Type::END:
-        return "END";
+        return "<END>";
     }
 }
 

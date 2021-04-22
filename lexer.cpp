@@ -48,7 +48,6 @@ bool deal_escape_char(const std::wstring &s,std::wstring & d)
                 d+=L'\t';
                 break;
             case L'u':{
-                wchar_t ec = L'\0';
                 unsigned int code_point=0;
                 if(deal_unicode_code_point(code_point,s,i)){
                     //必定是合法的utf码点，因此下面的转换一定成功
