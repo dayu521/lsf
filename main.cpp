@@ -30,7 +30,8 @@ int main()
     auto f3="3.txt";
     auto old=std::setlocale(LC_ALL,nullptr);
     std::setlocale(LC_ALL,std::locale("").name().c_str());
-    lsf::Lexer lex(std::make_unique<lsf::MBuff>(f1));
+    auto buff=std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(f2));
+    lsf::Lexer lex(buff);
     lsf::JsonParser parser({[&lex]()->void
                             {
                                 lex.next_token();
@@ -43,7 +44,7 @@ int main()
         parser.parser();
     }  catch (const lsf::LexerError & e) {
         std::cout<<e.what();
-        std::cout<<to_cstring(lex.get_error());
+        std::cout<<to_cstring(lex.get_error(buff->get_stat()));
         throw ;
     }   catch(const std::runtime_error e){
         std::cout<<e.what();

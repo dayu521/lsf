@@ -52,6 +52,10 @@ void KMP::piFunc()
 }
 namespace lsf {
 
+namespace Private {
+
+}
+
 MBuff::MBuff():
 //    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
     buff_(new wchar_t[2*BuffLen],[](auto p){delete [] p;}),
@@ -160,8 +164,9 @@ std::wstring MBuff::current_chars()
         return std::wstring(buff_.get()+lexeme_begin_,forward_-lexeme_begin_+1);
 }
 
-std::wstring MBuff::current_token()
+std::wstring MBuff::get_token()
 {
+    assert(state_!=State::S0);
     auto s=current_chars();
     lexeme_begin_=forward_+1;
     return s;
@@ -172,11 +177,6 @@ void MBuff::discard_token()
     //can not discard,we are in S0
     assert(state_!=State::S0);
     lexeme_begin_=forward_+1;
-}
-
-int MBuff::get_char_count() const
-{
-    return forward_-lexeme_begin_+1;
 }
 
 ///回滚不超过1个token
@@ -214,6 +214,71 @@ void MBuff::read(int begin, int length)
     auto c=f_.gcount();
     if(c<length)
         pb[c]=Eof;
+}
+
+FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),history_(1,0),stat_{1,1,1}
+{
+}
+
+FilterBuff::~FilterBuff()
+{
+
+}
+
+wchar_t FilterBuff::next_char()
+{
+    auto c=b_->next_char();
+    if(c==L'\n'){
+        stat_.line_++;
+        // \n \n \n     换行符
+        //  5  2  1     数量
+        //  0  1  2     数组索引
+        //每次遇到换行就从数组下一位开始从0计数，直到遇到换行符，然后重复过程，数组的大小就是当前token的换行符个数
+        //在回滚的时候从后往前，依次减掉回滚的个数，然后遇到换行符就把stat_.line_减一
+        //好吧 我描述的不太好，仔细想想就明白了
+        history_.push_back(0);
+        stat_.column_curr_=1;
+    }else
+        stat_.column_curr_++;
+    history_[history_.size()-1]++;
+    return c;
+}
+
+void FilterBuff::roll_back_char(int len)
+{
+    b_->roll_back_char(len);
+    stat_.column_curr_--;
+    for(auto i=history_.crbegin();i!=history_.crend();i++){
+        if(len-*i<0){
+            history_.resize(1);
+            history_[0]=0;
+            break;
+        }
+        len-=*i;
+        stat_.line_--;
+    }
+    assert(stat_.line_>=0&&stat_.column_curr_>=0);
+}
+
+void FilterBuff::discard_token()
+{
+    b_->discard_token();
+    stat_.column_last_=stat_.column_curr_;
+    history_.resize(1);
+    history_[0]=0;
+}
+
+std::wstring FilterBuff::get_token()
+{
+    stat_.column_last_=stat_.column_curr_;
+    history_.resize(1);
+    history_[0]=0;
+    return b_->get_token();
+}
+
+Statistic FilterBuff::get_stat() const
+{
+    return stat_;
 }
 
 }
