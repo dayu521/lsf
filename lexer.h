@@ -22,6 +22,8 @@
 #include "constant.h"
 namespace lsf {
 
+class MBuff;
+
 struct Token
 {
     Type type_;
@@ -32,26 +34,37 @@ struct Token
     }
 };
 
-class MBuff;
+struct Statistic
+{
+    unsigned int column_last_{0};
+    unsigned int column_curr_{0};
+    unsigned int line_{1};
+};
+
+class LexerError:public std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
 
 class Lexer
 {
 public:
     Lexer(std::unique_ptr<MBuff> input);
     void set_file(const std::string & name);
-    bool run();
+    Token & next_token();
     Token & get_token();
+    const std::wstring & get_error();
 private:
-    void init_dfa_table_partial();
+    bool run();
     bool try_number(wchar_t c);
     bool try_comment(wchar_t c);
 private:
     std::unique_ptr<MBuff> input_;
     std::set<std::wstring> symbol_;
-    bool error{false};
+    bool has_error_{false};
     Token current_token_{};
-
-    std::string error_{};
+    Statistic stat;
+    std::wstring error_{};
 };
 
 }

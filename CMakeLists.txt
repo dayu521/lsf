@@ -14,5 +14,6 @@ add_executable(${PROJECT_NAME} main.cpp
                                 kmp.cpp
                                 test.cpp
                                 lexer.cpp
-                                jsonparser.cpp)
+                                jsonparser.cpp
+                                json.cpp)
 #target_link_libraries(${PROJECT_NAME} jsoncpp)

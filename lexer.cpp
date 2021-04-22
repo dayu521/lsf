@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <sstream>
 #include "lexer.h"
 #include "kmp.h"
 
@@ -169,6 +171,28 @@ void Lexer::set_file(const std::string &name)
     input_->init();
 }
 
+Token &Lexer::next_token()
+{
+    if(!run()){
+        stat.column_last_=stat.column_curr_;
+        stat.column_curr_+=current_token_.value_.size();
+        has_error_=true;
+        std::wstringstream error_string{};
+        error_string<<L"分析:<";
+        error_string<<lsf::tokentype_to_string(current_token_.type_)
+            <<L":\""<<current_token_.value_<<L"\">出错,在第";
+        error_string<<stat.line_;
+        error_string<<L"行,第";
+        error_string<<stat.column_last_;
+        error_string<<L"列\n";
+        error_=error_string.str();
+        throw LexerError("词法分析出错\n");
+    }
+    stat.column_last_=stat.column_curr_;
+    stat.column_curr_+=current_token_.value_.size();
+    return current_token_;
+}
+
 bool Lexer::run()
 {
     auto c=input_->next_char();
@@ -177,28 +201,31 @@ bool Lexer::run()
         return true;
     }
     if(c==L'/'){//注释
+        current_token_.type_=Type::Comment;
         return try_comment(c);
 
     }else if(c==L'\"'){//字符串
-        std::wstring s{};
+        current_token_.type_=Type::String;
+//        std::wstring s{};
+        auto & s=current_token_.value_;
+        s.clear();
         c=input_->next_char();
         while (c!=L'\"') {
             if(c>=L'\u0020'&&c<=0x10FFFF){
                 s+=c;
                 c=input_->next_char();
-
-            }else{               
+            }else{
                 return false;
             }
         }
         input_->discard_token();
         std::wstring d{};
         Private::deal_escape_char(s,d);
-        current_token_=Token({Type::String,d});
+        current_token_.value_=d;
         return true;
     }else if(c==L'{'){
         current_token_=Token{Type::LBRACE,L"{"};
-         input_->discard_token();
+        input_->discard_token();
         goto T;
     }
     else if(c==L'}'){
@@ -227,19 +254,28 @@ bool Lexer::run()
         goto T;
     }
     else if(c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009'){
-        std::wstring s{};
+        current_token_.type_=Type::WHITESPACE;
+        auto & s=current_token_.value_;
+        s.clear();
         do{
             s+=c;
+            if(c==L'\u000a'){//'\n'
+                stat.line_++;
+                stat.column_curr_=0;
+            }
             c=input_->next_char();
         }while (c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009');
         input_->roll_back_char();
         input_->discard_token();
-        current_token_=Token{Type::WHITESPACE,s};
+        current_token_.value_=s;
         goto T;
     }else if((c>=L'0'&&c<=L'9')||c==L'-'){
+        current_token_.type_=Type::Number;
         return try_number(c);
-    }else if((c>=L'a'&&c<=L'z')||(c>=L'A'&&c<=L'Z')||c==L'_'){
-        std::wstring s{};
+    }else if(c>=L'\u0020'&&c<=0x10FFFF){
+        current_token_.type_=Type::KeyWord;
+        auto & s=current_token_.value_;
+        s.clear();
         if(c==L'_'){
             s+=c;
             c=input_->next_char();
@@ -250,11 +286,12 @@ bool Lexer::run()
         }
         input_->roll_back_char();
         if(symbol_.contains(s)){
-            current_token_=Token{Type::KeyWord,s};
+            current_token_.value_=s;
             goto T;
         }
-        else
+        else{
             goto F;
+        }
     }else
         goto F;
 
@@ -262,9 +299,15 @@ F:  return false;
 T:  return true;
 }
 
-Token &Lexer::get_token()
+Token & Lexer::get_token()
 {
     return current_token_;
+}
+
+const std::wstring &Lexer::get_error()
+{
+    assert(has_error_==true);
+    return error_;
 }
 
 bool Lexer::try_number(wchar_t c)
@@ -310,7 +353,7 @@ bool Lexer::try_number(wchar_t c)
                             end++;
                         }while(c>=L'0'&&c<=L'9');
                         input_->roll_back_char();
-                        current_token_=Token{Type::Number,input_->current_token()};
+                        current_token_.value_=input_->current_token();
                         return true;
                     }else
                         goto T;
@@ -326,14 +369,15 @@ bool Lexer::try_number(wchar_t c)
 
 F:  return false;
 T:  input_->roll_back_char(end);
-    current_token_=Token{Type::Number,input_->current_chars()};
+    current_token_.value_=input_->current_chars();
     input_->discard_token();
     return true;
 }
 
 bool Lexer::try_comment(wchar_t c)
 {
-    std::wstring s{};
+    auto & s=current_token_.value_;
+    s.clear();
     s+=c;
     c=input_->next_char();
     if(c==L'*'){
@@ -341,7 +385,7 @@ bool Lexer::try_comment(wchar_t c)
         c=input_->next_char();
         while (true) {
             if(c==MBuff::Eof)
-                return false;
+                goto F;
             if(c==L'*'){
                 s+=c;
                 c=input_->next_char();
@@ -352,7 +396,6 @@ bool Lexer::try_comment(wchar_t c)
             c=input_->next_char();
         }
         s+=c;
-        current_token_=Token{Type::Comment,s};
         input_->discard_token();
         return true;
     }else if(c==L'/'){
@@ -360,7 +403,7 @@ bool Lexer::try_comment(wchar_t c)
         c=input_->next_char();
         while (true) {
             if(c==MBuff::Eof)
-                return false;
+                goto F;
             if(c==L'\n'||c==L'\t'||c==L'\r')
                 break;;
             s+=c;
@@ -368,13 +411,11 @@ bool Lexer::try_comment(wchar_t c)
         }
 
         s+=c;
-        current_token_=Token{Type::Comment,s};
         input_->discard_token();
         return true;
-    }else{
-//        input_->discard_token();
-        return false;
-    }
+    }else
+        ;
+F:  return false;
 }
 
 }

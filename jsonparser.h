@@ -9,11 +9,19 @@ namespace lsf {
 
 class Token;
 
+enum class NodeCategory{Obj,Arr,String,Number,Keyword};
+
 class Visitor
 {
-    template<lsf::Type T>
-    void visit();
+    void visit_obj(Token t);
+    void visit_member(Token t);
+    void visit_arr(Token t);
+    void visit_element(Token t);
+    void visit_string(Token t);
+    void visit_number(Token t);
+    void visit_keyword(Token t);
 };
+
 
 struct GenToken
 {
@@ -25,7 +33,7 @@ class JsonParser
 {
 public:
     JsonParser(GenToken gen);
-    bool parser();
+    void parser();
 private:
     using TType=lsf::Type;
     bool json();

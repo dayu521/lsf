@@ -96,13 +96,14 @@ void MBuff::open(const std::string &file_name)
         throw std::runtime_error("failed to open file:"+file_name);
 }
 
-/// 不能一直调用此函数,需要调用current_token或discard来消耗当前已分析的字符，
-/// 否则当缓冲区重新填充时，当前已分析的这些字符被新读取的字符覆盖,且lexeme_begin_也表示的是原先分析的字符的开始处
+/// 因为当缓冲区重新填充时，当前已分析的这些字符被新读取的字符覆盖,且lexeme_begin_也表示的是原先分析的token的开始处,
+/// 因此需要在合适的时候调用current_token或discard来消耗当前已分析的字符.
+/// 否则current_token返回的是被污染的token
 wchar_t MBuff::next_char()
 {
     //无法达到2*BuffLen，因为在这之前已经被转移到下一状态了，从而forward_和lexeme_begin_被重置了
-    [[unlikely]]if(forward_-lexeme_begin_>=2*BuffLen-1)
-        throw std::runtime_error("exceed the max length of token,should not peek next char");
+    //exceed the max length of token,should not peek next char
+//    assert(forward_-lexeme_begin_<2*BuffLen-1);
     switch (state_) {
         case State::S0:{
             lexeme_begin_=forward_=fence_=0;
@@ -110,9 +111,11 @@ wchar_t MBuff::next_char()
             state_=State::S1;
         }
         break;
-        case State::S1:{
+        case State::S1:
+        case State::S3:{
             forward_++;
             if(forward_==BuffLen){
+                fence_=0;
                 read(forward_);
                 state_=State::S2;
             }
@@ -131,15 +134,6 @@ wchar_t MBuff::next_char()
             }
         }
         break;
-        case State::S3:{
-            forward_++;
-            if(forward_==BuffLen){
-                fence_=0;
-                read(forward_);
-                state_=State::S2;
-            }
-        }
-        break;
     }
     return buff_[(forward_+BuffLen*2)%(BuffLen*2)];
 }
@@ -152,26 +146,18 @@ wchar_t MBuff::current_char() const
 
 std::wstring MBuff::current_chars()
 {
-    switch (state_) {
-        case State::S0:throw std::out_of_range("there is not currently token,current S0");break;
-        case State::S1:
-        case State::S2:{
-            std::wstring s=std::wstring(buff_.get()+lexeme_begin_,forward_-lexeme_begin_+1);
-//            lexeme_begin_=forward_+1;
-            return s;
+    assert(state_!=State::S0);//there is not currently token,current S0
+    if(state_==State::S3){
+        std::wstring s(forward_-lexeme_begin_+1,wchar_t());
+        if(lexeme_begin_>=0||forward_<0)
+            s.assign(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),forward_-lexeme_begin_+1);
+        else{
+            s.assign(buff_.get()+lexeme_begin_+BuffLen*2,BuffLen);
+            s.append(buff_.get(),forward_+1);
         }
-        case State::S3:{
-            std::wstring s(forward_-lexeme_begin_+1,wchar_t());
-            if(lexeme_begin_>=0||forward_<0)
-                s.assign(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),forward_-lexeme_begin_+1);
-            else{
-                s.assign(buff_.get()+lexeme_begin_+BuffLen*2,BuffLen);
-                s.append(buff_.get(),forward_+1);
-            }
-//            lexeme_begin_=forward_+1;
-            return s;
-        }
-    }
+        return s;
+    }else
+        return std::wstring(buff_.get()+lexeme_begin_,forward_-lexeme_begin_+1);
 }
 
 std::wstring MBuff::current_token()
@@ -197,21 +183,13 @@ int MBuff::get_char_count() const
 ///溢出未考虑，留给调用者自己决定
 void MBuff::roll_back_char(int len)
 {
-    switch (state_) {
-        case State::S0:{
-            throw std::out_of_range("roolback fail,current S0");
-        }
-        break;
-        case State::S1:
-        case State::S2:
-        case State::S3:{
-            if(forward_-len<lexeme_begin_-1){
-                throw std::out_of_range("roolback fail,current S2");
-            }
-            forward_-=len;
-        }
-        break;
+    //roolback fail
+    assert(state_!=State::S0);
+    if(forward_-len<lexeme_begin_-1){
+        throw std::out_of_range("roolback fail,current S2");
     }
+    forward_-=len;
+
 }
 
 bool MBuff::is_eof() const
@@ -231,7 +209,7 @@ void MBuff::read(int begin, int length)
 {
     auto pb=&buff_[0]+begin;
     f_.read(pb,length);
-    if(f_.fail())
+    if(f_.bad())
         throw std::runtime_error("read file failed!");
     auto c=f_.gcount();
     if(c<length)
