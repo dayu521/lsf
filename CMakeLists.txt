@@ -15,5 +15,6 @@ add_executable(${PROJECT_NAME} main.cpp
                                 test.cpp
                                 lexer.cpp
                                 jsonparser.cpp
-                                json.cpp)
+                                json.cpp
+                                error.cpp)
 #target_link_libraries(${PROJECT_NAME} jsoncpp)

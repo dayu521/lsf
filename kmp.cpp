@@ -282,4 +282,18 @@ Statistic FilterBuff::get_stat() const
     return stat_;
 }
 
+bool FilterBuff::test_and_skipBOM()
+{
+    wchar_t head[3]={};
+    for (auto i=0;i<3;i++){
+        head[i]=b_->next_char();
+    }
+    if(wcscmp(head,L"\xEF\xBB\xBF")==0){
+        b_->discard_token();
+        return true;
+    }
+    b_->roll_back_char(3);
+    return false;
+}
+
 }

@@ -9,6 +9,8 @@ namespace lsf {
 
 class Token;
 
+class PError;
+
 enum class NodeCategory{Obj,Arr,String,Number,Keyword};
 
 class Visitor
@@ -29,37 +31,38 @@ struct GenToken
     std::function<const Token & ()> current_;
 };
 
-class ParserError: public std::runtime_error
+class ParserError: public lsf::BaseError
 {
 public:
-    using std::runtime_error::runtime_error;
+    using BaseError::BaseError;
 };
 
 class JsonParser
 {
 public:
     JsonParser(GenToken gen);
-    void parser();
+    bool parser();
+    const std::vector<lsf::Type> & get_error()const;
 private:
     using TType=lsf::Type;
-    void json();
-    void element();
-    void value();
-    void obj();
-    void mb_ws();
-    void mb_ws_r();
-    void memberL();
-    void member();
-    void array();
-    void arr_ws();
-    void arr_ws_r();
-    void elementsL();
-    void unuse();
+    bool json();
+    bool element();
+    bool value();
+    bool obj();
+    bool mb_ws();
+    bool mb_ws_r();
+    bool memberL();
+    bool member();
+    bool array();
+    bool arr_ws();
+    bool arr_ws_r();
+    bool elementsL();
+    bool unuse();
 
     bool isTerminator(TType type);
 private:
     GenToken gen_;
-    Token * c_token_{nullptr};
+    std::vector<lsf::Type> error_array_;
     std::unique_ptr<Visitor> visitor_;
 };
 

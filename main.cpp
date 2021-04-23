@@ -6,19 +6,8 @@
 #include "lexer.h"
 #include "jsonparser.h"
 #include "kmp.h"
+#include "error.h"
 using namespace std;
-
-std::string to_cstring(const std::wstring & s)
-{
-    char cc[MB_CUR_MAX];
-    std::string r{};
-    for(const auto c:s){
-        auto l=wctomb(cc,c);
-        assert(l>=0);
-        r.append(cc,l);
-    }
-    return r;
-}
 
 int main()
 {
@@ -30,7 +19,8 @@ int main()
     auto f3="3.txt";
     auto old=std::setlocale(LC_ALL,nullptr);
     std::setlocale(LC_ALL,std::locale("").name().c_str());
-    auto buff=std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(f2));
+    auto buff=std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(f1));
+    buff->test_and_skipBOM();
     lsf::Lexer lex(buff);
     lsf::JsonParser parser({[&lex]()->void
                             {
@@ -41,14 +31,17 @@ int main()
                              return lex.get_token();}
                            });
     try {
-        parser.parser();
+        if(!parser.parser()){
+            std::cout<<lsf::parser_messages(buff->get_stat(),lex.get_token(),parser.get_error());
+            return -1;
+        }
     }  catch (const lsf::LexerError & e) {
         std::cout<<e.what();
-        std::cout<<to_cstring(lex.get_error(buff->get_stat()));
-        throw ;
-    }   catch(const std::runtime_error e){
+        std::cout<<lsf::lexer_messages(buff->get_stat(),lex.get_token());
+        return -1;
+    }   catch(const std::runtime_error &e){
         std::cout<<e.what();
-        throw ;
+
     }
 
     std::cout<<"合法json"<<endl;

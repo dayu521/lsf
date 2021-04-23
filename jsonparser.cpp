@@ -4,26 +4,35 @@
 
 namespace lsf {
 
-JsonParser::JsonParser(GenToken gen):gen_(gen)
+JsonParser::JsonParser(GenToken gen):gen_(gen),
+    error_array_{}
 {
 
 }
 
-void JsonParser::parser()
+bool JsonParser::parser()
 {
     assert(gen_.next_||gen_.current_);
+    error_array_.clear();//之后push_back或assign都一样
     gen_.next_();
-    json();
+    return json();
 }
 
-//json -> element
-void JsonParser::json()
+const std::vector<Type> &JsonParser::get_error()const
 {
-    return element();
+    return error_array_;
+}
+
+//  json -> element
+bool JsonParser::json()
+{
+    if(element())
+        return isTerminator(TType::END);
+    return false;
 }
 
 //element -> unuse value unuse
-void JsonParser::element()
+bool JsonParser::element()
 {
     unuse();
     if(value())
@@ -32,7 +41,7 @@ void JsonParser::element()
 }
 
 //value -> obj | array | String | Number | KeyWord
-void JsonParser::value()
+bool JsonParser::value()
 {
     switch (gen_.current_().type_) {
     case Type::LBRACE:
@@ -45,32 +54,38 @@ void JsonParser::value()
         gen_.next_();
         return true;
     default:
+        error_array_.assign({Type::String,Type::Number,Type::KeyWord});
         return false;
     }
 }
 
 //obj -> '{' mb_ws '}'
-void JsonParser::obj()
+bool JsonParser::obj()
 {
-    if(isTerminator(lsf::Type::LBRACE)){
+    if(isTerminator(TType::LBRACE)){
         gen_.next_();
-        if(mb_ws()&&isTerminator(TType::RBRACE)){
-            gen_.next_();
-            return true;
+        if(mb_ws()){
+            if(isTerminator(TType::RBRACE)){
+                gen_.next_();
+                return true;
+            }
+            return false;
         }
+        return false;
     }
+    error_array_.push_back(TType::LBRACE);
     return false;
 }
 
 //mb_ws -> unuse mb_ws_r
-void JsonParser::mb_ws()
+bool JsonParser::mb_ws()
 {
     unuse();
     return mb_ws_r();
 }
 
 //mb_ws_r -> String unuse ':' element memberL | e
-void JsonParser::mb_ws_r()
+bool JsonParser::mb_ws_r()
 {
     if(isTerminator(TType::String)){
         gen_.next_();
@@ -79,16 +94,22 @@ void JsonParser::mb_ws_r()
             gen_.next_();
             if(element())
                 return memberL();
+            else
+                return false;
         }
+        error_array_.push_back(TType::COLON);
         return false;
     }else if (isTerminator(TType::RBRACE)) {
         return true;
-    }else
+    }else{
+         error_array_.push_back(TType::String);
+         error_array_.push_back(TType::RBRACE);
         return false;
+    }
 }
 
 //memberL -> ',' member memberL | e
-void JsonParser::memberL()
+bool JsonParser::memberL()
 {
     if(isTerminator(TType::RBRACE)){
         return true;
@@ -102,11 +123,13 @@ void JsonParser::memberL()
         }
         return false;
     }
+    error_array_.push_back(TType::RBRACE);
+    error_array_.push_back(TType::COMMA);
     return false;
 }
 
 //member -> unuse String unuse ':' element
-void JsonParser::member()
+bool JsonParser::member()
 {
     unuse();
     if(isTerminator(TType::String)){
@@ -116,32 +139,41 @@ void JsonParser::member()
             gen_.next_();
             return element();
         }
+        error_array_.push_back(TType::COLON);
+        return false;
     }
+    error_array_.push_back(TType::String);
     return false;
 }
 
 //array -> '[' arr_ws ']'
-void JsonParser::array()
+bool JsonParser::array()
 {
     if(isTerminator(TType::LSQUARE)){
         gen_.next_();
-        if(arr_ws()&&isTerminator(TType::RSQUARE)){
-            gen_.next_();
-            return true;
+        if(arr_ws()){
+            if(isTerminator(TType::RSQUARE)){
+                gen_.next_();
+                return true;
+            }
+            error_array_.push_back(TType::RSQUARE);
+            return false;
         }
+        return false;
     }
+    error_array_.push_back(TType::LSQUARE);
     return false;
 }
 
 //arr_ws -> unuse | arr_ws_r
-void JsonParser::arr_ws()
+bool JsonParser::arr_ws()
 {
     unuse();
     return arr_ws_r();
 }
 
-//arr_ws_r -> value unuse elementsL
-void JsonParser::arr_ws_r()
+//arr_ws_r -> value unuse elementsL | e
+bool JsonParser::arr_ws_r()
 {
     switch (gen_.current_().type_) {
     case TType::LBRACE:
@@ -158,12 +190,13 @@ void JsonParser::arr_ws_r()
     case TType::RSQUARE:
         return true;
     default:
+        error_array_.assign({TType::RSQUARE});
         return false;
     }
 }
 
 //elementsL -> ',' element elementsL | e
-void JsonParser::elementsL()
+bool JsonParser::elementsL()
 {
     if(isTerminator(Type::RSQUARE))
         return true;
@@ -176,16 +209,19 @@ void JsonParser::elementsL()
         }
         return false;
     }
+    error_array_.push_back(Type::RSQUARE);
+    error_array_.push_back(Type::COMMA);
     return false;
 }
 
 //unuse -> wc unuse | e
 //wc -> WhiteSpace | Comment
-void JsonParser::unuse()
+bool JsonParser::unuse()
 {
     while (isTerminator(TType::WHITESPACE)||isTerminator(TType::Comment)) {
         gen_.next_();
     }
+    return true;
 }
 
 bool JsonParser::isTerminator(JsonParser::TType type)

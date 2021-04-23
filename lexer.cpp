@@ -166,6 +166,9 @@ lsf::Lexer::Lexer(std::shared_ptr<lsf::BuffBase> input):input_(input)
 
 Token &Lexer::next_token()
 {
+    //  可以不抛异常，但定义一个不是任何Token类型的ErrorToken类型，这样，语法解析的时候
+    //  就会对这个错误做特别处理。因为它不是任何词法单元，所以不会被认为是语法错误
+    //  从而在错误消息中区别到底词法还是语法部分出了问题
     if(!run()){        
         has_error_=true;
         throw LexerError("词法分析出错\n");
@@ -276,24 +279,15 @@ F:  return false;
 T:  return true;
 }
 
-Token & Lexer::get_token()
+Token &Lexer::get_token()
 {
     return current_token_;
 }
 
-const std::wstring &Lexer::get_error(Statistic stat)
+const Token &Lexer::get_error()
 {
     assert(has_error_==true);
-    std::wstringstream error_string{};
-    error_string<<L"分析:<";
-    error_string<<lsf::tokentype_to_string(current_token_.type_)
-        <<L":\""<<current_token_.value_<<L"\">出错,在第";
-    error_string<<stat.line_;
-    error_string<<L"行,第";
-    error_string<<stat.column_last_;
-    error_string<<L"列\n";
-    error_=error_string.str();
-    return error_;
+    return current_token_;
 }
 
 bool Lexer::try_number(wchar_t c)

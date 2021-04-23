@@ -23,10 +23,10 @@
 namespace lsf {
 
 class BuffBase;
-struct Statistic;
 
 struct Token
 {
+    using Type=lsf::Type;
     Type type_;
     std::wstring value_{};
     bool operator ==(const Token & c)const
@@ -35,9 +35,9 @@ struct Token
     }
 };
 
-class LexerError:public std::runtime_error
+class LexerError:public lsf::BaseError
 {
-    using std::runtime_error::runtime_error;
+    using BaseError::BaseError;
 };
 
 class Lexer
@@ -46,8 +46,7 @@ public:
     Lexer(std::shared_ptr<BuffBase> input);
     Token & next_token();
     Token & get_token();
-    const std::wstring & get_error();
-    const std::wstring & get_error(Statistic stat);
+    const Token & get_error();
 private:
     bool run();
     bool try_number(wchar_t c);
@@ -57,7 +56,7 @@ private:
     std::set<std::wstring> symbol_;
     bool has_error_{false};
     Token current_token_{};
-    std::wstring error_{};
+    std::wstring error_;
 };
 
 }

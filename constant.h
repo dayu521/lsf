@@ -1,5 +1,6 @@
 #ifndef CONSTANT_H
 #define CONSTANT_H
+#include<stdexcept>
 namespace lsf {
 
 enum class Type{
@@ -45,6 +46,11 @@ inline const char * tokentype_to_string(Type type)
         return "<END>";
     }
 }
+
+class BaseError : public std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
 
 }
 #endif // CONSTANT_H

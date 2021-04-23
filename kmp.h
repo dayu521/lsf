@@ -97,6 +97,7 @@ public:
     FilterBuff(std::unique_ptr<BuffBase> buff );
     ~FilterBuff();
     Statistic get_stat()const;
+    bool test_and_skipBOM();
 private:
     std::unique_ptr<BuffBase> b_;
     std::vector<int> history_{};
