@@ -179,7 +179,7 @@ Token &Lexer::next_token()
 bool Lexer::run()
 {
     auto c=input_->next_char();
-    if(c==BuffBase::Eof){
+    if(c==BuffBase::Eof_w){
         current_token_=Token{Type::END};
         return true;
     }
@@ -265,7 +265,7 @@ bool Lexer::run()
             c=input_->next_char();
         }
         input_->roll_back_char();
-        current_token_.value_=s;
+        input_->discard_token();
         if(symbol_.contains(s)){           
             goto T;
         }
@@ -363,7 +363,7 @@ bool Lexer::try_comment(wchar_t c)
         s+=c;
         c=input_->next_char();
         while (true) {
-            if(c==MBuff::Eof)
+            if(c==MBuff::Eof_w)
                 goto F;
             if(c==L'*'){
                 s+=c;
@@ -381,7 +381,7 @@ bool Lexer::try_comment(wchar_t c)
         s+=c;
         c=input_->next_char();
         while (true) {
-            if(c==MBuff::Eof)
+            if(c==MBuff::Eof_w)
                 goto F;
             if(c==L'\n'||c==L'\t'||c==L'\r')
                 break;;

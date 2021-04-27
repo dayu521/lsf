@@ -3,13 +3,6 @@
 
 namespace lsf {
 
-class JsonNode
-{
-    JsonNode * left_child_{nullptr};
-    JsonNode * right_bro_{nullptr};
-
-};
-
 class json
 {
 public:

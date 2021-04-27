@@ -5,7 +5,7 @@
 namespace lsf {
 
 JsonParser::JsonParser(GenToken gen):gen_(gen),
-    error_array_{}
+    expect_array_{}
 {
 
 }
@@ -13,14 +13,14 @@ JsonParser::JsonParser(GenToken gen):gen_(gen),
 bool JsonParser::parser()
 {
     assert(gen_.next_||gen_.current_);
-    error_array_.clear();//之后push_back或assign都一样
+    expect_array_.clear();//之后push_back或assign都一样
     gen_.next_();
     return json();
 }
 
-const std::vector<Type> &JsonParser::get_error()const
+const std::vector<Type> &JsonParser::get_expect_token()const
 {
-    return error_array_;
+    return expect_array_;
 }
 
 //  json -> element
@@ -54,7 +54,7 @@ bool JsonParser::value()
         gen_.next_();
         return true;
     default:
-        error_array_.assign({Type::String,Type::Number,Type::KeyWord});
+        expect_array_.assign({Type::String,Type::Number,Type::KeyWord});
         return false;
     }
 }
@@ -73,7 +73,7 @@ bool JsonParser::obj()
         }
         return false;
     }
-    error_array_.push_back(TType::LBRACE);
+    expect_array_.push_back(TType::LBRACE);
     return false;
 }
 
@@ -97,13 +97,13 @@ bool JsonParser::mb_ws_r()
             else
                 return false;
         }
-        error_array_.push_back(TType::COLON);
+        expect_array_.push_back(TType::COLON);
         return false;
     }else if (isTerminator(TType::RBRACE)) {
         return true;
     }else{
-         error_array_.push_back(TType::String);
-         error_array_.push_back(TType::RBRACE);
+         expect_array_.push_back(TType::String);
+         expect_array_.push_back(TType::RBRACE);
         return false;
     }
 }
@@ -123,8 +123,8 @@ bool JsonParser::memberL()
         }
         return false;
     }
-    error_array_.push_back(TType::RBRACE);
-    error_array_.push_back(TType::COMMA);
+    expect_array_.push_back(TType::RBRACE);
+    expect_array_.push_back(TType::COMMA);
     return false;
 }
 
@@ -139,10 +139,10 @@ bool JsonParser::member()
             gen_.next_();
             return element();
         }
-        error_array_.push_back(TType::COLON);
+        expect_array_.push_back(TType::COLON);
         return false;
     }
-    error_array_.push_back(TType::String);
+    expect_array_.push_back(TType::String);
     return false;
 }
 
@@ -156,12 +156,12 @@ bool JsonParser::array()
                 gen_.next_();
                 return true;
             }
-            error_array_.push_back(TType::RSQUARE);
+            expect_array_.push_back(TType::RSQUARE);
             return false;
         }
         return false;
     }
-    error_array_.push_back(TType::LSQUARE);
+    expect_array_.push_back(TType::LSQUARE);
     return false;
 }
 
@@ -190,7 +190,7 @@ bool JsonParser::arr_ws_r()
     case TType::RSQUARE:
         return true;
     default:
-        error_array_.assign({TType::RSQUARE});
+        expect_array_.assign({TType::RSQUARE});
         return false;
     }
 }
@@ -209,8 +209,8 @@ bool JsonParser::elementsL()
         }
         return false;
     }
-    error_array_.push_back(Type::RSQUARE);
-    error_array_.push_back(Type::COMMA);
+    expect_array_.push_back(Type::RSQUARE);
+    expect_array_.push_back(Type::COMMA);
     return false;
 }
 

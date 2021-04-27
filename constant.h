@@ -52,5 +52,21 @@ class BaseError : public std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
+template<typename ...T>
+struct BaseVisitor;
+
+template<typename T>
+struct BaseVisitor<T>
+{
+    virtual void visit(T & a){}
+};
+
+template<typename T,typename ...Others>
+struct BaseVisitor<T,Others...> : BaseVisitor<Others...>
+{
+    using BaseVisitor<Others...>::visit;
+    virtual void visit(T & a);
+};
+
 }
 #endif // CONSTANT_H

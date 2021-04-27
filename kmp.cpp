@@ -194,7 +194,7 @@ void MBuff::roll_back_char(int len)
 
 bool MBuff::is_eof() const
 {
-    return buff_[forward_]==Eof;
+    return buff_[forward_]==Eof_w;
 }
 
 void MBuff::init()
@@ -213,7 +213,7 @@ void MBuff::read(int begin, int length)
         throw std::runtime_error("read file failed!");
     auto c=f_.gcount();
     if(c<length)
-        pb[c]=Eof;
+        pb[c]=Eof_w;
 }
 
 FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),history_(1,0),stat_{1,1,1}

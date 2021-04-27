@@ -7,6 +7,7 @@
 #include "jsonparser.h"
 #include "kmp.h"
 #include "error.h"
+#include<loki/Visitor.h>
 using namespace std;
 
 int main()
@@ -32,7 +33,7 @@ int main()
                            });
     try {
         if(!parser.parser()){
-            std::cout<<lsf::parser_messages(buff->get_stat(),lex.get_token(),parser.get_error());
+            std::cout<<lsf::parser_messages(buff->get_stat(),lex.get_token(),parser.get_expect_token());
             return -1;
         }
     }  catch (const lsf::LexerError & e) {

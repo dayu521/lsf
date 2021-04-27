@@ -31,7 +31,7 @@ public:
     virtual void roll_back_char(int len=1)=0;
     virtual void discard_token()=0;
     virtual std::wstring get_token()=0;
-    static constexpr auto Eof=WEOF;
+    static constexpr auto Eof_w=WEOF;
     static constexpr  int BuffLen=512;
 };
 

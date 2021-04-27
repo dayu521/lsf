@@ -11,19 +11,20 @@ class Token;
 
 class PError;
 
-enum class NodeCategory{Obj,Arr,String,Number,Keyword};
+enum  NodeCategory{Obj,Arr,String,Number,Keyword};
 
-class Visitor
+class Visitor;
+
+struct TreeNode
 {
-    void visit_obj(Token t);
-    void visit_member(Token t);
-    void visit_arr(Token t);
-    void visit_element(Token t);
-    void visit_string(Token t);
-    void visit_number(Token t);
-    void visit_keyword(Token t);
+    virtual ~TreeNode(){}
+    virtual void accept(Visitor & v)=0;
+    TreeNode * left_child_{nullptr};
+    TreeNode * right_bro_{nullptr};
 };
 
+template<auto token>
+struct Jnode;
 
 struct GenToken
 {
@@ -42,7 +43,7 @@ class JsonParser
 public:
     JsonParser(GenToken gen);
     bool parser();
-    const std::vector<lsf::Type> & get_error()const;
+    const std::vector<lsf::Type> & get_expect_token()const;
 private:
     using TType=lsf::Type;
     bool json();
@@ -60,11 +61,43 @@ private:
     bool unuse();
 
     bool isTerminator(TType type);
+
+    //检查重复key
+    bool check_obj_key();
+    //检查数组元素类型是否相同
+    bool check_arr();
 private:
     GenToken gen_;
-    std::vector<lsf::Type> error_array_;
-    std::unique_ptr<Visitor> visitor_;
+    std::vector<lsf::Type> expect_array_;
 };
 
+class Visitor : public lsf::BaseVisitor<Jnode<Obj>,Jnode<Arr>,Jnode<String>,Jnode<Number>>
+{
+public:
+    virtual ~Visitor(){}
+};
+
+#define AcceptImp virtual void accept(Visitor & v){v.visit(*this);}
+
+template<>
+struct Jnode<Obj>:TreeNode
+{
+    std::string key_;
+    AcceptImp
+};
+
+template<>
+struct Jnode<Arr>:TreeNode
+{
+    std::string key_;
+    AcceptImp
+};
+
+class Generator
+{
+
+};
+
+//namespace end
 }
 #endif // JSONPARSER_H
