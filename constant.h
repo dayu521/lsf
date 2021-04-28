@@ -44,6 +44,8 @@ inline const char * tokentype_to_string(Type type)
         return "<WHITESPACE>";
     case Type::END:
         return "<END>";
+    default:
+        return "error";
     }
 }
 

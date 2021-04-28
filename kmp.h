@@ -81,9 +81,9 @@ private:
 
 struct Statistic
 {
-    unsigned int column_curr_{0};
-    unsigned int line_{0};
-    unsigned int column_last_{0};
+    size_t column_curr_{0};
+    size_t line_{0};
+    size_t column_last_{0};
 };
 
 class FilterBuff:public BuffBase

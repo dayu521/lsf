@@ -7,7 +7,7 @@
 #include "jsonparser.h"
 #include "kmp.h"
 #include "error.h"
-#include<loki/Visitor.h>
+//#include<loki/Visitor.h>
 using namespace std;
 
 int main()

@@ -7,7 +7,7 @@ namespace lsf {
 
 namespace Private {
 //namespace start
-bool deal_unicode_code_point(unsigned int &d, const std::wstring &s, unsigned long &index);
+bool deal_unicode_code_point(unsigned int &d, const std::wstring &s, size_t  &index);
 
 bool cp_to_utf8(unsigned int cp,wchar_t & u8);
 
@@ -70,7 +70,7 @@ bool deal_escape_char(const std::wstring &s,std::wstring & d)
     return true;
 }
 
-bool deal_unicode_code_point(unsigned int & d, const std::wstring & s, unsigned long &index)
+bool deal_unicode_code_point(unsigned int & d, const std::wstring & s, size_t &index)
 {
     unsigned int high=0,low=0;
     wchar_t c{};

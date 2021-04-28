@@ -7,7 +7,7 @@
 
 namespace lsf {
 
-class Token;
+struct Token;
 
 class PError;
 

@@ -58,7 +58,7 @@ namespace Private {
 
 MBuff::MBuff():
 //    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
-    buff_(new wchar_t[2*BuffLen],[](auto p){delete [] p;}),
+    buff_(new wchar_t[2*BuffLen],[](wchar_t * p){delete [] p;}),
     state_(State::S0)
 {
     f_.imbue(std::locale(""));
@@ -81,7 +81,7 @@ MBuff::MBuff(const std::string &file_name):
      *      http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0674r1.html
      */
 //    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
-    buff_(new wchar_t[2*BuffLen],[](auto p){delete [] p;}),
+    buff_(new wchar_t[2*BuffLen],[](wchar_t * p){delete [] p;}),
     f_(file_name),
     state_(State::S0)
 {

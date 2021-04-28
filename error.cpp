@@ -25,7 +25,8 @@ std::string lexer_messages(Statistic stat_for_rc, Token lex_token)
 
 std::string to_cstring(const std::wstring &s)
 {
-    char cc[MB_CUR_MAX];
+    //char cc[MB_CUR_MAX];
+    char cc[6];
     std::string r{};
     for(const auto c:s){
         auto l=wctomb(cc,c);
