@@ -67,7 +67,7 @@ template<typename T,typename ...Others>
 struct BaseVisitor<T,Others...> : BaseVisitor<Others...>
 {
     using BaseVisitor<Others...>::visit;
-    virtual void visit(T & a);
+    virtual void visit(T & a){}
 };
 
 }

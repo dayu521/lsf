@@ -25,6 +25,7 @@ std::string lexer_messages(Statistic stat_for_rc, Token lex_token)
 
 std::string to_cstring(const std::wstring &s)
 {
+    //msvc下MB_CUR_MAX不是常量
     //char cc[MB_CUR_MAX];
     char cc[6];
     std::string r{};

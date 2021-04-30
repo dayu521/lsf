@@ -11,20 +11,19 @@ struct Token;
 
 class PError;
 
-enum  NodeCategory{Obj,Arr,String,Number,Keyword};
+struct TreeNode;
 
-class Visitor;
-
-struct TreeNode
-{
-    virtual ~TreeNode(){}
-    virtual void accept(Visitor & v)=0;
-    TreeNode * left_child_{nullptr};
-    TreeNode * right_bro_{nullptr};
-};
-
-template<auto token>
-struct Jnode;
+/// 暂时不考虑使用allocator，因为要自己考虑析构函数调用
+//template<typename T>
+//class LsfAlloc
+//{
+//public:
+//    static auto Allocate()->decltype (std::allocator<T>())
+//    {
+//        return std::allocator<T>();
+//    }
+//    static auto DeAllocate();
+//};
 
 struct GenToken
 {
@@ -43,6 +42,8 @@ class JsonParser
 public:
     JsonParser(GenToken gen);
     bool parser();
+    TreeNode * get_ast();
+    TreeNode * get_faken()const{return fake_n;}
     const std::vector<lsf::Type> & get_expect_token()const;
 private:
     using TType=lsf::Type;
@@ -62,6 +63,8 @@ private:
 
     bool isTerminator(TType type);
 
+    void denodes(TreeNode * root_);
+
     //检查重复key
     bool check_obj_key();
     //检查数组元素类型是否相同
@@ -69,9 +72,37 @@ private:
 private:
     GenToken gen_;
     std::vector<lsf::Type> expect_array_;
+    TreeNode * root_;
+    TreeNode * fake_n;
 };
 
-class Visitor : public lsf::BaseVisitor<Jnode<Obj>,Jnode<Arr>,Jnode<String>,Jnode<Number>>
+/// 内部表示
+
+enum  class NodeC{Obj,Arr,String,Number,Keyword};
+
+class Visitor;
+
+struct TreeNode
+{
+    TreeNode * left_child_{nullptr};
+    TreeNode * right_bro_{nullptr};
+    //在array中表示数量，类型是int
+    //在obj或keyword中表示key,类型是std::string
+    //在number中表示数值,类型是double
+    std::wstring key_;
+    virtual ~TreeNode(){}
+    virtual void accept(Visitor & v)=0;
+};
+
+template<auto token>
+struct Jnode;
+
+class Visitor : public lsf::BaseVisitor<
+        Jnode<NodeC::Obj>,
+        Jnode<NodeC::Arr>,
+        Jnode<NodeC::String>,
+        Jnode<NodeC::Number>,
+        Jnode<NodeC::Keyword>>
 {
 public:
     virtual ~Visitor(){}
@@ -80,22 +111,55 @@ public:
 #define AcceptImp virtual void accept(Visitor & v){v.visit(*this);}
 
 template<>
-struct Jnode<Obj>:TreeNode
+struct Jnode<NodeC::Obj>:TreeNode
 {
-    std::string key_;
+    //key保存在key_中
     AcceptImp
 };
 
 template<>
-struct Jnode<Arr>:TreeNode
+struct Jnode<NodeC::Arr>:TreeNode
 {
-    std::string key_;
+    //key保存在key_中
     AcceptImp
 };
 
-class Generator
+template<>
+struct Jnode<NodeC::String> :TreeNode
 {
+    //保存在str_中
+    std::wstring str_;
+    AcceptImp
+};
 
+template<>
+struct Jnode<NodeC::Number> :TreeNode
+{
+    //很多时候，可能会把整数修改为浮点数
+    double number_;
+    //保存字符串表示在str_repst中
+    std::wstring str_repst;
+    AcceptImp
+};
+
+template<>
+struct Jnode<NodeC::Keyword> :TreeNode
+{
+    //保存在v_中
+    std::wstring v_;
+    AcceptImp
+};
+
+class PrintNodes: public Visitor
+{
+public:
+    virtual void visit(Jnode<NodeC::Obj> &)override;
+    virtual void visit(Jnode<NodeC::Arr> &)override;
+    virtual void visit(Jnode<NodeC::String> & str)override;
+    virtual void visit(Jnode<NodeC::Number> & num)override;
+    virtual void visit(Jnode<NodeC::Keyword> & key)override;
+public:
+    void v(TreeNode *root,TreeNode * faken);
 };
 
 //namespace end
