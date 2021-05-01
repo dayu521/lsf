@@ -395,9 +395,77 @@ void Visitor::visit_BFS(TreeNode *root, TreeNode * faken, std::function<void ()>
     }
 }
 
-void TypeChecker::check_type()
+bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
+{
+    if(obj.left_child_==faken_){
+        current_type=NodeC::None;
+        return true;
+    }
+    set_.clear();
+    auto j=obj.left_child_;
+    if(j->accept_check(*this))
+    {
+        set_.insert(j->key_);
+        while (j!=obj.left_child_) {
+            j=j->right_bro_;
+            if(set_.contains(j->key_))
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool TypeChecker::visit(Jnode<NodeC::Arr> &arr)
 {
 
+    if(arr.left_child_==faken_){
+        current_type=NodeC::None;
+        return true;
+    }
+
+    auto j=arr.left_child_;
+    if(j->accept_check(*this))
+    {
+        auto pre_type=current_type;
+        while (j!=arr.left_child_) {
+            if(j->accept_check(*this)){
+                if(pre_type!=current_type)
+                    return false;
+                j=j->right_bro_;
+                continue;
+            }
+            return false;
+        }
+        current_type=NodeC::Arr;
+        return true;
+    }
+    return false;
+}
+
+bool TypeChecker::visit(Jnode<NodeC::String> &str)
+{
+    current_type=NodeC::String;
+    return true;
+}
+
+bool TypeChecker::visit(Jnode<NodeC::Number> &num)
+{
+    current_type=NodeC::Number;
+    return true;
+}
+
+bool TypeChecker::visit(Jnode<NodeC::Keyword> &key)
+{
+    current_type=NodeC::Keyword;
+    return true;
+}
+
+bool TypeChecker::check_type(TreeNode *root, TreeNode *faken)
+{
+//    cur_node_=root;
+    faken_=faken;
+    return root->accept_check(*this);
 }
 
 }

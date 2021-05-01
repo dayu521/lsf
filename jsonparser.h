@@ -3,6 +3,7 @@
 
 #include<memory>
 #include<functional>
+#include<set>
 #include"constant.h"
 
 namespace lsf {
@@ -81,7 +82,7 @@ private:
 
 /// 内部表示
 
-enum  class NodeC{Obj,Arr,String,Number,Keyword};
+enum  class NodeC{Obj,Arr,String,Number,Keyword,None,Error};
 
 class Visitor;
 
@@ -102,6 +103,29 @@ struct ArrMbr
 
 template<auto token>
 struct Jnode;
+
+class TypeChecker: public lsf::BaseVisitor<
+        bool,   //返回类型
+        Jnode<NodeC::Obj>,
+        Jnode<NodeC::Arr>,
+        Jnode<NodeC::String>,
+        Jnode<NodeC::Number>,
+        Jnode<NodeC::Keyword>>
+{
+public:
+    virtual bool visit(Jnode<NodeC::Obj> & obj)override;
+    virtual bool visit(Jnode<NodeC::Arr> & arr)override;
+    virtual bool visit(Jnode<NodeC::String> & str)override;
+    virtual bool visit(Jnode<NodeC::Number> & num)override;
+    virtual bool visit(Jnode<NodeC::Keyword> & key)override;
+public:
+    bool check_type(TreeNode * root ,TreeNode * faken);
+private:
+    NodeC current_type{NodeC::Error};
+//    TreeNode * cur_node_;
+    TreeNode * faken_{};
+    std::set<std::wstring> set_;   //检查对象成员是否存在相同key
+};
 
 //以下产生5个纯虚函数,且返回类型都是void,可通过Visitor::Rtype访问到
 //virtual void visit(Jnode<NodeC::Obj> &)=0;
@@ -125,17 +149,17 @@ public:
 };
 
 #define AcceptImp virtual Visitor::Rtype accept(Visitor & v){return v.visit(*this);}
+#define TypeCheckerImp virtual TypeChecker::Rtype accept_check(TypeChecker & v){return v.visit(*this);}
 
 struct TreeNode
 {
     TreeNode * left_child_{nullptr};
     TreeNode * right_bro_{nullptr};
-    //在array中表示数量，类型是int
-    //在obj或keyword中表示key,类型是std::string
-    //在number中表示数值,类型是double
+
     std::wstring key_;
     virtual ~TreeNode(){}
     virtual  Visitor::Rtype accept(Visitor & v)=0;
+    virtual  TypeChecker::Rtype accept_check(TypeChecker & v)=0;
 };
 
 template<>
@@ -143,6 +167,7 @@ struct Jnode<NodeC::Obj>:TreeNode
 {
     //key保存在key_中
     AcceptImp
+    TypeCheckerImp
 };
 
 template<>
@@ -150,7 +175,7 @@ struct Jnode<NodeC::Arr>:TreeNode
 {
     //key保存在key_中
     AcceptImp
-//    virtual void accept(Visitor & v){v.visit()}
+    TypeCheckerImp
 };
 
 template<>
@@ -159,6 +184,7 @@ struct Jnode<NodeC::String> :TreeNode
     //保存在str_中
     std::wstring str_;
     AcceptImp
+    TypeCheckerImp
 };
 
 template<>
@@ -169,6 +195,7 @@ struct Jnode<NodeC::Number> :TreeNode
     //保存字符串表示在str_repst中
     std::wstring str_repst;
     AcceptImp
+    TypeCheckerImp
 };
 
 template<>
@@ -177,6 +204,7 @@ struct Jnode<NodeC::Keyword> :TreeNode
     //保存在v_中
     std::wstring v_;
     AcceptImp
+    TypeCheckerImp
 };
 
 class PrintNodes: public Visitor
@@ -188,18 +216,6 @@ public:
     virtual void visit(Jnode<NodeC::Number> & num)override;
     virtual void visit(Jnode<NodeC::Keyword> & key)override;
     TreeNode * faken{};
-};
-
-class TypeChecker: public Visitor
-{
-public:
-//    virtual void visit(Jnode<NodeC::Obj> &)override;
-//    virtual void visit(Jnode<NodeC::Arr> &)override;
-//    virtual void visit(Jnode<NodeC::String> & str)override;
-//    virtual void visit(Jnode<NodeC::Number> & num)override;
-//    virtual void visit(Jnode<NodeC::Keyword> & key)override;
-public:
-    void check_type();
 };
 
 //namespace end
