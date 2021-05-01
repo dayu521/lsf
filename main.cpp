@@ -43,9 +43,10 @@ int main()
         return -1;
     }   catch(const std::runtime_error &e){
         std::cout<<e.what();
-
+        return -1;
     }
     lsf::PrintNodes p;
+    p.faken = parser.get_faken();
     p.visit_BFS(parser.get_ast(),parser.get_faken(),[]{std::cout<<std::endl;});
     std::cout<<"合法json"<<endl;
     std::setlocale(LC_ALL,old);

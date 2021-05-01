@@ -38,11 +38,13 @@ const std::vector<Type> &JsonParser::get_expect_token()const
 //  json.node=element.node
 bool JsonParser::json()
 {
-    if(element())
-        if(isTerminator(TType::END)){
-            root_->key_=L"\"root\"";
+    if (element()) {
+        if (isTerminator(TType::END)) {
+            root_->key_ = L"\"root\"";
             return true;
         }
+        expect_array_.push_back({ TType::END });
+    }
     return false;
 }
 
@@ -156,6 +158,7 @@ bool JsonParser::mb_ws_r()
         return false;
     }else if (isTerminator(TType::RBRACE)) {
         //root_
+        root_ = fake_n;
         return true;
     }else{
          expect_array_.push_back(TType::String);
@@ -268,6 +271,7 @@ bool JsonParser::arr_ws_r()
     }
     case TType::RSQUARE:
         //
+        root_ = fake_n;
         return true;
     default:
         expect_array_.assign({TType::RSQUARE});
