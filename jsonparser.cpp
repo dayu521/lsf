@@ -39,7 +39,10 @@ const std::vector<Type> &JsonParser::get_expect_token()const
 bool JsonParser::json()
 {
     if(element())
-        return isTerminator(TType::END);
+        if(isTerminator(TType::END)){
+            root_->key_=L"\"root\"";
+            return true;
+        }
     return false;
 }
 
@@ -204,6 +207,7 @@ bool JsonParser::member()
                 root_->key_=key;
                 return true;
             }
+            return false;
         }
         expect_array_.push_back(TType::COLON);
         return false;
@@ -321,30 +325,47 @@ void JsonParser::denodes(TreeNode *root_)
 
 void PrintNodes::visit(Jnode<NodeC::Obj> & obj)
 {
-    std::cout<<lsf::to_cstring(obj.key_)<<" ";
+//    std::cout<<lsf::to_cstring(obj.key_)<<" ";
+    [[likely]]if(obj.left_child_!=faken){
+        auto j=obj.left_child_;
+        do {
+            std::cout<<lsf::to_cstring(j->key_)<<" ";
+            j=j->right_bro_;
+        } while (j!=obj.left_child_);
+    }
 }
 
 void PrintNodes::visit(Jnode<NodeC::Arr> &arr)
 {
-    std::cout<<lsf::to_cstring(arr.key_)<<" ";
+//    std::cout<<lsf::to_cstring(arr.key_)<<" ";
+//    if(arr.left_child_!=faken){
+//        auto j=arr.left_child_;
+//        do {
+//            j->accept(*this);
+//            j=j->right_bro_;
+//        } while (j!=arr.left_child_);
+//    }
 }
 
 void PrintNodes::visit(Jnode<NodeC::String> &str)
 {
-    std::cout<<lsf::to_cstring(str.key_)<<":"<<lsf::to_cstring(str.str_)<<" ";
+    //<<lsf::to_cstring(str.key_)<<":"
+    std::cout<<lsf::to_cstring(str.str_)<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Number> &num)
 {
-    std::cout<<lsf::to_cstring(num.key_)<<":"<<lsf::to_cstring(num.str_repst)<<" ";
+    //<<lsf::to_cstring(num.key_)<<":"
+    std::cout<<lsf::to_cstring(num.str_repst)<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Keyword> &key)
 {
-    std::cout<<lsf::to_cstring(key.key_)<<":"<<lsf::to_cstring(key.v_)<<" ";
+    //<<lsf::to_cstring(key.key_)<<":"
+    std::cout<<lsf::to_cstring(key.v_)<<" ";
 }
 
-void PrintNodes::v( TreeNode *root,TreeNode * faken)
+void Visitor::visit_BFS(TreeNode *root, TreeNode * faken, std::function<void ()> round)
 {
     std::queue< TreeNode*> c{};
     c.push(root);
@@ -365,9 +386,14 @@ void PrintNodes::v( TreeNode *root,TreeNode * faken)
         if(x==0){
             x=y;
             y=0;
-            std::cout<<std::endl;
+            round();
         }
     }
+}
+
+void TypeChecker::check_type()
+{
+
 }
 
 }

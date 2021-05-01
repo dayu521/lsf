@@ -13,6 +13,8 @@ class PError;
 
 struct TreeNode;
 
+class Treebuilder;
+
 /// 暂时不考虑使用allocator，因为要自己考虑析构函数调用
 //template<typename T>
 //class LsfAlloc
@@ -72,6 +74,7 @@ private:
 private:
     GenToken gen_;
     std::vector<lsf::Type> expect_array_;
+//    std::unique_ptr<Treebuilder> builder_;
     TreeNode * root_;
     TreeNode * fake_n;
 };
@@ -82,6 +85,47 @@ enum  class NodeC{Obj,Arr,String,Number,Keyword};
 
 class Visitor;
 
+template<typename T>
+struct ObjMbr
+{
+    //在array中表示数量，类型是int
+    //在obj或keyword中表示key,类型是std::string
+    //在number中表示数值,类型是double
+    std::wstring key_;
+};
+
+template<typename T>
+struct ArrMbr
+{
+
+};
+
+template<auto token>
+struct Jnode;
+
+//以下产生5个纯虚函数,且返回类型都是void,可通过Visitor::Rtype访问到
+//virtual void visit(Jnode<NodeC::Obj> &)=0;
+//virtual void visit(Jnode<NodeC::Arr> &)=0;
+//virtual void visit(Jnode<NodeC::String> & str)=0;
+//virtual void visit(Jnode<NodeC::Number> & num)=0;
+//virtual void visit(Jnode<NodeC::Keyword> & key)=0;
+//所以需要在子类手动覆盖
+//参数第一个是返回类型，剩下的是要访问的类型
+class Visitor : public lsf::BaseVisitor<
+        void,   //返回类型
+        Jnode<NodeC::Obj>,
+        Jnode<NodeC::Arr>,
+        Jnode<NodeC::String>,
+        Jnode<NodeC::Number>,
+        Jnode<NodeC::Keyword>>
+{
+public:
+    virtual ~Visitor(){}
+    virtual void visit_BFS(TreeNode *root,TreeNode * faken,std::function<void ()> round);
+};
+
+#define AcceptImp virtual Visitor::Rtype accept(Visitor & v){return v.visit(*this);}
+
 struct TreeNode
 {
     TreeNode * left_child_{nullptr};
@@ -91,24 +135,8 @@ struct TreeNode
     //在number中表示数值,类型是double
     std::wstring key_;
     virtual ~TreeNode(){}
-    virtual void accept(Visitor & v)=0;
+    virtual  Visitor::Rtype accept(Visitor & v)=0;
 };
-
-template<auto token>
-struct Jnode;
-
-class Visitor : public lsf::BaseVisitor<
-        Jnode<NodeC::Obj>,
-        Jnode<NodeC::Arr>,
-        Jnode<NodeC::String>,
-        Jnode<NodeC::Number>,
-        Jnode<NodeC::Keyword>>
-{
-public:
-    virtual ~Visitor(){}
-};
-
-#define AcceptImp virtual void accept(Visitor & v){v.visit(*this);}
 
 template<>
 struct Jnode<NodeC::Obj>:TreeNode
@@ -122,6 +150,7 @@ struct Jnode<NodeC::Arr>:TreeNode
 {
     //key保存在key_中
     AcceptImp
+//    virtual void accept(Visitor & v){v.visit()}
 };
 
 template<>
@@ -158,8 +187,19 @@ public:
     virtual void visit(Jnode<NodeC::String> & str)override;
     virtual void visit(Jnode<NodeC::Number> & num)override;
     virtual void visit(Jnode<NodeC::Keyword> & key)override;
+    TreeNode * faken{};
+};
+
+class TypeChecker: public Visitor
+{
 public:
-    void v(TreeNode *root,TreeNode * faken);
+//    virtual void visit(Jnode<NodeC::Obj> &)override;
+//    virtual void visit(Jnode<NodeC::Arr> &)override;
+//    virtual void visit(Jnode<NodeC::String> & str)override;
+//    virtual void visit(Jnode<NodeC::Number> & num)override;
+//    virtual void visit(Jnode<NodeC::Keyword> & key)override;
+public:
+    void check_type();
 };
 
 //namespace end

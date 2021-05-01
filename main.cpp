@@ -8,6 +8,7 @@
 #include "kmp.h"
 #include "error.h"
 //#include<loki/Visitor.h>
+//#include<loki/AbstractFactory.h>
 using namespace std;
 
 int main()
@@ -20,7 +21,7 @@ int main()
     auto f3="3.txt";
     auto old=std::setlocale(LC_ALL,nullptr);
     std::setlocale(LC_ALL,std::locale("").name().c_str());
-    auto buff=std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(f3));
+    auto buff=std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(f1));
     buff->test_and_skipBOM();
     lsf::Lexer lex(buff);
     lsf::JsonParser parser({[&lex]()->void
@@ -45,7 +46,7 @@ int main()
 
     }
     lsf::PrintNodes p;
-    p.v(parser.get_ast(),parser.get_faken());
+    p.visit_BFS(parser.get_ast(),parser.get_faken(),[]{std::cout<<std::endl;});
     std::cout<<"合法json"<<endl;
     std::setlocale(LC_ALL,old);
     return 0;

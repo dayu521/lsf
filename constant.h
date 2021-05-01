@@ -57,17 +57,51 @@ class BaseError : public std::runtime_error
 template<typename ...T>
 struct BaseVisitor;
 
-template<typename T>
-struct BaseVisitor<T>
+template<typename R,typename T>
+struct BaseVisitor<R,T>
 {
-    virtual void visit(T & a){}
+    using Rtype=R;
+    virtual R visit(T & a)=0;
 };
 
-template<typename T,typename ...Others>
-struct BaseVisitor<T,Others...> : BaseVisitor<Others...>
+template<typename R,typename T,typename ...Others>
+struct BaseVisitor<R,T,Others...> : BaseVisitor<R,Others...>
 {
-    using BaseVisitor<Others...>::visit;
-    virtual void visit(T & a){}
+    using BaseVisitor<R,Others...>::visit;
+    virtual R visit(T & a)=0;
+};
+
+template<typename T>
+struct DoBuilder
+{
+    virtual ~DoBuilder(){}
+    virtual void build()=0;
+};
+
+template <typename ...T>
+struct BaseBuilder;
+
+template<typename T>
+struct BaseBuilder<T>: DoBuilder<T>
+{
+
+};
+
+template<typename T,typename ...Left>
+struct BaseBuilder<T,Left...>: DoBuilder<T>, BaseBuilder<Left...>
+{
+    using DoBuilder<T>::build;
+    using BaseBuilder<Left...>::build;
+};
+
+template<typename ...T>
+struct OpneBuilder:BaseBuilder<T...>
+{
+    template<typename U>
+    void build()
+    {
+        DoBuilder<U>::build();
+    }
 };
 
 }
