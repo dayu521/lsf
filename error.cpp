@@ -1,6 +1,7 @@
 #include "error.h"
 #include <sstream>
 #include <cassert>
+#include "inner_imp.h"
 namespace lsf{
 
 std::string parser_messages(Statistic stat_for_rc, Token lex_token, std::vector<Type> expects)

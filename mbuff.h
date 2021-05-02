@@ -1,25 +1,9 @@
 #ifndef KMP_H
 #define KMP_H
 #include <string>
-#include <vector>
 #include <fstream>
 #include <memory>
 
-//本来以为用得着kmp算法，但没想到没用
-class KMP
-{
-public:
-    KMP(const std::wstring &p_);
-    KMP(const KMP &)=delete ;
-    int match(const std::wstring &s) const;
-    ~KMP();
-private:
-    void piFunc();
-private:
-    std::wstring pattern{};
-    int pattern_len{0};
-    std::vector<int> pi{};
-};
 namespace lsf {
 
 class BuffBase
@@ -77,31 +61,6 @@ private:
 
 private:
     void read(int begin, int length=BuffLen);
-};
-
-struct Statistic
-{
-    size_t column_curr_{0};
-    size_t line_{0};
-    size_t column_last_{0};
-};
-
-class FilterBuff:public BuffBase
-{
-public:
-    virtual wchar_t next_char();
-    virtual void roll_back_char(int len=1);
-    virtual void discard_token();
-    virtual std::wstring get_token();
-public:
-    FilterBuff(std::unique_ptr<BuffBase> buff );
-    ~FilterBuff();
-    Statistic get_stat()const;
-    bool test_and_skipBOM();
-private:
-    std::unique_ptr<BuffBase> b_;
-    std::vector<int> history_{};
-    Statistic stat_{};
 };
 
 //namespace end

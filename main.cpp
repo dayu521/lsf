@@ -5,8 +5,9 @@
 #include <cassert>
 #include "lexer.h"
 #include "jsonparser.h"
-#include "kmp.h"
+#include "mbuff.h"
 #include "error.h"
+#include "inner_imp.h"
 //#include<loki/Visitor.h>
 //#include<loki/AbstractFactory.h>
 using namespace std;
@@ -23,23 +24,16 @@ int main()
     std::setlocale(LC_ALL,std::locale("").name().c_str());
     auto buff=std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(f1));
     buff->test_and_skipBOM();
-    lsf::Lexer lex(buff);
-    lsf::JsonParser parser({[&lex]()->void
-                            {
-                                lex.next_token();
-                            },
-                            [&lex]()->const lsf::Token &
-                            {
-                             return lex.get_token();}
-                           });
+    std::shared_ptr<lsf::Lexer> lex=std::make_shared<lsf::Lexer>(buff);
+    lsf::JsonParser parser(std::make_unique<lsf::Ltokens>(lex));
     try {
         if(!parser.parser()){
-            std::cout<<lsf::parser_messages(buff->get_stat(),lex.get_token(),parser.get_expect_token());
+            std::cout<<lsf::parser_messages(buff->get_stat(),lex->get_token(),parser.get_expect_token());
             return -1;
         }
     }  catch (const lsf::LexerError & e) {
         std::cout<<e.what();
-        std::cout<<lsf::lexer_messages(buff->get_stat(),lex.get_token());
+        std::cout<<lsf::lexer_messages(buff->get_stat(),lex->get_token());
         return -1;
     }   catch(const std::runtime_error &e){
         std::cout<<e.what();
@@ -48,6 +42,10 @@ int main()
     lsf::PrintNodes p;
     p.faken = parser.get_faken();
     p.visit_BFS(parser.get_ast(),parser.get_faken(),[]{std::cout<<std::endl;});
+    lsf::TypeChecker typer;
+    if(!typer.check_type(parser.get_ast(),parser.get_faken())){
+        return -1;
+    }
     std::cout<<"合法json"<<endl;
     std::setlocale(LC_ALL,old);
     return 0;

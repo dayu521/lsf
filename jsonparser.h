@@ -16,6 +16,8 @@ struct TreeNode;
 
 class Treebuilder;
 
+class Lexer;
+
 /// 暂时不考虑使用allocator，因为要自己考虑析构函数调用
 //template<typename T>
 //class LsfAlloc
@@ -30,8 +32,11 @@ class Treebuilder;
 
 struct GenToken
 {
-    std::function<void ()> next_;
-    std::function<const Token & ()> current_;
+    virtual ~GenToken(){}
+    virtual void next_()=0;
+    virtual Token & current_()=0;
+//    std::function<void ()> next_;
+//    std::function<Token & ()> current_;
 };
 
 class ParserError: public lsf::BaseError
@@ -43,7 +48,7 @@ public:
 class JsonParser
 {
 public:
-    JsonParser(GenToken gen);
+    JsonParser(std::unique_ptr<GenToken> gen);
     bool parser();
     TreeNode * get_ast();
     TreeNode * get_faken()const{return fake_n;}
@@ -73,7 +78,7 @@ private:
     //检查数组元素类型是否相同
     bool check_arr();
 private:
-    GenToken gen_;
+    std::unique_ptr<GenToken> gen_;
     std::vector<lsf::Type> expect_array_;
 //    std::unique_ptr<Treebuilder> builder_;
     TreeNode * root_;
@@ -151,12 +156,15 @@ public:
 #define AcceptImp virtual Visitor::Rtype accept(Visitor & v){return v.visit(*this);}
 #define TypeCheckerImp virtual TypeChecker::Rtype accept_check(TypeChecker & v){return v.visit(*this);}
 
+enum class TypeState:char{Uncheck,TypeOk,Error};
+
 struct TreeNode
 {
     TreeNode * left_child_{nullptr};
     TreeNode * right_bro_{nullptr};
 
     std::wstring key_;
+    TypeState check_;
     virtual ~TreeNode(){}
     virtual  Visitor::Rtype accept(Visitor & v)=0;
     virtual  TypeChecker::Rtype accept_check(TypeChecker & v)=0;

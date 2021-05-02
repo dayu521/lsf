@@ -1,7 +1,6 @@
 #include <assert.h>
-#include <sstream>
 #include "lexer.h"
-#include "kmp.h"
+#include "mbuff.h"
 
 namespace lsf {
 
