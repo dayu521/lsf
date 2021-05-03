@@ -39,12 +39,13 @@ public:
 public:
     FilterBuff(std::unique_ptr<BuffBase> buff );
     ~FilterBuff();
-    Statistic get_stat()const;
+    Statistic get_stat();
     bool test_and_skipBOM();
 private:
     std::unique_ptr<BuffBase> b_;
     std::vector<int> history_{};
     Statistic stat_{};
+    int chars_n_;
 };
 
 class Lexer;
@@ -60,6 +61,7 @@ public:
 private:
     std::shared_ptr<lsf::Lexer> lexer_;
 };
+
 }
 
 #endif // IMP_H

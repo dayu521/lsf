@@ -54,7 +54,7 @@ void KMP::piFunc()
     std::cout<<std::endl;
 }
 
-FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),history_(1,0),stat_{1,1,1}
+FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),history_(1,1),stat_{1,1,1}
 {
 }
 
@@ -76,47 +76,49 @@ wchar_t FilterBuff::next_char()
         //所以上述图示表示,前5个字符不是换行符，第6个字符是换行符，第7个字符不是换行符，第8个是换行符
         //好吧 我描述的不太好，仔细想想就明白了
         history_.push_back(0);
-        stat_.column_curr_=1;
-    }else
-        stat_.column_curr_++;
+    }
     history_[history_.size()-1]++;
     return c;
 }
 
+///这个函数实现有毒,我跪了
 void FilterBuff::roll_back_char(int len)
 {
+    assert(len>=0);
+    //roll_back_char函数会断言len合法
+    //且history_[0]>=1
+    //所以下面迭代中不会出现n<0
     b_->roll_back_char(len);
-    stat_.column_curr_--;
-    for(auto i=history_.crbegin();i!=history_.crend();i++){
-        if(len-*i<0){
-            history_.resize(1);
-            history_[0]=0;
-            break;
-        }
-        len-=*i;
-        stat_.line_--;
+    auto n=history_.size();
+    auto llen=len;
+    do{
+        n--;    //必定存在n>=0
+        llen-=history_[n];
+    }while(llen>=0);
+    history_[n]=-llen;
+    if(n<history_.size()){
+        stat_.line_-=history_.size()-n-1;
+        history_.resize(n+1);
     }
-    assert(stat_.line_>=0&&stat_.column_curr_>=0);
 }
 
 void FilterBuff::discard_token()
 {
     b_->discard_token();
-    stat_.column_last_=stat_.column_curr_;
+    stat_.column_last_=history_[0]=history_[history_.size()-1];
     history_.resize(1);
-    history_[0]=0;
 }
 
 std::wstring FilterBuff::get_token()
 {
-    stat_.column_last_=stat_.column_curr_;
+    stat_.column_last_=history_[0]=history_[history_.size()-1];
     history_.resize(1);
-    history_[0]=0;
     return b_->get_token();
 }
 
-Statistic FilterBuff::get_stat() const
+Statistic FilterBuff::get_stat()
 {
+    stat_.column_curr_=history_[history_.size()-1];
     return stat_;
 }
 

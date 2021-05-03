@@ -264,11 +264,12 @@ bool Lexer::run()
             c=input_->next_char();
         }
         input_->roll_back_char();
-        input_->discard_token();
         if(symbol_.contains(s)){           
+            input_->discard_token();
             goto T;
         }
         else{
+            input_->roll_back_char(s.size());
             goto F;
         }
     }else

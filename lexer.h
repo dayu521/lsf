@@ -29,10 +29,6 @@ struct Token
     using Type=lsf::Type;
     Type type_;
     std::wstring value_{};
-    bool operator ==(const Token & c)const
-    {
-        return type_==c.type_;
-    }
 };
 
 class LexerError:public lsf::BaseError

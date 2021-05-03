@@ -394,6 +394,7 @@ void Visitor::visit_BFS(TreeNode *root, TreeNode * faken, std::function<void ()>
     }
 }
 
+///*************TypeChecker*************
 bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
 {
     if(obj.left_child_==faken_){

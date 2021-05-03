@@ -16,8 +16,6 @@ struct TreeNode;
 
 class Treebuilder;
 
-class Lexer;
-
 /// 暂时不考虑使用allocator，因为要自己考虑析构函数调用
 //template<typename T>
 //class LsfAlloc
@@ -35,8 +33,6 @@ struct GenToken
     virtual ~GenToken(){}
     virtual void next_()=0;
     virtual Token & current_()=0;
-//    std::function<void ()> next_;
-//    std::function<Token & ()> current_;
 };
 
 class ParserError: public lsf::BaseError
@@ -73,10 +69,6 @@ private:
 
     void denodes(TreeNode * root_);
 
-    //检查重复key
-    bool check_obj_key();
-    //检查数组元素类型是否相同
-    bool check_arr();
 private:
     std::unique_ptr<GenToken> gen_;
     std::vector<lsf::Type> expect_array_;
@@ -90,21 +82,6 @@ private:
 enum  class NodeC{Obj,Arr,String,Number,Keyword,None,Error};
 
 class Visitor;
-
-template<typename T>
-struct ObjMbr
-{
-    //在array中表示数量，类型是int
-    //在obj或keyword中表示key,类型是std::string
-    //在number中表示数值,类型是double
-    std::wstring key_;
-};
-
-template<typename T>
-struct ArrMbr
-{
-
-};
 
 template<auto token>
 struct Jnode;

@@ -136,9 +136,8 @@ void MBuff::roll_back_char(int len)
 {
     //roolback fail
     assert(state_!=State::S0);
-    if(forward_-len<lexeme_begin_-1){
-        throw std::out_of_range("roolback fail,current S2");
-    }
+    //roolback fail,len overflows
+    assert(forward_-len>=lexeme_begin_-1);
     forward_-=len;
 
 }
