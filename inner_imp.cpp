@@ -93,10 +93,12 @@ void FilterBuff::roll_back_char(int len)
     auto llen=len;
     do{
         n--;    //必定存在n>=0
-        llen-=history_[n];
+        llen-=history_[n];  //不会出现llen=0&&n=0
     }while(llen>=0);
     history_[n]=-llen;
-    if(n<history_.size()){
+    //实际上不用判断，直接操作，但一般来说，回滚只是一两个字符，
+    //所以当n仅仅减少1时，直接跳过,不需要操作
+    if(n<history_.size()-1){
         stat_.line_-=history_.size()-n-1;
         history_.resize(n+1);
     }

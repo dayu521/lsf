@@ -1,31 +1,27 @@
 #include <cassert>
 #include "jsonparser.h"
 #include "lexer.h"
-#include <queue>
-#include <iostream>
-#include "error.h"
+#include "analyse.h"
 
 namespace lsf {
 
 JsonParser::JsonParser(std::unique_ptr<GenToken> gen):gen_(std::move(gen)),
     expect_array_{}
 {
-    root_=fake_n=new Jnode<NodeC::Obj>;
-    fake_n->left_child_=fake_n->right_bro_=root_;
-    fake_n->key_=L"Never used!";
+
+}
+
+void JsonParser::set_builder(std::shared_ptr<Treebuilder> b)
+{
+    builder_=b;
 }
 
 bool JsonParser::parser()
 {
-    denodes(root_);
+    builder_->start_build();
     expect_array_.clear();//之后push_back或assign都一样
     gen_->next_();
     return json();
-}
-
-TreeNode *JsonParser::get_ast()
-{
-    return root_;
 }
 
 const std::vector<Type> &JsonParser::get_expect_token()const
@@ -39,7 +35,7 @@ bool JsonParser::json()
 {
     if (element()) {
         if (isTerminator(TType::END)) {
-            root_->key_ = L"\"root\"";
+            builder_->finish_build();
             return true;
         }
         expect_array_.push_back({ TType::END });
@@ -68,29 +64,17 @@ bool JsonParser::value()
     case Type::LSQUARE:
         return array();
     case Type::String:{
-        auto n=new Jnode<NodeC::String>;
-        n->str_=std::move(gen_->current_().value_);
-        n->left_child_=fake_n;
-        n->right_bro_=n;
-        root_=n;
+        builder_->build_string(gen_->current_().value_);
         gen_->next_();
         return true;
     }
     case Type::Number:{
-        auto n=new Jnode<NodeC::Number>;
-        n->str_repst=std::move(gen_->current_().value_);
-        n->left_child_=fake_n;
-        n->right_bro_=n;
-        root_=n;
+        builder_->build_number(gen_->current_().value_);
         gen_->next_();
         return true;
     }
     case Type::KeyWord:{
-        auto n=new Jnode<NodeC::Keyword>;
-        n->v_=std::move(gen_->current_().value_);
-        n->left_child_=fake_n;
-        n->right_bro_=n;
-        root_=n;
+        builder_->build_keyword(gen_->current_().value_);
         gen_->next_();
         return true;
     }
@@ -111,10 +95,7 @@ bool JsonParser::obj()
         if(mb_ws()){
             if(isTerminator(TType::RBRACE)){
                 gen_->next_();
-                auto n=new Jnode<NodeC::Obj>;
-                n->left_child_=root_;
-                n->right_bro_=n;
-                root_=n;
+                builder_->build_obj();
                 return true;
             }
             return false;
@@ -146,8 +127,7 @@ bool JsonParser::mb_ws_r()
         if(isTerminator(TType::COLON)){
             gen_->next_();
             if(element()){
-                root_->key_=key;
-                root_->right_bro_=root_;
+                builder_->set_memberkey(key);
                 return memberL();
             }
             else
@@ -156,8 +136,8 @@ bool JsonParser::mb_ws_r()
         expect_array_.push_back(TType::COLON);
         return false;
     }else if (isTerminator(TType::RBRACE)) {
-        //root_
-        root_ = fake_n;
+//        root_ = null_;
+        builder_->build_null_mbr();
         return true;
     }else{
          expect_array_.push_back(TType::String);
@@ -173,15 +153,13 @@ bool JsonParser::memberL()
     if(isTerminator(TType::RBRACE)){
         return true;
     }
-    auto m=root_;
+    builder_->start_iteration();
     while (isTerminator(TType::COMMA)) {
         gen_->next_();
         if(member()){
-            root_->right_bro_=m->right_bro_;
-            m->right_bro_=root_;
-            m=root_;
+            builder_->move_next();
             if(isTerminator(TType::RBRACE)){
-                root_=root_->right_bro_;
+                builder_->finish_iteration();
                 return true;
             }
             continue;
@@ -206,7 +184,7 @@ bool JsonParser::member()
         if(isTerminator(TType::COLON)){
             gen_->next_();
             if(element()){
-                root_->key_=key;
+                builder_->set_memberkey(key);
                 return true;
             }
             return false;
@@ -229,10 +207,7 @@ bool JsonParser::array()
         if(arr_ws()){
             if(isTerminator(TType::RSQUARE)){
                 gen_->next_();
-                auto n=new Jnode<NodeC::Arr>;
-                n->left_child_=root_;
-                n->right_bro_=n;
-                root_=n;
+                builder_->build_arr();
                 return true;
             }
             expect_array_.push_back(TType::RSQUARE);
@@ -269,8 +244,8 @@ bool JsonParser::arr_ws_r()
         return false;
     }
     case TType::RSQUARE:
-        //
-        root_ = fake_n;
+//        root_ = null_;
+        builder_->build_null_mbr();
         return true;
     default:
         expect_array_.assign({TType::RSQUARE});
@@ -284,15 +259,13 @@ bool JsonParser::elementsL()
 {
     if(isTerminator(Type::RSQUARE))
         return true;
-    auto e=root_;
+    builder_->start_iteration();
     while(isTerminator(Type::COMMA)){
         gen_->next_();
         if(element()){
-            root_->right_bro_=e->right_bro_;
-            e->right_bro_=root_;
-            e=root_;
+            builder_->move_next();
             if(isTerminator(Type::RSQUARE)){
-                root_=root_->right_bro_;
+                builder_->finish_iteration();
                 return true;
             }
             continue;
@@ -317,163 +290,6 @@ bool JsonParser::unuse()
 bool JsonParser::isTerminator(JsonParser::TType type)
 {
     return gen_->current_().type_==type;
-}
-
-void JsonParser::denodes(TreeNode *root_)
-{
-//    if(root_!=fake_n){
-//        denodes(root_)
-//    }
-}
-
-void PrintNodes::visit(Jnode<NodeC::Obj> & obj)
-{
-//    std::cout<<lsf::to_cstring(obj.key_)<<" ";
-    [[likely]]if(obj.left_child_!=faken){
-        auto j=obj.left_child_;
-        do {
-            std::cout<<lsf::to_cstring(j->key_)<<" ";
-            j=j->right_bro_;
-        } while (j!=obj.left_child_);
-    }
-}
-
-void PrintNodes::visit(Jnode<NodeC::Arr> &arr)
-{
-//    std::cout<<lsf::to_cstring(arr.key_)<<" ";
-//    if(arr.left_child_!=faken){
-//        auto j=arr.left_child_;
-//        do {
-//            j->accept(*this);
-//            j=j->right_bro_;
-//        } while (j!=arr.left_child_);
-//    }
-}
-
-void PrintNodes::visit(Jnode<NodeC::String> &str)
-{
-    //<<lsf::to_cstring(str.key_)<<":"
-    std::cout<<lsf::to_cstring(str.str_)<<" ";
-}
-
-void PrintNodes::visit(Jnode<NodeC::Number> &num)
-{
-    //<<lsf::to_cstring(num.key_)<<":"
-    std::cout<<lsf::to_cstring(num.str_repst)<<" ";
-}
-
-void PrintNodes::visit(Jnode<NodeC::Keyword> &key)
-{
-    //<<lsf::to_cstring(key.key_)<<":"
-    std::cout<<lsf::to_cstring(key.v_)<<" ";
-}
-
-void Visitor::visit_BFS(TreeNode *root, TreeNode * faken, std::function<void ()> round)
-{
-    std::queue< TreeNode*> c{};
-    c.push(root);
-    int x=1,y=0;
-    while (!c.empty()) {
-        auto i=c.front();
-        c.pop();
-        x--;
-        i->accept(*this);
-        if(i->left_child_!=faken){
-            auto j=i->left_child_;
-            do {
-                y++;
-                c.push(j);
-                j=j->right_bro_;
-            } while (j!=i->left_child_);
-        }
-        if(x==0){
-            x=y;
-            y=0;
-            round();
-        }
-    }
-}
-
-///*************TypeChecker*************
-bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
-{
-    if(obj.left_child_==faken_){
-        current_type=NodeC::Obj;
-        return true;
-    }
-    std::set<std::wstring> cset{};
-    auto j=obj.left_child_;
-    do{
-        if(!j->accept_check(*this))
-            return false;
-        if(cset.contains(j->key_)){
-            std::cout<<"重复key_:"<<lsf::to_cstring(j->key_)<<std::endl;
-            return false;
-        }
-        cset.insert(j->key_);
-        j=j->right_bro_;
-    }while(j!=obj.left_child_);
-    current_type=NodeC::Obj;
-    return true;
-}
-
-bool TypeChecker::visit(Jnode<NodeC::Arr> &arr)
-{
-
-    if(arr.left_child_==faken_){
-        current_type=NodeC::Arr;
-        return true;
-    }
-
-    auto j=arr.left_child_;
-    do{
-        if(!j->accept_check(*this))
-            return false;
-        j=j->right_bro_;
-    }while(j!=arr.left_child_);
-    current_type=NodeC::Arr;
-    return true;
-//    if(j->accept_check(*this))
-//    {
-//        auto pre_type=current_type;
-//        while (j!=arr.left_child_) {
-//            if(j->accept_check(*this)){
-//                if(pre_type!=current_type)
-//                    return false;
-//                j=j->right_bro_;
-//                continue;
-//            }
-//            return false;
-//        }
-//        current_type=NodeC::Arr;
-//        return true;
-//    }
-//    return false;
-}
-
-bool TypeChecker::visit(Jnode<NodeC::String> &str)
-{
-    current_type=NodeC::String;
-    return true;
-}
-
-bool TypeChecker::visit(Jnode<NodeC::Number> &num)
-{
-    current_type=NodeC::Number;
-    return true;
-}
-
-bool TypeChecker::visit(Jnode<NodeC::Keyword> &key)
-{
-    current_type=NodeC::Keyword;
-    return true;
-}
-
-bool TypeChecker::check_type(TreeNode *root, TreeNode *faken)
-{
-//    cur_node_=root;
-    faken_=faken;
-    return root->accept_check(*this);
 }
 
 }

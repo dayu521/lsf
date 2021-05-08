@@ -71,11 +71,23 @@ struct BaseVisitor<R,T,Others...> : BaseVisitor<R,Others...>
     virtual R visit(T & a)=0;
 };
 
+//template <typename ...T>
+//struct TypePackage
+//{
+//    using OriginalType=T...;
+//};
+
+template <typename T>
+struct TypeTag
+{
+    typedef T OriginalType;
+};
+
 template<typename T>
 struct DoBuilder
 {
     virtual ~DoBuilder(){}
-    virtual void build()=0;
+    virtual void build(TypeTag<T>)=0;
 };
 
 template <typename ...T>
@@ -100,7 +112,7 @@ struct OpneBuilder:BaseBuilder<T...>
     template<typename U>
     void build()
     {
-        DoBuilder<U>::build();
+        build(TypeTag<U>());
     }
 };
 

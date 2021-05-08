@@ -25,5 +25,6 @@ add_executable(${PROJECT_NAME} main.cpp
                                 jsonparser.cpp
                                 json.cpp
                                 error.cpp
-                                inner_imp.cpp)
+                                inner_imp.cpp
+                                analyse.cpp)
 #target_link_libraries(${PROJECT_NAME} jsoncpp)

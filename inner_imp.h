@@ -45,7 +45,6 @@ private:
     std::unique_ptr<BuffBase> b_;
     std::vector<int> history_{};
     Statistic stat_{};
-    int chars_n_;
 };
 
 class Lexer;
