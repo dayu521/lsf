@@ -5,9 +5,9 @@
 
 namespace lsf {
 
-TreeNode *Treebuilder::get_ast()
+Tree Treebuilder::get_ast()
 {
-    return root_;
+    return {root_,null_};
 }
 
 void Treebuilder::start_build()
@@ -20,7 +20,8 @@ void Treebuilder::start_build()
 void Treebuilder::finish_build()
 {
     root_->key_ = L"\"root\"";
-    root_->right_bro_=null_;//暂借right_bro存储fake_n_
+    root_->right_bro_=root_;
+    null_->left_child_=null_->right_bro_=null_;
 }
 
 void Treebuilder::build_obj()
@@ -94,10 +95,15 @@ void Treebuilder::finish_iteration()
     mbr_node_.pop();
 }
 
+void PrintNodes::set_null(TreeNode *nul)
+{
+    faken_=nul;
+}
+
 void PrintNodes::visit(Jnode<NodeC::Obj> & obj)
 {
 //    std::cout<<lsf::to_cstring(obj.key_)<<" ";
-    [[likely]]if(obj.left_child_!=faken){
+    [[likely]]if(obj.left_child_!=faken_){
         auto j=obj.left_child_;
         do {
             std::cout<<lsf::to_cstring(j->key_)<<" ";
@@ -136,11 +142,10 @@ void PrintNodes::visit(Jnode<NodeC::Keyword> &key)
     std::cout<<lsf::to_cstring(key.v_)<<" ";
 }
 
-void Visitor::visit_BFS(TreeNode *root, std::function<void ()> round_callback)
+void Visitor::visit_BFS(Tree roott, std::function<void ()> round_callback)
 {
     std::queue< TreeNode*> c{};
-    auto faken=root->right_bro_;
-    root->right_bro_=root;
+    auto [root,faken]=roott;
     c.push(root);
     int x=1,y=0;
     while (!c.empty()) {
@@ -223,11 +228,11 @@ bool TypeChecker::visit(Jnode<NodeC::Keyword> &key)
     return true;
 }
 
-bool TypeChecker::check_type(TreeNode *root)
+bool TypeChecker::check_type(Tree roott)
 {
 //    cur_node_=root;
-    null_=root->right_bro_;
-    root->right_bro_=root;
+    null_=std::get<1>(roott);
+    auto root=std::get<0>(roott);
     return root->accept_check(*this);
 }
 

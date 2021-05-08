@@ -18,6 +18,7 @@ void JsonParser::set_builder(std::shared_ptr<Treebuilder> b)
 
 bool JsonParser::parser()
 {
+    assert(builder_&&gen_);
     builder_->start_build();
     expect_array_.clear();//之后push_back或assign都一样
     gen_->next_();

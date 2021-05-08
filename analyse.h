@@ -34,11 +34,13 @@ enum  class NodeC{Obj,Arr,String,Number,Keyword,None,Error};
 template<auto token>
 struct Jnode;
 
+/// 第一个指向root_,第二个指向null_
+using Tree=std::tuple<TreeNode *,TreeNode *>;
+
 class Treebuilder
 {
 public:
-    /// root_.right_bro_指向null_
-    TreeNode * get_ast();
+    Tree get_ast();
 protected:
     friend class JsonParser;
     virtual void start_build();
@@ -78,7 +80,7 @@ class Visitor : public lsf::BaseVisitor<
 {
 public:
     virtual ~Visitor(){}
-    virtual void visit_BFS(TreeNode *root,std::function<void ()> round_callback);
+    virtual void visit_BFS(Tree root,std::function<void ()> round_callback);
 };
 ///********************************
 
@@ -97,7 +99,7 @@ public:
     virtual bool visit(Jnode<NodeC::Number> & num)override;
     virtual bool visit(Jnode<NodeC::Keyword> & key)override;
 public:
-    bool check_type(TreeNode * root);
+    bool check_type(Tree root);
     bool advance_and_check(TreeNode * one,TreeNode * another);
 private:
     NodeC current_type{NodeC::Error};
@@ -108,12 +110,14 @@ private:
 class PrintNodes: public Visitor
 {
 public:
+    void set_null(TreeNode * nul);
+private:
     virtual void visit(Jnode<NodeC::Obj> &)override;
     virtual void visit(Jnode<NodeC::Arr> &)override;
     virtual void visit(Jnode<NodeC::String> & str)override;
     virtual void visit(Jnode<NodeC::Number> & num)override;
     virtual void visit(Jnode<NodeC::Keyword> & key)override;
-    TreeNode * faken{};
+    TreeNode * faken_{};
 };
 
 #define AcceptImp virtual Visitor::Rtype accept(Visitor & v){return v.visit(*this);}

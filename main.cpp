@@ -41,6 +41,7 @@ int main()
         return -1;
     }
     lsf::PrintNodes p;
+    p.set_null(std::get<1>(builder->get_ast()));
     p.visit_BFS(builder->get_ast(),[]{std::cout<<std::endl;});
     lsf::TypeChecker typer;
     if(!typer.check_type(builder->get_ast())){
