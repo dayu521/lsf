@@ -8,8 +8,6 @@ namespace Private {
 }
 
 MBuff::MBuff():
-//    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
-    buff_(new wchar_t[2*BuffLen],[](wchar_t * p){delete [] p;}),
     state_(State::S0)
 {
     f_.imbue(std::locale(""));
@@ -20,19 +18,6 @@ MBuff::~MBuff()
 }
 
 MBuff::MBuff(const std::string &file_name):
-    /* 根本原因就是当前库未实现make_shared.
-     * 根据大佬推测，库只是分配了一个指向数组的指针，所以当把这个这个指针作为数组读写时，
-     * 造成之后其他对象分配的数据空间遭到破坏.于是错误反而在其他对象的数据析构时才发现，
-     * 于是可能会被误导为其他对象出了问题
-     *
-     * 总结:要看各个标准库发行文档以及注记
-     * libstc++文档中写了未实现
-     *      https://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html#status.iso.2017
-     * 相关提案P0674R1
-     *      http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0674r1.html
-     */
-//    buff_(std::make_shared<wchar_t [2*MaxTokenLen]>()),
-    buff_(new wchar_t[2*BuffLen],[](wchar_t * p){delete [] p;}),
     f_(file_name),
     state_(State::S0)
 {
@@ -105,14 +90,14 @@ std::wstring MBuff::current_chars()
     if(state_==State::S3){
         std::wstring s(forward_-lexeme_begin_+1,wchar_t());
         if(lexeme_begin_>=0||forward_<0)
-            s.assign(buff_.get()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),(-lexeme_begin_)+forward_+1);
+            s.assign(buff_.data()+(lexeme_begin_+BuffLen*2)%(BuffLen*2),(-lexeme_begin_)+forward_+1);
         else{
-            s.assign(buff_.get()+lexeme_begin_+BuffLen*2,(-lexeme_begin_));
-            s.append(buff_.get(),forward_+1);
+            s.assign(buff_.data()+lexeme_begin_+BuffLen*2,(-lexeme_begin_));
+            s.append(buff_.data(),forward_+1);
         }
         return s;
     }else
-        return std::wstring(buff_.get()+lexeme_begin_,(-lexeme_begin_)+forward_+1);
+        return std::wstring(buff_.data()+lexeme_begin_,(-lexeme_begin_)+forward_+1);
 }
 
 std::wstring MBuff::get_token()

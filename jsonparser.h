@@ -2,7 +2,7 @@
 #define JSONPARSER_H
 
 #include<memory>
-#include<functional>
+#include<vector>
 #include"constant.h"
 
 namespace lsf {

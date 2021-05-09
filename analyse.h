@@ -3,6 +3,7 @@
 #include"constant.h"
 #include"jsonparser.h"
 #include<stack>
+#include<functional>
 
 namespace lsf {
 //namespace start
@@ -43,8 +44,8 @@ public:
     Tree get_ast();
 protected:
     friend class JsonParser;
-    virtual void start_build();
-    virtual void finish_build();
+    virtual void before_build();
+    virtual void after_build();
     virtual void build_obj();
     virtual void build_arr();
     virtual void build_string(std::wstring str);

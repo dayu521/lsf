@@ -2,7 +2,7 @@
 #define KMP_H
 #include <string>
 #include <fstream>
-#include <memory>
+#include <array>
 
 namespace lsf {
 
@@ -47,7 +47,7 @@ private:
     int forward_ {-1};
 
     //2*BuffLen
-    std::shared_ptr<wchar_t []> buff_{};
+    std::array<wchar_t,2*BuffLen> buff_{};
 
     std::wifstream f_ {};
 

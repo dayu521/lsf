@@ -1,7 +1,6 @@
 #include<cassert>
 #include "inner_imp.h"
 #include "lexer.h"
-#include <iostream>
 
 namespace lsf {
 
@@ -21,9 +20,9 @@ int KMP::match(const std::wstring &str) const
         if(pattern[k]==str[i])
             k++;
         if(k==pattern_len){
-            using std::wcout;
-            wcout<<str.substr(0,i-pattern_len+1)<<L"("<<
-                  pattern<<L")"<<str.substr(i+1)<<std::endl;
+//            using std::wcout;
+//            wcout<<str.substr(0,i-pattern_len+1)<<L"("<<
+//                  pattern<<L")"<<str.substr(i+1)<<std::endl;
 //            k=pi[k];
 //            break;
             k=pi[0];
@@ -49,9 +48,9 @@ void KMP::piFunc()
         }
         pi[i]=k;
     }
-    for(int i=0;i<pattern_len;i++)
-        std::cout<<pi[i]<<" ";
-    std::cout<<std::endl;
+//    for(int i=0;i<pattern_len;i++)
+//        std::cout<<pi[i]<<" ";
+//    std::cout<<std::endl;
 }
 
 FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),history_(1,1),stat_{1,1,1}
@@ -127,10 +126,10 @@ Statistic FilterBuff::get_stat()
 bool FilterBuff::test_and_skipBOM()
 {
     wchar_t head[3]={};
-    for (auto i=0;i<3;i++){
+    for (std::size_t i=0;i<3;i++){
         head[i]=b_->next_char();
     }
-    if(wcscmp(head,L"\xEF\xBB\xBF")==0){
+    if(wcsncmp(head,L"\xEF\xBB\xBF",3)==0){
         b_->discard_token();
         return true;
     }

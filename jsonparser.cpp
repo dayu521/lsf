@@ -19,7 +19,7 @@ void JsonParser::set_builder(std::shared_ptr<Treebuilder> b)
 bool JsonParser::parser()
 {
     assert(builder_&&gen_);
-    builder_->start_build();
+    builder_->before_build();
     expect_array_.clear();//之后push_back或assign都一样
     gen_->next_();
     return json();
@@ -36,7 +36,7 @@ bool JsonParser::json()
 {
     if (element()) {
         if (isTerminator(TType::END)) {
-            builder_->finish_build();
+            builder_->after_build();
             return true;
         }
         expect_array_.push_back({ TType::END });

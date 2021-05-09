@@ -10,14 +10,14 @@ Tree Treebuilder::get_ast()
     return {root_,null_};
 }
 
-void Treebuilder::start_build()
+void Treebuilder::before_build()
 {
     root_=null_=new Jnode<NodeC::Obj>;
     null_->left_child_=null_->right_bro_=null_;
     null_->key_=L"Never used!";
 }
 
-void Treebuilder::finish_build()
+void Treebuilder::after_build()
 {
     root_->key_ = L"\"root\"";
     root_->right_bro_=root_;
