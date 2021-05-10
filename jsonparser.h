@@ -31,7 +31,7 @@ class JsonParser
 public:
     JsonParser(std::unique_ptr<GenToken> gen);
     void set_builder(std::shared_ptr<Treebuilder> b);
-    bool parser();
+    [[nodiscard]] bool parser();
     const std::vector<lsf::Type> & get_expect_token()const;
 private:
     using TType=lsf::Type;

@@ -2,6 +2,8 @@
 #include "error.h"
 #include<iostream>
 #include<queue>
+#include<cassert>
+#include<algorithm>
 
 namespace lsf {
 
@@ -114,14 +116,7 @@ void PrintNodes::visit(Jnode<NodeC::Obj> & obj)
 
 void PrintNodes::visit(Jnode<NodeC::Arr> &arr)
 {
-//    std::cout<<lsf::to_cstring(arr.key_)<<" ";
-//    if(arr.left_child_!=faken){
-//        auto j=arr.left_child_;
-//        do {
-//            j->accept(*this);
-//            j=j->right_bro_;
-//        } while (j!=arr.left_child_);
-//    }
+
 }
 
 void PrintNodes::visit(Jnode<NodeC::String> &str)
@@ -172,8 +167,12 @@ void Visitor::visit_BFS(Tree roott, std::function<void ()> round_callback)
 ///*************TypeChecker*************
 bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
 {
+    current_type=NodeC::Obj;
+    //arr begin
+    jtype_.push_back(current_type);
     if(obj.left_child_==null_){
-        current_type=NodeC::Obj;
+        //arr end
+        jtype_.push_back(current_type);
         return true;
     }
     std::set<std::wstring> cset{};
@@ -188,57 +187,80 @@ bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
         cset.insert(j->key_);
         j=j->right_bro_;
     }while(j!=obj.left_child_);
+    //因为是共享的,所以需要重新赋值.其他地方类似
     current_type=NodeC::Obj;
+    //end
+    jtype_.push_back(current_type);
     return true;
 }
 
 bool TypeChecker::visit(Jnode<NodeC::Arr> &arr)
 {
-
+    current_type=NodeC::Arr;
+    //arr begin
+    jtype_.push_back(current_type);
     if(arr.left_child_==null_){
-        current_type=NodeC::Arr;
+        //arr end
+        jtype_.push_back(current_type);
         return true;
     }
-
+    auto first_beg=jtype_.size();
     auto j=arr.left_child_;
-    do{
-        if(!j->accept_check(*this))
+    if(!j->accept_check(*this))
+        return false;
+    auto another_beg=jtype_.size();
+    j=j->right_bro_;
+    while (j!=arr.left_child_) {
+        if(!j->accept_check(*this)||!do_check(first_beg,another_beg)){
+            std::cout<<"数组类型不同:"<<lsf::to_cstring(arr.key_)<<std::endl;
             return false;
+        }
+        jtype_.resize(another_beg);
         j=j->right_bro_;
-    }while(j!=arr.left_child_);
+    }
     current_type=NodeC::Arr;
+    //end
+    jtype_.push_back(current_type);
     return true;
 }
 
 bool TypeChecker::visit(Jnode<NodeC::String> &str)
 {
     current_type=NodeC::String;
+    jtype_.push_back(current_type);
     return true;
 }
 
 bool TypeChecker::visit(Jnode<NodeC::Number> &num)
 {
     current_type=NodeC::Number;
+    jtype_.push_back(current_type);
     return true;
 }
 
 bool TypeChecker::visit(Jnode<NodeC::Keyword> &key)
 {
     current_type=NodeC::Keyword;
+    jtype_.push_back(current_type);
     return true;
 }
 
 bool TypeChecker::check_type(Tree roott)
 {
 //    cur_node_=root;
+    jtype_.clear();
     null_=std::get<1>(roott);
     auto root=std::get<0>(roott);
     return root->accept_check(*this);
 }
 
-bool TypeChecker::advance_and_check(TreeNode *one, TreeNode *another)
+bool TypeChecker::do_check(int first, int another)
 {
-    return false;
+    auto first_beg=jtype_.begin()+first;
+    auto another_beg=jtype_.begin()+another;
+    assert(first_beg!=jtype_.end()&&another_beg!=jtype_.end());
+    auto r= std::equal(first_beg,another_beg,another_beg,jtype_.end());
+    return r;
 }
 
 }

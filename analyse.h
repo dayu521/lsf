@@ -101,11 +101,11 @@ public:
     virtual bool visit(Jnode<NodeC::Keyword> & key)override;
 public:
     bool check_type(Tree root);
-    bool advance_and_check(TreeNode * one,TreeNode * another);
+    bool do_check(int first,int another);
 private:
     NodeC current_type{NodeC::Error};
-//    TreeNode * cur_node_;
     TreeNode * null_{};
+    std::vector<NodeC> jtype_{};
 };
 
 class PrintNodes: public Visitor
