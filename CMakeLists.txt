@@ -20,11 +20,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 #message(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(${PROJECT_NAME} main.cpp
                                 mbuff.cpp
-                                test.cpp
+#                                test.cpp
                                 lexer.cpp
                                 jsonparser.cpp
                                 json.cpp
                                 error.cpp
                                 inner_imp.cpp
                                 analyse.cpp)
+configure_file(2.txt .)
 #target_link_libraries(${PROJECT_NAME} jsoncpp)

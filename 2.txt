@@ -1,0 +1,7 @@
+{"a":55,
+"s":"hello adahs",
+"bs":true,
+"pe":{"name":"小明",
+        "age":18
+        }
+}
