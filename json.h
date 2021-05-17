@@ -3,6 +3,7 @@
 #include"analyse.h"
 #include<tuple>
 #include<cassert>
+#include<string>
 
 namespace lsf {
 
@@ -12,6 +13,19 @@ struct instance {
   template <typename Type>
   operator Type() const;
 };
+//struct Hellos
+//{
+//    int a;
+//    std::string s;
+//    bool bs;
+//};
+//struct Mk:Hellos
+//{
+//};
+//int tr(Mk n);
+//excess elements in struct initializer
+//instance()转换成Hellos,所以无法初始化基类成员
+//auto xst=tr(Mk{instance(),instance()});
 
 template <typename Aggregate, typename IndexSequence = std::index_sequence<>,
           //当下面偏特化中的std::void_t替换失败时，选择这个主模板
@@ -62,6 +76,9 @@ inline auto to_tuple(T& t);
 }
 
 template<typename T>
+inline void Deserialize(T & s,TreeNode * t);
+
+template<typename T>
 void deserialize(T & obj,TreeNode * t)
 {
     using TT=std::decay_t<T>;
@@ -70,29 +87,38 @@ void deserialize(T & obj,TreeNode * t)
         assert(t != nullptr);
         deserialize(*obj, t);
     } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
-        if constexpr (std::is_scalar_v<TT>) {
-            deserialize(obj,t);
-        } else {
-            auto tupes=detail::to_tuple(obj);
-            size_t n=0;
-            auto temp=t->left_child_;
-            do{
-                n++;
-                temp=temp->right_bro_;
-            }while(temp!=t->left_child_);
-            assert(std::tuple_size<decltype (tupes)>::value==n);
-            TreeNode * de=new Jnode<NodeC::Obj>;
-            de->right_bro_=temp;
-            std::apply([&](auto&&... args) {
-                (deserialize(args,de=de->right_bro_),...);
-            },tupes);
-        }
+        auto tupes=detail::to_tuple(obj);
+        size_t n=0;
+        auto temp=t->left_child_;
+        do{
+            n++;
+            temp=temp->right_bro_;
+        }while(temp!=t->left_child_);
+        assert(std::tuple_size<decltype (tupes)>::value==n);
+        TreeNode * de=new Jnode<NodeC::Obj>;
+        de->right_bro_=temp;
+        //不用循环，因为编译前已知次数
+        std::apply([&](auto&&... args) {
+            (deserialize(args,de=de->right_bro_),...);
+        },tupes);
     }else
-        deserialize(obj,t);
+        Deserialize(obj,t);
+}
+
+template<typename T>
+void deserialize(std::vector<T> &v,TreeNode * t)
+{
+    auto temp=t->left_child_;
+    T m{};
+    do{
+        deserialize(m,temp);
+        v.push_back(m);
+        temp=temp->right_bro_;
+    }while(temp!=t->left_child_);
 }
 
 template<>
-inline void deserialize<std::string>(std::string & s,TreeNode * t)
+inline void Deserialize<std::string>(std::string & s,TreeNode * t)
 {
     //如果有错,语法分析会提前失败.下同
     if(t->ele_type_==NodeC::String){
@@ -109,7 +135,7 @@ inline void deserialize<std::string>(std::string & s,TreeNode * t)
 }
 
 template<>
-inline void deserialize<int>(int & s,TreeNode * t)
+inline void Deserialize<int>(int & s,TreeNode * t)
 {
     if(t->ele_type_==NodeC::Number){     
         s=std::stoi(static_cast<Jnode<NodeC::Number> *>(t)->data_);
@@ -117,7 +143,7 @@ inline void deserialize<int>(int & s,TreeNode * t)
 }
 
 template<>
-inline void deserialize<bool>(bool & b,TreeNode * t)
+inline void Deserialize<bool>(bool & b,TreeNode * t)
 {
     if(t->ele_type_==NodeC::Keyword){
         auto v=static_cast<Jnode<NodeC::Number> *>(t)->data_;
@@ -129,22 +155,112 @@ inline void deserialize<bool>(bool & b,TreeNode * t)
     }
 }
 
-//template<>
-//void deserialize(bool & b,TreeNode * t)
-//{
-//    if(t->ele_type_==NodeC::Keyword){
-//        auto v=static_cast<Jnode<NodeC::Number> *>(t)->data_;
-//        if(v==L"true"){
-//            b=true;
-//        }else if (v==L"false") {
-//            b=false;
-//        }
-//    }
-//}
+class SerializeBuilder
+{
+public:
+    std::string get_jsonstring()const{return out_.c_str();}
+public:
+    virtual ~SerializeBuilder(){}
+    ///数组元素和基本值(string,keyword,number...)
+    template<typename T>
+    void write_value(const T & ele)
+    {
+        out_.push_back(ele);
+    }
+    virtual void write_key(std::string key)
+    {
+        out_+='"';
+        out_+=key;
+        out_+='"';
+        out_+=':';
+    }
+    virtual void arr_start()
+    {
+        out_+='[';
+    }
+    virtual void arr_end()
+    {
+        out_+=']';
+    }
+    virtual void obj_start()
+    {
+        out_+='{';
+    }
+    virtual void obj_end()
+    {
+        out_+='}';
+    }
+    virtual void forward_next()
+    {
+        out_+=',';
+    }
+    virtual void back()
+    {
+        if(out_.back()==',')
+            out_.resize(out_.size()-1);
+    }
+protected:
+    std::string out_;
+    int indent_{0};
+};
+
+template<>
+inline void SerializeBuilder::write_value<std::string>(const std::string & ele)
+{
+    out_+='"';
+    out_+=ele;
+    out_+='"';
+}
+
+template<>
+inline void SerializeBuilder::write_value<bool>(const bool & ele)
+{
+    out_+='"';
+    out_+=(ele==true?"true":"false");
+    out_+='"';
+}
+
+template<>
+inline void SerializeBuilder::write_value<int>(const int & ele)
+{
+    out_+='"';
+    out_+=std::to_string(ele);
+    out_+='"';
+}
 
 template<typename T>
-void serialize();
+void serialize(const T & obj,SerializeBuilder & builder)
+{
+    using TT=std::decay_t<T>;
+    if constexpr (std::is_pointer_v<TT>) {//if constexpr间接提供了"函数偏特化"
+        static_assert (!std::is_pointer_v<std::decay_t<decltype (*obj)>>,"不支持多级指针");
+        assert(obj != nullptr);
+        serialize(*obj, builder);
+    } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
+        auto tupes=detail::to_tuple(obj);
+        builder.obj_start();
+        std::apply([&](auto&&... args) {
+            ((builder.write_key("fuck"),serialize(args,builder),builder.forward_next()),...);
+        },tupes);
+        if(std::tuple_size<decltype (tupes)>::value>0)
+            builder.back();
+        builder.obj_end();
+    }else
+        builder.write_value(obj);
+}
 
+template<typename T>
+void serialize(const std::vector<T> &v,SerializeBuilder & builder)
+{
+    builder.arr_start();
+    for(auto && i:v){
+        serialize(i,builder);
+        builder.forward_next();
+    }
+    if(v.size()>0)
+        builder.back();
+    builder.arr_end();
+}
 class json
 {
 public:

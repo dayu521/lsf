@@ -15,17 +15,15 @@ struct Pe
 {
     std::string name;
     int age;
-//    double ss;
+    std::vector<int> ss;
 };
 struct Hellos
 {
     int a;
     std::string s;
     bool bs;
-    Pe * p;
+    Pe p;
 };
-
-constexpr auto sie=lsf::detail::arity<Hellos>();
 
 int main()
 {
@@ -81,8 +79,12 @@ int main()
     std::cout<<"合法json"<<endl;
 
     Hellos lf;
-    lf.p=new Pe;
     lsf::deserialize(lf,std::get<0>(builder->get_ast()));
+
+    lsf::SerializeBuilder bu;
+    lsf::serialize(lf,bu);
+
+    std::cout<<bu.get_jsonstring();
 
     std::setlocale(LC_ALL,old);
     return 0;
