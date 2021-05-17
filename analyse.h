@@ -1,7 +1,6 @@
 #ifndef ANALYSE_H
 #define ANALYSE_H
 #include"constant.h"
-#include"jsonparser.h"
 #include<stack>
 #include<functional>
 
@@ -84,7 +83,8 @@ public:
     virtual void visit_BFS(Tree root,std::function<void ()> round_callback);
 };
 ///********************************
-
+/// 检查对象的重复key，以及数组中每个元素类型是否相同
+///**********************************
 class TypeChecker: public lsf::BaseVisitor<
         bool,   //返回类型
         Jnode<NodeC::Obj>,
@@ -129,6 +129,7 @@ struct TreeNode
     TreeNode * left_child_{nullptr};    ///左孩子
     TreeNode * right_bro_{nullptr};     ///右兄弟
     std::wstring key_;                  ///作为对象成员的key
+    NodeC ele_type_{NodeC::Error};
     virtual  Visitor::Rtype accept(Visitor & v)=0;
     virtual TypeChecker::Rtype accept_check(TypeChecker & v)=0;
     virtual ~TreeNode(){}
@@ -137,7 +138,6 @@ struct TreeNode
 template<>
 struct Jnode<NodeC::Obj>:TreeNode
 {
-    //key保存在key_中
     AcceptImp
     TypeCheckerImp
 };
@@ -145,7 +145,6 @@ struct Jnode<NodeC::Obj>:TreeNode
 template<>
 struct Jnode<NodeC::Arr>:TreeNode
 {
-    //key保存在key_中
     AcceptImp
     TypeCheckerImp
 };
@@ -153,8 +152,7 @@ struct Jnode<NodeC::Arr>:TreeNode
 template<>
 struct Jnode<NodeC::String> :TreeNode
 {
-    //保存在str_中
-    std::wstring str_;
+    std::wstring data_;
     AcceptImp
     TypeCheckerImp
 };
@@ -162,10 +160,7 @@ struct Jnode<NodeC::String> :TreeNode
 template<>
 struct Jnode<NodeC::Number> :TreeNode
 {
-    //很多时候，可能会把整数修改为浮点数
-    double number_;
-    //保存字符串表示在str_repst中
-    std::wstring str_repst;
+    std::wstring data_;
     AcceptImp
     TypeCheckerImp
 };
@@ -173,8 +168,7 @@ struct Jnode<NodeC::Number> :TreeNode
 template<>
 struct Jnode<NodeC::Keyword> :TreeNode
 {
-    //保存在v_中
-    std::wstring v_;
+    std::wstring data_;
     AcceptImp
     TypeCheckerImp
 };

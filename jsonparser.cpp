@@ -99,6 +99,7 @@ bool JsonParser::obj()
                 builder_->build_obj();
                 return true;
             }
+            expect_array_.push_back(TType::RBRACE);
             return false;
         }
         return false;

@@ -45,7 +45,8 @@ void Treebuilder::build_arr()
 void Treebuilder::build_string(std::wstring str)
 {
     auto n=new Jnode<NodeC::String>;
-    n->str_=std::move(std::move(str));
+    n->data_=std::move(std::move(str));
+    n->ele_type_=NodeC::String;
     n->left_child_=null_;
     n->right_bro_=n;
     root_=n;
@@ -54,7 +55,8 @@ void Treebuilder::build_string(std::wstring str)
 void Treebuilder::build_number(std::wstring str)
 {
     auto n=new Jnode<NodeC::Number>;
-    n->str_repst=std::move(str);
+    n->data_=std::move(str);
+    n->ele_type_=NodeC::Number;
     n->left_child_=null_;
     n->right_bro_=n;
     root_=n;
@@ -63,7 +65,8 @@ void Treebuilder::build_number(std::wstring str)
 void Treebuilder::build_keyword(std::wstring str)
 {
     auto n=new Jnode<NodeC::Keyword>;
-    n->v_=std::move(str);
+    n->data_=std::move(str);
+    n->ele_type_=NodeC::Keyword;
     n->left_child_=null_;
     n->right_bro_=n;
     root_=n;
@@ -104,7 +107,6 @@ void PrintNodes::set_null(TreeNode *nul)
 
 void PrintNodes::visit(Jnode<NodeC::Obj> & obj)
 {
-//    std::cout<<lsf::to_cstring(obj.key_)<<" ";
     [[likely]]if(obj.left_child_!=faken_){
         auto j=obj.left_child_;
         do {
@@ -121,20 +123,17 @@ void PrintNodes::visit(Jnode<NodeC::Arr> &arr)
 
 void PrintNodes::visit(Jnode<NodeC::String> &str)
 {
-    //<<lsf::to_cstring(str.key_)<<":"
-    std::cout<<lsf::to_cstring(str.str_)<<" ";
+    std::cout<<lsf::to_cstring(str.data_)<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Number> &num)
 {
-    //<<lsf::to_cstring(num.key_)<<":"
-    std::cout<<lsf::to_cstring(num.str_repst)<<" ";
+    std::cout<<lsf::to_cstring(num.data_)<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Keyword> &key)
 {
-    //<<lsf::to_cstring(key.key_)<<":"
-    std::cout<<lsf::to_cstring(key.v_)<<" ";
+    std::cout<<lsf::to_cstring(key.data_)<<" ";
 }
 
 void Visitor::visit_BFS(Tree roott, std::function<void ()> round_callback)
@@ -247,7 +246,6 @@ bool TypeChecker::visit(Jnode<NodeC::Keyword> &key)
 
 bool TypeChecker::check_type(Tree roott)
 {
-//    cur_node_=root;
     jtype_.clear();
     null_=std::get<1>(roott);
     auto root=std::get<0>(roott);
