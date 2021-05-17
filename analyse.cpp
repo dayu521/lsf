@@ -179,7 +179,12 @@ bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
     do{
         if(!j->accept_check(*this))
             return false;
-        if(cset.contains(j->key_)){
+#if __cplusplus >= 202002L
+        auto haskey=cset.contains(j->key_);
+#else
+        auto haskey=cset.end()!=cset.find(j->key_);
+#endif
+        if(haskey){
             std::cout<<"重复key_:"<<lsf::to_cstring(j->key_)<<std::endl;
             return false;
         }

@@ -264,7 +264,12 @@ bool Lexer::run()
             c=input_->next_char();
         }
         input_->roll_back_char();
-        if(symbol_.contains(s)){           
+#if __cplusplus >= 202002L
+        auto haskey=symbol_.contains(s);
+#else
+        auto haskey=symbol_.end()!=symbol_.find(s);
+#endif
+        if(haskey){
             input_->discard_token();
             goto T;
         }

@@ -35,8 +35,8 @@ int main()
     //设置全局c++环境,所有之后std::locale()的实例都是此locale的副本，
     //同时设置本地c环境为用户偏好的locale，默认c环境的name好像是"C"
 //    std::locale::global(std::locale(""));
-    auto old=std::setlocale(LC_CTYPE,nullptr);
-    std::setlocale(LC_CTYPE,std::locale("").name().c_str());
+    auto old=std::setlocale(LC_ALL,nullptr);
+    std::setlocale(LC_ALL,std::locale("").name().c_str());
 
     //输入抽象
     auto f1="2.txt";
@@ -84,7 +84,7 @@ int main()
     lf.p=new Pe;
     lsf::deserialize(lf,std::get<0>(builder->get_ast()));
 
-    std::setlocale(LC_CTYPE,old);
+    std::setlocale(LC_ALL,old);
     return 0;
 }
 
