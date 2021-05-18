@@ -191,7 +191,7 @@ bool Lexer::run()
 //        std::wstring s{};
         auto & s=current_token_.value_;
         s.clear();
-        s+=c;
+//        s+=c;
         c=input_->next_char();
         while (c!=L'\"') {
             if(c>=L'\u0020'&&c<=0x10FFFF){
@@ -201,7 +201,7 @@ bool Lexer::run()
                 return false;
             }
         }
-        s+=c;
+//        s+=c;
         input_->discard_token();
         std::wstring d{};
         Private::deal_escape_char(s,d);

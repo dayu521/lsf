@@ -16,6 +16,7 @@ struct Pe
     std::string name;
     int age;
     std::vector<int> ss;
+    JS_OBJECT(JS_MEMBER(name),JS_MEMBER(age),JS_MEMBER(ss));
 };
 struct Hellos
 {
@@ -23,6 +24,7 @@ struct Hellos
     std::string s;
     bool bs;
     Pe p;
+    JS_OBJECT(JS_MEMBER(a),JS_MEMBER(s),JS_MEMBER(bs),JS_MEMBER(p));
 };
 
 int main()

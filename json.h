@@ -1,6 +1,7 @@
 #ifndef JSON_H
 #define JSON_H
 #include"analyse.h"
+#include"error.h"
 #include<tuple>
 #include<cassert>
 #include<string>
@@ -8,6 +9,35 @@
 namespace lsf {
 
 namespace detail{
+
+template <typename T, typename U, typename NAMETUPLE>
+struct MI
+{
+  NAMETUPLE name;
+  T U::*member;
+  typedef T type;
+};
+
+template <typename T, typename U>
+constexpr auto makeMemberInfo(const char * name, T U::*member)
+  -> MI<T, U, const char *>
+{
+  return {name, member};
+}
+
+#define JS_OBJECT_INTERNAL_IMPL(member_list)                                                               \
+  template <typename JS_OBJECT_T>                                                                                      \
+  struct JsonStructBase                                                                                                \
+  {                                                                                                                    \
+    using TT = decltype(member_list);                                                                                  \
+    static inline constexpr const TT js_static_meta_data_info()                                                        \
+    {                                                                                                                  \
+      return member_list;                                                                                              \
+    }                                                                                                                  \
+  }
+
+#define JS_MEMBER(member) lsf::detail::makeMemberInfo(#member, &JS_OBJECT_T::member)
+#define JS_OBJECT(...) JS_OBJECT_INTERNAL_IMPL(std::make_tuple(__VA_ARGS__))
 
 struct instance {
   template <typename Type>
@@ -75,6 +105,23 @@ inline auto to_tuple(T& t);
 //namespace detail end
 }
 
+//struct JsonObject
+//{
+//    int One;
+//    std::string Two;
+//    double Three;
+
+//    template <typename JS_OBJECT_T>
+//    struct JsonStructBase
+//    {
+//        using TT = decltype(std::make_tuple(makeMemberInfo("One", &JS_OBJECT_T::One) , makeMemberInfo("Two", &JS_OBJECT_T::Two) , makeMemberInfo("Three", &JS_OBJECT_T::Three)));
+//        static inline constexpr const TT js_static_meta_data_info()
+//        {
+//            return std::make_tuple(makeMemberInfo("One", &JS_OBJECT_T::One) , makeMemberInfo("Two", &JS_OBJECT_T::Two) , makeMemberInfo("Three", &JS_OBJECT_T::Three));
+//        }
+//    };
+//};
+
 template<typename T>
 inline void Deserialize(T & s,TreeNode * t);
 
@@ -87,20 +134,29 @@ void deserialize(T & obj,TreeNode * t)
         assert(t != nullptr);
         deserialize(*obj, t);
     } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
-        auto tupes=detail::to_tuple(obj);
+        auto member_info=TT::template JsonStructBase<TT>::js_static_meta_data_info();
+//        auto tupes=detail::to_tuple(obj);
         size_t n=0;
         auto temp=t->left_child_;
         do{
             n++;
             temp=temp->right_bro_;
         }while(temp!=t->left_child_);
-        assert(std::tuple_size<decltype (tupes)>::value==n);
+//        assert(std::tuple_size<decltype (tupes)>::value==n);
+        assert(std::tuple_size<decltype (member_info)>::value==n);
         TreeNode * de=new Jnode<NodeC::Obj>;
         de->right_bro_=temp;
         //不用循环，因为编译前已知次数
-        std::apply([&](auto&&... args) {
-            (deserialize(args,de=de->right_bro_),...);
-        },tupes);
+//        std::apply([&](auto&&... args) {
+//            (deserialize(args,de=de->right_bro_),...);
+//        },tupes);
+        auto check_key=std::apply([&](auto&&... args) {
+            return ((args.name==lsf::to_cstring((de=de->right_bro_)->key_))&&...);
+        },member_info);
+        if(check_key)
+            std::apply([&](auto&&... args) {
+                (deserialize(obj.*(args.member),de=de->right_bro_),...);
+            },member_info);
     }else
         Deserialize(obj,t);
 }
@@ -110,6 +166,7 @@ void deserialize(std::vector<T> &v,TreeNode * t)
 {
     auto temp=t->left_child_;
     T m{};
+    v.clear();
     do{
         deserialize(m,temp);
         v.push_back(m);
@@ -177,27 +234,36 @@ public:
     virtual void arr_start()
     {
         out_+='[';
+        out_+='\n';
     }
     virtual void arr_end()
     {
+        out_+='\n';
         out_+=']';
     }
     virtual void obj_start()
     {
         out_+='{';
+        out_+='\n';
+//        auto i=indent_;
+//        while (i>0) {
+//            out_+="  ";
+//            i--;
+//        }
     }
     virtual void obj_end()
     {
+        out_+='\n';
         out_+='}';
     }
     virtual void forward_next()
     {
         out_+=',';
+        out_+='\n';
     }
     virtual void back()
     {
-        if(out_.back()==',')
-            out_.resize(out_.size()-1);
+        out_.resize(out_.size()-2);
     }
 protected:
     std::string out_;
@@ -215,17 +281,13 @@ inline void SerializeBuilder::write_value<std::string>(const std::string & ele)
 template<>
 inline void SerializeBuilder::write_value<bool>(const bool & ele)
 {
-    out_+='"';
     out_+=(ele==true?"true":"false");
-    out_+='"';
 }
 
 template<>
 inline void SerializeBuilder::write_value<int>(const int & ele)
 {
-    out_+='"';
     out_+=std::to_string(ele);
-    out_+='"';
 }
 
 template<typename T>
@@ -237,12 +299,20 @@ void serialize(const T & obj,SerializeBuilder & builder)
         assert(obj != nullptr);
         serialize(*obj, builder);
     } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
-        auto tupes=detail::to_tuple(obj);
+//        auto tupes=detail::to_tuple(obj);
+//        builder.obj_start();
+//        std::apply([&](auto&&... args) {
+//            ((builder.write_key("fuck"),serialize(args,builder),builder.forward_next()),...);
+//        },tupes);
+//        if(std::tuple_size<decltype (tupes)>::value>0)
+//            builder.back();
+//        builder.obj_end();
+        auto member_info=TT::template JsonStructBase<TT>::js_static_meta_data_info();
         builder.obj_start();
         std::apply([&](auto&&... args) {
-            ((builder.write_key("fuck"),serialize(args,builder),builder.forward_next()),...);
-        },tupes);
-        if(std::tuple_size<decltype (tupes)>::value>0)
+            ((builder.write_key(args.name),serialize(obj.*(args.member),builder),builder.forward_next()),...);
+        },member_info);
+        if(std::tuple_size<decltype (member_info)>::value>0)
             builder.back();
         builder.obj_end();
     }else

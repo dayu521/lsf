@@ -1,4 +1,8 @@
-### json 解析器，当前只支持解析文件
+### json 解析器
+
+从文件读取json到c++结构，以及从c++结构反序列化到json
+
+感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践
 
 - 不处理字符编码问题，因为实在搞不定
 
