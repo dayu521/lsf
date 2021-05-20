@@ -11,11 +11,15 @@ namespace lsf {
 namespace detail{
 
 /*宏定义开始*/
+#define BRACKET_L() (
+#define BRACKET_R() )
 
 #define EXPAND(...) __VA_ARGS__
 
-#define CAT(x, y) x ## y
-#define PRIMITIVE_CAT(x, y) CAT(x, y)
+//#define CAT(x, y) x ## y
+//#define PRIMITIVE_CAT(x, y) CAT(x, y)
+#define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
+#define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
 
 #define JS_INTERNAL_BOOL(x) JS_INTERNAL_NOT(JS_INTERNAL_NOT(x))
 
@@ -29,7 +33,9 @@ namespace detail{
 #define JS_INTERNAL__IF_0_ELSE(...) __VA_ARGS__
 
 #define GET_N(...) IN_PARAMETER_N(__VA_ARGS__, FOR_EACH_RSEQ_N())
-#define IN_PARAMETER_N(...) PARAMETER_N(__VA_ARGS__)
+//#define IN_PARAMETER_N(...)  PARAMETER_N ( __VA_ARGS__ )
+    /* msvc需要这样的写法*/
+#define IN_PARAMETER_N(...) EXPAND( PARAMETER_N BRACKET_L() __VA_ARGS__ BRACKET_R() )
 #define PARAMETER_N(_01, _02, _03, _04, _05, _06, _07, _08, _09, _10, _11, _12, _13, _14, _15, _16, N, ...) N
 #define FOR_EACH_RSEQ_N() 16, 15, 14, 13, 12, 11, 10, 09, 08, 07, 06, 05, 04, 03, 02, 01, 00
 
@@ -49,7 +55,7 @@ namespace detail{
 #define N_03(member,name1,...)/*暂时不实现*/
 
 //#define JS_MEMBER(member,...) lsf::detail::makeMemberInfo(name, &JS_OBJECT_T::member)
-#define JS_MEMBER(...) PRIMITIVE_CAT(N_,GET_N(__VA_ARGS__))(__VA_ARGS__)
+#define JS_MEMBER(...) CAT(N_,GET_N(__VA_ARGS__))(__VA_ARGS__)
 
 #define JS_OBJECT(...) JS_OBJECT_INTERNAL_IMPL(std::make_tuple(__VA_ARGS__))
 /*宏定义结束*/
