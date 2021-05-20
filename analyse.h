@@ -34,31 +34,54 @@ enum  class NodeC{Obj,Arr,String,Number,Keyword,None,Error};
 template<auto token>
 struct Jnode;
 
+class BuilderInterface
+{
+public:
+    virtual ~BuilderInterface(){}
+protected:
+    friend class JsonParser;
+    virtual void before_build()=0;
+    virtual void after_build()=0;
+    virtual void build_obj()=0;
+    virtual void build_arr()=0;
+    virtual void build_string(std::wstring str)=0;
+    virtual void build_number(std::wstring str)=0;
+    virtual void build_keyword(std::wstring str)=0;
+    virtual void set_memberkey(std::wstring key)=0;
+    virtual void build_null_mbr()=0;
+    virtual void start_iteration()=0;
+    virtual void move_next()=0;
+    virtual void finish_iteration()=0;
+};
+
 /// 第一个指向root_,第二个指向null_
 using Tree=std::tuple<TreeNode *,TreeNode *>;
 
-class Treebuilder
+class Treebuilder :public BuilderInterface
 {
 public:
-    Tree get_ast();
+    virtual ~Treebuilder();
 protected:
     friend class JsonParser;
-    virtual void before_build();
-    virtual void after_build();
-    virtual void build_obj();
-    virtual void build_arr();
-    virtual void build_string(std::wstring str);
-    virtual void build_number(std::wstring str);
-    virtual void build_keyword(std::wstring str);
-    virtual void set_memberkey(std::wstring key);
-    virtual void build_null_mbr();
-    virtual void start_iteration();
-    virtual void move_next();
-    virtual void finish_iteration();
+    virtual void before_build() override;
+    virtual void after_build() override;
+    virtual void build_obj() override;
+    virtual void build_arr() override;
+    virtual void build_string(std::wstring str) override;
+    virtual void build_number(std::wstring str) override;
+    virtual void build_keyword(std::wstring str) override;
+    virtual void set_memberkey(std::wstring key) override;
+    virtual void build_null_mbr() override;
+    virtual void start_iteration() override;
+    virtual void move_next() override;
+    virtual void finish_iteration() override;
+public:
+    Tree get_ast();
+    void dealloc_node();
 private:
-    TreeNode * root_;
-    std::stack<TreeNode *> mbr_node_;
-    TreeNode * null_;
+    TreeNode * root_{nullptr};
+    std::stack<TreeNode *> mbr_node_{};
+    TreeNode * null_{nullptr};
 };
 
 ///********************Visitor*****************

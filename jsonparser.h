@@ -11,7 +11,7 @@ struct Token;
 
 class PError;
 
-class Treebuilder;
+class BuilderInterface;
 
 struct GenToken
 {
@@ -30,7 +30,7 @@ class JsonParser
 {
 public:
     JsonParser(std::unique_ptr<GenToken> gen);
-    void set_builder(std::shared_ptr<Treebuilder> b);
+    void set_builder(std::shared_ptr<BuilderInterface> b);
     [[nodiscard]] bool parser();
     const std::vector<lsf::Type> & get_expect_token()const;
 private:
@@ -53,7 +53,7 @@ private:
 
 private:
     std::unique_ptr<GenToken> gen_;
-    std::shared_ptr<Treebuilder> builder_;
+    std::shared_ptr<BuilderInterface> builder_;
     std::vector<lsf::Type> expect_array_;
 };
 

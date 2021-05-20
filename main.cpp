@@ -15,8 +15,11 @@ struct Pe
 {
     std::string name;
     int age;
-    std::vector<int> ss;
-    JS_OBJECT(JS_MEMBER(name),JS_MEMBER(age),JS_MEMBER(ss));
+    std::vector<int> fucks;
+    //默认json的键是成员名的字符串,即"name","age","fucks"
+    JS_OBJECT(JS_MEMBER(name),JS_MEMBER(age),JS_MEMBER(fucks));
+    //为成员名指定不同的json键
+//    JS_OBJECT(JS_MEMBER(name,"xxxkey1"),JS_MEMBER(age,"xxxkey2"),JS_MEMBER(fucks,"xxxkey3"));
 };
 struct Hellos
 {

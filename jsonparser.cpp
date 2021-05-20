@@ -11,7 +11,7 @@ JsonParser::JsonParser(std::unique_ptr<GenToken> gen):gen_(std::move(gen)),
 
 }
 
-void JsonParser::set_builder(std::shared_ptr<Treebuilder> b)
+void JsonParser::set_builder(std::shared_ptr<BuilderInterface> b)
 {
     builder_=b;
 }

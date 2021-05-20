@@ -10,6 +10,51 @@ namespace lsf {
 
 namespace detail{
 
+/*宏定义开始*/
+
+#define EXPAND(...) __VA_ARGS__
+
+#define CAT(x, y) x ## y
+#define PRIMITIVE_CAT(x, y) CAT(x, y)
+
+#define JS_INTERNAL_BOOL(x) JS_INTERNAL_NOT(JS_INTERNAL_NOT(x))
+
+#define JS_INTERNAL_IF_ELSE(condition) JS_INTERNAL__IF_ELSE(JS_INTERNAL_BOOL(condition))
+#define JS_INTERNAL__IF_ELSE(condition) JS_INTERNAL_CAT(JS_INTERNAL__IF_, condition)
+
+#define JS_INTERNAL__IF_1(...) __VA_ARGS__ JS_INTERNAL__IF_1_ELSE
+#define JS_INTERNAL__IF_0(...) JS_INTERNAL__IF_0_ELSE
+
+#define JS_INTERNAL__IF_1_ELSE(...)
+#define JS_INTERNAL__IF_0_ELSE(...) __VA_ARGS__
+
+#define GET_N(...) IN_PARAMETER_N(__VA_ARGS__, FOR_EACH_RSEQ_N())
+#define IN_PARAMETER_N(...) PARAMETER_N(__VA_ARGS__)
+#define PARAMETER_N(_01, _02, _03, _04, _05, _06, _07, _08, _09, _10, _11, _12, _13, _14, _15, _16, N, ...) N
+#define FOR_EACH_RSEQ_N() 16, 15, 14, 13, 12, 11, 10, 09, 08, 07, 06, 05, 04, 03, 02, 01, 00
+
+#define JS_OBJECT_INTERNAL_IMPL(member_list)                                                               \
+  template <typename JS_OBJECT_T>                                                                                      \
+  struct JsonStructBase                                                                                                \
+  {                                                                                                                    \
+    using TT = decltype(member_list);                                                                                  \
+    static inline constexpr const TT js_static_meta_data_info()                                                        \
+    {                                                                                                                  \
+      return member_list;                                                                                              \
+    }                                                                                                                  \
+  }
+
+#define N_01(member,...) lsf::detail::makeMemberInfo(#member, &JS_OBJECT_T::member)
+#define N_02(member,name1,...) lsf::detail::makeMemberInfo(name1, &JS_OBJECT_T::member)
+#define N_03(member,name1,...)/*暂时不实现*/
+
+//#define JS_MEMBER(member,...) lsf::detail::makeMemberInfo(name, &JS_OBJECT_T::member)
+#define JS_MEMBER(...) PRIMITIVE_CAT(N_,GET_N(__VA_ARGS__))(__VA_ARGS__)
+
+#define JS_OBJECT(...) JS_OBJECT_INTERNAL_IMPL(std::make_tuple(__VA_ARGS__))
+/*宏定义结束*/
+
+
 template <typename T, typename U, typename NAMETUPLE>
 struct MI
 {
@@ -24,20 +69,6 @@ constexpr auto makeMemberInfo(const char * name, T U::*member)
 {
   return {name, member};
 }
-
-#define JS_OBJECT_INTERNAL_IMPL(member_list)                                                               \
-  template <typename JS_OBJECT_T>                                                                                      \
-  struct JsonStructBase                                                                                                \
-  {                                                                                                                    \
-    using TT = decltype(member_list);                                                                                  \
-    static inline constexpr const TT js_static_meta_data_info()                                                        \
-    {                                                                                                                  \
-      return member_list;                                                                                              \
-    }                                                                                                                  \
-  }
-
-#define JS_MEMBER(member) lsf::detail::makeMemberInfo(#member, &JS_OBJECT_T::member)
-#define JS_OBJECT(...) JS_OBJECT_INTERNAL_IMPL(std::make_tuple(__VA_ARGS__))
 
 struct instance {
   template <typename Type>
@@ -88,40 +119,10 @@ constexpr std::size_t arity() {
 template <typename T>
 inline auto to_tuple(T& t);
 
-
-//template <typename T, typename Fn>
-//inline void for_each_field(T& t, Fn&& fn) {
-//  if constexpr (std::is_pointer_v<T>) {//if constexpr间接提供了"函数偏特化"
-//    static_assert (!std::is_pointer_v<std::decay_t<decltype (*t)>>,"不支持多级指针");
-//    assert(t != nullptr);
-//    for_each_field(*t, std::forward<Fn>(fn));
-//  } else if constexpr (std::is_scalar_v<T>) {
-//    fn(t);
-//  } else {
-//    std::apply([&](auto&&... args) { (fn(args), ...); }, detail::to_tuple(t));
-//  }
-//}
-
 //namespace detail end
 }
 
-//struct JsonObject
-//{
-//    int One;
-//    std::string Two;
-//    double Three;
-
-//    template <typename JS_OBJECT_T>
-//    struct JsonStructBase
-//    {
-//        using TT = decltype(std::make_tuple(makeMemberInfo("One", &JS_OBJECT_T::One) , makeMemberInfo("Two", &JS_OBJECT_T::Two) , makeMemberInfo("Three", &JS_OBJECT_T::Three)));
-//        static inline constexpr const TT js_static_meta_data_info()
-//        {
-//            return std::make_tuple(makeMemberInfo("One", &JS_OBJECT_T::One) , makeMemberInfo("Two", &JS_OBJECT_T::Two) , makeMemberInfo("Three", &JS_OBJECT_T::Three));
-//        }
-//    };
-//};
-
+/*****************************/
 template<typename T>
 inline void Deserialize(T & s,TreeNode * t);
 
@@ -146,6 +147,7 @@ void deserialize(T & obj,TreeNode * t)
         assert(std::tuple_size<decltype (member_info)>::value==n);
         TreeNode * de=new Jnode<NodeC::Obj>;
         de->right_bro_=temp;
+        temp=de;
         //不用循环，因为编译前已知次数
 //        std::apply([&](auto&&... args) {
 //            (deserialize(args,de=de->right_bro_),...);
@@ -157,6 +159,7 @@ void deserialize(T & obj,TreeNode * t)
             std::apply([&](auto&&... args) {
                 (deserialize(obj.*(args.member),de=de->right_bro_),...);
             },member_info);
+        delete temp;
     }else
         Deserialize(obj,t);
 }
@@ -215,15 +218,13 @@ inline void Deserialize<bool>(bool & b,TreeNode * t)
 class SerializeBuilder
 {
 public:
-    std::string get_jsonstring()const{return out_.c_str();}
+    std::string get_jsonstring()const{return out_;}
 public:
     virtual ~SerializeBuilder(){}
-    ///数组元素和基本值(string,keyword,number...)
+
     template<typename T>
-    void write_value(const T & ele)
-    {
-        out_.push_back(ele);
-    }
+    void write_value(const T & ele);
+
     virtual void write_key(std::string key)
     {
         out_+='"';

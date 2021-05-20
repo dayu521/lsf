@@ -7,6 +7,12 @@
 
 namespace lsf {
 
+Treebuilder::~Treebuilder()
+{
+    if(root_!=nullptr&&null_!=nullptr)
+        dealloc_node();
+}
+
 Tree Treebuilder::get_ast()
 {
     return {root_,null_};
@@ -14,6 +20,8 @@ Tree Treebuilder::get_ast()
 
 void Treebuilder::before_build()
 {
+    if(root_!=nullptr&&null_!=nullptr)
+        dealloc_node();
     root_=null_=new Jnode<NodeC::Obj>;
     null_->left_child_=null_->right_bro_=null_;
     null_->key_=L"Never used!";
@@ -98,6 +106,30 @@ void Treebuilder::finish_iteration()
 {
     root_=root_->right_bro_;
     mbr_node_.pop();
+}
+
+void Treebuilder::dealloc_node()
+{
+    assert(root_!=nullptr&&null_!=nullptr);
+    std::queue< TreeNode*> c{};
+    auto root=root_;
+    c.push(root);
+    while (!c.empty()) {
+        auto i=c.front();
+        c.pop();
+
+        if(i->left_child_!=null_){
+            auto j=i->left_child_;
+            do {
+                c.push(j);
+                j=j->right_bro_;
+            } while (j!=i->left_child_);
+        }
+        delete i;
+        i=nullptr;
+    }
+    delete null_;
+    root_=null_=nullptr;
 }
 
 void PrintNodes::set_null(TreeNode *nul)
