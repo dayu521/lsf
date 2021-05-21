@@ -27,7 +27,7 @@ struct Hellos
     std::string s;
     bool bs;
     Pe p;
-    JS_OBJECT(JS_MEMBER(a),JS_MEMBER(s),JS_MEMBER(bs),JS_MEMBER(p));
+    JS_OBJECT(JS_MEMBER(a,"a"),JS_MEMBER(s),JS_MEMBER(bs,"bs"),JS_MEMBER(p,"p"));
 };
 
 int main()

@@ -270,6 +270,8 @@ bool Lexer::run()
         auto haskey=symbol_.end()!=symbol_.find(s);
 #endif
         if(haskey){
+            if(s==L"null")
+                current_token_.type_=Type::Null;
             input_->discard_token();
             goto T;
         }

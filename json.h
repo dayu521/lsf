@@ -14,7 +14,7 @@ namespace detail{
 #define BRACKET_L() (
 #define BRACKET_R() )
 
-#define EXPAND(...) __VA_ARGS__
+#define EVAL(...) __VA_ARGS__
 
 #define CAT(a, ...) PRIMITIVE_CAT(a, __VA_ARGS__)
 #define PRIMITIVE_CAT(a, ...) a ## __VA_ARGS__
@@ -31,7 +31,11 @@ namespace detail{
 #define JS_INTERNAL__IF_0_ELSE(...) __VA_ARGS__
 
 #define GET_N(...) IN_PARAMETER_N(__VA_ARGS__, FOR_EACH_RSEQ_N())
-#define IN_PARAMETER_N(...) EXPAND( PARAMETER_N( __VA_ARGS__ ) )
+/*#define IN_PARAMETER_N(...)  PARAMETER_N( __VA_ARGS__ )
+    因为msvc会在转发可变参数时"优化"，于是PARAMETER_N不会展开__VA_ARGS__
+    https://docs.microsoft.com/en-us/cpp/preprocessor/preprocessor-experimental-overview?view=msvc-160
+*/
+#define IN_PARAMETER_N(...) EVAL( PARAMETER_N( __VA_ARGS__ ) )
 #define PARAMETER_N(_01, _02, _03, _04, _05, _06, _07, _08, _09, _10, _11, _12, _13, _14, _15, _16, N, ...) N
 #define FOR_EACH_RSEQ_N() 16, 15, 14, 13, 12, 11, 10, 09, 08, 07, 06, 05, 04, 03, 02, 01, 00
 
@@ -50,7 +54,7 @@ namespace detail{
 #define N_02(member,name1,...) lsf::detail::makeMemberInfo(name1, &JS_OBJECT_T::member)
 #define N_03(member,name1,...)/*暂时不实现*/
 
-//#define JS_MEMBER(member,...) lsf::detail::makeMemberInfo(name, &JS_OBJECT_T::member)
+/*#define JS_MEMBER(member,...) lsf::detail::makeMemberInfo(name, &JS_OBJECT_T::member)*/
 #define JS_MEMBER(...) CAT(N_,GET_N(__VA_ARGS__))(__VA_ARGS__)
 
 #define JS_OBJECT(...) JS_OBJECT_INTERNAL_IMPL(std::make_tuple(__VA_ARGS__))
@@ -131,37 +135,43 @@ inline void Deserialize(T & s,TreeNode * t);
 template<typename T>
 void deserialize(T & obj,TreeNode * t)
 {
+    auto temp=t->left_child_;
+    if(temp==t){
+        //到底了
+        obj={};
+        return;
+    }
     using TT=std::decay_t<T>;
     if constexpr (std::is_pointer_v<TT>) {//if constexpr间接提供了"函数偏特化"
         static_assert (!std::is_pointer_v<std::decay_t<decltype (*t)>>,"不支持多级指针");
-        assert(t != nullptr);
+        if(t==nullptr)
+            return ;
         deserialize(*obj, t);
     } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
         auto member_info=TT::template JsonStructBase<TT>::js_static_meta_data_info();
-//        auto tupes=detail::to_tuple(obj);
-        size_t n=0;
-        auto temp=t->left_child_;
+        if(t->ele_type_==NodeC::Null){
+            obj={};
+            return;
+        }
+        std::vector<TreeNode*> vs{};
         do{
-            n++;
+            vs.push_back(temp);
             temp=temp->right_bro_;
         }while(temp!=t->left_child_);
-//        assert(std::tuple_size<decltype (tupes)>::value==n);
-        assert(std::tuple_size<decltype (member_info)>::value==n);
-        TreeNode * de=new Jnode<NodeC::Obj>;
-        de->right_bro_=temp;
-        temp=de;
-        //不用循环，因为编译前已知次数
-//        std::apply([&](auto&&... args) {
-//            (deserialize(args,de=de->right_bro_),...);
-//        },tupes);
+        if(std::tuple_size<decltype (member_info)>::value!=vs.size()){
+            //元素数量不等
+            return ;
+        }
+        std::size_t n=0;
         auto check_key=std::apply([&](auto&&... args) {
-            return ((args.name==lsf::to_cstring((de=de->right_bro_)->key_))&&...);
+            return ((args.name==lsf::to_cstring(vs[n++]->key_))&&...);
         },member_info);
+        n=0;
         if(check_key)
             std::apply([&](auto&&... args) {
-                (deserialize(obj.*(args.member),de=de->right_bro_),...);
+                (deserialize(obj.*(args.member),vs[n++]),...);
             },member_info);
-        delete temp;
+        //key不等
     }else
         Deserialize(obj,t);
 }
@@ -170,6 +180,17 @@ template<typename T>
 void deserialize(std::vector<T> &v,TreeNode * t)
 {
     auto temp=t->left_child_;
+    if(t->ele_type_==NodeC::Null){
+        v={};
+        return;
+    }
+    if(temp==t){
+        //到底了
+        v={};
+        return;
+    }
+    if(t->ele_type_!=NodeC::Arr)
+        return;
     T m{};
     v.clear();
     do{
@@ -182,8 +203,8 @@ void deserialize(std::vector<T> &v,TreeNode * t)
 template<>
 inline void Deserialize<std::string>(std::string & s,TreeNode * t)
 {
-    //如果有错,语法分析会提前失败.下同
     if(t->ele_type_==NodeC::String){
+        //如果有错,语法分析会提前失败.下同
         auto v=static_cast<Jnode<NodeC::String> *>(t)->data_;
         char cc[6];
         std::string r{};
@@ -194,6 +215,7 @@ inline void Deserialize<std::string>(std::string & s,TreeNode * t)
             s.append(cc,l);
         }
     }
+    //错误
 }
 
 template<>
@@ -202,6 +224,7 @@ inline void Deserialize<int>(int & s,TreeNode * t)
     if(t->ele_type_==NodeC::Number){     
         s=std::stoi(static_cast<Jnode<NodeC::Number> *>(t)->data_);
     }
+    //错误
 }
 
 template<>
@@ -215,6 +238,7 @@ inline void Deserialize<bool>(bool & b,TreeNode * t)
             b=false;
         }
     }
+    //错误
 }
 
 class SerializeBuilder
@@ -300,7 +324,10 @@ void serialize(const T & obj,SerializeBuilder & builder)
     if constexpr (std::is_pointer_v<TT>) {//if constexpr间接提供了"函数偏特化"
         static_assert (!std::is_pointer_v<std::decay_t<decltype (*obj)>>,"不支持多级指针");
         assert(obj != nullptr);
-        serialize(*obj, builder);
+        if(obj==nullptr){
+            builder.write_value<std::string>("null");
+        }else
+            serialize(*obj, builder);
     } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
 //        auto tupes=detail::to_tuple(obj);
 //        builder.obj_start();

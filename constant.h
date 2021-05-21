@@ -7,6 +7,7 @@ enum class Type{
     String,
     Number,
     KeyWord,
+    Null,
     Comment,
     LBRACE, RBRACE,     //{,}
     LSQUARE, RSQUARE,   //[,]
@@ -26,6 +27,8 @@ inline const char * tokentype_to_string(Type type)
         return "<Number>";
     case Type::KeyWord:
         return "<KeyWord>";
+    case Type::Null:
+        return "<Null>";
     case Type::Comment:
         return "<Comment>";
     case Type::LBRACE:

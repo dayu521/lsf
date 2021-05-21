@@ -29,7 +29,7 @@ namespace lsf {
 
 struct TreeNode;
 
-enum  class NodeC{Obj,Arr,String,Number,Keyword,None,Error};
+enum  class NodeC{Obj,Arr,String,Number,Keyword,Null,Error};
 
 template<auto token>
 struct Jnode;
@@ -47,6 +47,7 @@ protected:
     virtual void build_string(std::wstring str)=0;
     virtual void build_number(std::wstring str)=0;
     virtual void build_keyword(std::wstring str)=0;
+    virtual void build_Null(std::wstring str)=0;
     virtual void set_memberkey(std::wstring key)=0;
     virtual void build_null_mbr()=0;
     virtual void start_iteration()=0;
@@ -70,6 +71,7 @@ protected:
     virtual void build_string(std::wstring str) override;
     virtual void build_number(std::wstring str) override;
     virtual void build_keyword(std::wstring str) override;
+    virtual void build_Null(std::wstring str) override;
     virtual void set_memberkey(std::wstring key) override;
     virtual void build_null_mbr() override;
     virtual void start_iteration() override;
@@ -81,6 +83,7 @@ public:
 private:
     TreeNode * root_{nullptr};
     std::stack<TreeNode *> mbr_node_{};
+    std::vector<TreeNode *> clear_{};
     TreeNode * null_{nullptr};
 };
 
@@ -99,7 +102,8 @@ class Visitor : public lsf::BaseVisitor<
         Jnode<NodeC::Arr>,
         Jnode<NodeC::String>,
         Jnode<NodeC::Number>,
-        Jnode<NodeC::Keyword>>
+        Jnode<NodeC::Keyword>,
+        Jnode<NodeC::Null>>
 {
 public:
     virtual ~Visitor(){}
@@ -114,7 +118,8 @@ class TypeChecker: public lsf::BaseVisitor<
         Jnode<NodeC::Arr>,
         Jnode<NodeC::String>,
         Jnode<NodeC::Number>,
-        Jnode<NodeC::Keyword>>
+        Jnode<NodeC::Keyword>,
+        Jnode<NodeC::Null>>
 {
 public:
     virtual bool visit(Jnode<NodeC::Obj> & obj)override;
@@ -122,6 +127,7 @@ public:
     virtual bool visit(Jnode<NodeC::String> & str)override;
     virtual bool visit(Jnode<NodeC::Number> & num)override;
     virtual bool visit(Jnode<NodeC::Keyword> & key)override;
+    virtual bool visit(Jnode<NodeC::Null> & null)override;
 public:
     bool check_type(Tree root);
     bool do_check(int first,int another);
@@ -141,6 +147,7 @@ private:
     virtual void visit(Jnode<NodeC::String> & str)override;
     virtual void visit(Jnode<NodeC::Number> & num)override;
     virtual void visit(Jnode<NodeC::Keyword> & key)override;
+    virtual void visit(Jnode<NodeC::Null> & null)override;
     TreeNode * faken_{};
 };
 
@@ -192,6 +199,13 @@ template<>
 struct Jnode<NodeC::Keyword> :TreeNode
 {
     std::wstring data_;
+    AcceptImp
+    TypeCheckerImp
+};
+
+template<>
+struct Jnode<NodeC::Null> : Jnode<NodeC::Keyword>
+{
     AcceptImp
     TypeCheckerImp
 };

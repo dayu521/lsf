@@ -54,9 +54,9 @@ bool JsonParser::element()
     return false;
 }
 
-//value -> obj | array | String | Number | KeyWord
+//value -> obj | array | String | Number | KeyWord | Null
 //value.node=obj.node,array.node
-//value.node=new Jnode<string,number,keyword>;
+//value.node=new Jnode<(string|number|keyword|Null)>;
 bool JsonParser::value()
 {
     switch (gen_->current_().type_) {
@@ -79,8 +79,13 @@ bool JsonParser::value()
         gen_->next_();
         return true;
     }
+    case Type::Null:{
+        builder_->build_Null(gen_->current_().value_);
+        gen_->next_();
+        return true;
+    }
     default:
-        expect_array_.assign({Type::String,Type::Number,Type::KeyWord});
+        expect_array_.assign({Type::String,Type::Number,Type::KeyWord,Type::Null});
         return false;
     }
 }
@@ -238,7 +243,8 @@ bool JsonParser::arr_ws_r()
     case TType::LSQUARE:
     case TType::String:
     case TType::Number:
-    case TType::KeyWord:{
+    case TType::KeyWord:
+    case TType::Null:{
         if(value()){
             unuse();
             return elementsL();

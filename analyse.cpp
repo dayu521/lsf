@@ -9,8 +9,7 @@ namespace lsf {
 
 Treebuilder::~Treebuilder()
 {
-    if(root_!=nullptr&&null_!=nullptr)
-        dealloc_node();
+    dealloc_node();
 }
 
 Tree Treebuilder::get_ast()
@@ -20,11 +19,11 @@ Tree Treebuilder::get_ast()
 
 void Treebuilder::before_build()
 {
-    if(root_!=nullptr&&null_!=nullptr)
-        dealloc_node();
+    dealloc_node();
     root_=null_=new Jnode<NodeC::Obj>;
     null_->left_child_=null_->right_bro_=null_;
     null_->key_=L"Never used!";
+    clear_.push_back(null_);
 }
 
 void Treebuilder::after_build()
@@ -37,17 +36,21 @@ void Treebuilder::after_build()
 void Treebuilder::build_obj()
 {
     auto n=new Jnode<NodeC::Obj>;
+    n->ele_type_=NodeC::Obj;
     n->left_child_=root_;
     n->right_bro_=n;
     root_=n;
+    clear_.push_back(root_);
 }
 
 void Treebuilder::build_arr()
 {
     auto n=new Jnode<NodeC::Arr>;
+    n->ele_type_=NodeC::Arr;
     n->left_child_=root_;
     n->right_bro_=n;
     root_=n;
+    clear_.push_back(root_);
 }
 
 void Treebuilder::build_string(std::wstring str)
@@ -58,6 +61,7 @@ void Treebuilder::build_string(std::wstring str)
     n->left_child_=null_;
     n->right_bro_=n;
     root_=n;
+    clear_.push_back(root_);
 }
 
 void Treebuilder::build_number(std::wstring str)
@@ -68,6 +72,7 @@ void Treebuilder::build_number(std::wstring str)
     n->left_child_=null_;
     n->right_bro_=n;
     root_=n;
+    clear_.push_back(root_);
 }
 
 void Treebuilder::build_keyword(std::wstring str)
@@ -78,6 +83,13 @@ void Treebuilder::build_keyword(std::wstring str)
     n->left_child_=null_;
     n->right_bro_=n;
     root_=n;
+    clear_.push_back(root_);
+}
+
+void Treebuilder::build_Null(std::wstring str)
+{
+    build_keyword(str);
+    root_->ele_type_=NodeC::Null;
 }
 
 void Treebuilder::set_memberkey(std::wstring key)
@@ -110,26 +122,11 @@ void Treebuilder::finish_iteration()
 
 void Treebuilder::dealloc_node()
 {
-    assert(root_!=nullptr&&null_!=nullptr);
-    std::queue< TreeNode*> c{};
-    auto root=root_;
-    c.push(root);
-    while (!c.empty()) {
-        auto i=c.front();
-        c.pop();
-
-        if(i->left_child_!=null_){
-            auto j=i->left_child_;
-            do {
-                c.push(j);
-                j=j->right_bro_;
-            } while (j!=i->left_child_);
-        }
+    for(auto & i:clear_){
         delete i;
         i=nullptr;
     }
-    delete null_;
-    root_=null_=nullptr;
+    clear_.clear();
 }
 
 void PrintNodes::set_null(TreeNode *nul)
@@ -166,6 +163,11 @@ void PrintNodes::visit(Jnode<NodeC::Number> &num)
 void PrintNodes::visit(Jnode<NodeC::Keyword> &key)
 {
     std::cout<<lsf::to_cstring(key.data_)<<" ";
+}
+
+void PrintNodes::visit(Jnode<NodeC::Null> &null)
+{
+    std::cout<<"null"<<" ";
 }
 
 void Visitor::visit_BFS(Tree roott, std::function<void ()> round_callback)
@@ -277,6 +279,13 @@ bool TypeChecker::visit(Jnode<NodeC::Number> &num)
 bool TypeChecker::visit(Jnode<NodeC::Keyword> &key)
 {
     current_type=NodeC::Keyword;
+    jtype_.push_back(current_type);
+    return true;
+}
+
+bool TypeChecker::visit(Jnode<NodeC::Null> &null)
+{
+    current_type=NodeC::Null;
     jtype_.push_back(current_type);
     return true;
 }
