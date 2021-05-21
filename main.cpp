@@ -71,13 +71,14 @@ int main()
     }
 
     //广度优先输出
-    lsf::PrintNodes p;
-    p.set_null(std::get<1>(builder->get_ast()));
-    p.visit_BFS(builder->get_ast(),[]{std::cout<<std::endl;});
+//    lsf::PrintNodes p;
+//    p.set_null(std::get<1>(builder->get_ast()));
+//    p.visit_BFS(builder->get_ast(),[]{std::cout<<std::endl;});
 
     //类型检查
     lsf::TypeChecker typer;
     if(!typer.check_type(builder->get_ast())){
+        std::cout<<"类型检查失败"<<std::endl;
         return -1;
     }
 
@@ -89,7 +90,7 @@ int main()
     lsf::SerializeBuilder bu;
     lsf::serialize(lf,bu);
 
-    std::cout<<bu.get_jsonstring();
+    std::cout<<bu.get_jsonstring()<<std::endl;
 
     std::setlocale(LC_ALL,old);
     return 0;

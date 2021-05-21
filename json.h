@@ -244,9 +244,10 @@ inline void Deserialize<bool>(bool & b,TreeNode * t)
 class SerializeBuilder
 {
 public:
+    SerializeBuilder(){indent.push(0);}
+    virtual ~SerializeBuilder(){}
     std::string get_jsonstring()const{return out_;}
 public:
-    virtual ~SerializeBuilder(){}
 
     template<typename T>
     void write_value(const T & ele);
@@ -256,45 +257,69 @@ public:
         out_+='"';
         out_+=key;
         out_+='"';
-        out_+=':';
+        out_+=": ";
     }
     virtual void arr_start()
     {
         out_+='[';
         out_+='\n';
+        indent.push(indent.top()+1);
+        auto i=indent.top();
+        while (i>0) {
+            out_+="    ";
+            i--;
+        }
     }
     virtual void arr_end()
     {
-        out_+='\n';
+        out_+='\n';     
+        auto i=indent.top();
+        indent.pop();
+        while (i-1>0) {
+            out_+="    ";
+            i--;
+        }
         out_+=']';
     }
     virtual void obj_start()
     {
         out_+='{';
         out_+='\n';
-//        auto i=indent_;
-//        while (i>0) {
-//            out_+="  ";
-//            i--;
-//        }
+        indent.push(indent.top()+1);
+        auto i=indent.top();
+        while (i>0) {
+            out_+="    ";
+            i--;
+        }
     }
     virtual void obj_end()
     {
-        out_+='\n';
+        out_+='\n';       
+        auto i=indent.top();
+        indent.pop();
+        while (i-1>0) {
+            out_+="    ";
+            i--;
+        }
         out_+='}';
     }
     virtual void forward_next()
     {
         out_+=',';
         out_+='\n';
+        auto i=indent.top();
+        while (i>0) {
+            out_+="    ";
+            i--;
+        }
     }
     virtual void back()
     {
-        out_.resize(out_.size()-2);
+        out_.resize(out_.size()-indent.top()*4-2);
     }
 protected:
-    std::string out_;
-    int indent_{0};
+    std::string out_{};
+    std::stack<int> indent{};
 };
 
 template<>
