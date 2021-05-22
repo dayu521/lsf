@@ -23,7 +23,7 @@ struct Pe
 };
 struct Hellos
 {
-    int a;
+    double a;
     std::string s;
     bool bs;
     Pe p;
@@ -76,16 +76,20 @@ int main()
 //    p.visit_BFS(builder->get_ast(),[]{std::cout<<std::endl;});
 
     //类型检查
-    lsf::TypeChecker typer;
+    lsf::WeakTypeChecker typer;
     if(!typer.check_type(builder->get_ast())){
         std::cout<<"类型检查失败"<<std::endl;
+        std::cout<<typer.get_error()<<std::endl;
         return -1;
     }
 
-    std::cout<<"合法json"<<endl;
-
     Hellos lf;
-    lsf::deserialize(lf,std::get<0>(builder->get_ast()));
+    try {
+        lsf::deserialize(lf,std::get<0>(builder->get_ast()));
+    }  catch (const lsf::DeserializeError &ex) {
+        std::cout<<ex.what()<<std::endl;
+        return -1;
+    }
 
     lsf::SerializeBuilder bu;
     lsf::serialize(lf,bu);

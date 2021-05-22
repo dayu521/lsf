@@ -27,9 +27,11 @@ namespace lsf {
 //    virtual ~LinkNode(){}
 //};
 
+inline constexpr const char * CXC[]={"true","false","null"};
+
 struct TreeNode;
 
-enum  class NodeC{Obj,Arr,String,Number,Keyword,Null,Error};
+enum  class NodeC:char{Obj,Arr,String,Number,Keyword,Null,Error};
 
 template<auto token>
 struct Jnode;
@@ -82,7 +84,7 @@ public:
     void dealloc_node();
 private:
     TreeNode * root_{nullptr};
-    std::stack<TreeNode *> mbr_node_{};
+    std::stack<std::tuple<TreeNode *,int>> mbr_node_{};
     std::vector<TreeNode *> clear_{};
     TreeNode * null_{nullptr};
 };
@@ -112,7 +114,7 @@ public:
 ///********************************
 /// 检查对象的重复key，以及数组中每个元素类型是否相同
 ///**********************************
-class TypeChecker: public lsf::BaseVisitor<
+class WeakTypeChecker: public lsf::BaseVisitor<
         bool,   //返回类型
         Jnode<NodeC::Obj>,
         Jnode<NodeC::Arr>,
@@ -129,12 +131,15 @@ public:
     virtual bool visit(Jnode<NodeC::Keyword> & key)override;
     virtual bool visit(Jnode<NodeC::Null> & null)override;
 public:
+    [[nodiscard]]
     bool check_type(Tree root);
     bool do_check(int first,int another);
+    std::string_view get_error();
 private:
     NodeC current_type{NodeC::Error};
     TreeNode * null_{};
     std::vector<NodeC> jtype_{};
+    std::string error_{};
 };
 
 class PrintNodes: public Visitor
@@ -152,62 +157,64 @@ private:
 };
 
 #define AcceptImp virtual Visitor::Rtype accept(Visitor & v){return v.visit(*this);}
-#define TypeCheckerImp virtual TypeChecker::Rtype accept_check(TypeChecker & v){return v.visit(*this);}
+#define TypeCheckerImp(TypeChecker) virtual TypeChecker::Rtype accept_check(TypeChecker & v){return v.visit(*this);}
 
 struct TreeNode
 {
     TreeNode * left_child_{nullptr};    ///左孩子
     TreeNode * right_bro_{nullptr};     ///右兄弟
-    std::wstring key_;                  ///作为对象成员的key
+    std::string key_;                  ///作为对象成员的key
     NodeC ele_type_{NodeC::Error};
     virtual  Visitor::Rtype accept(Visitor & v)=0;
-    virtual TypeChecker::Rtype accept_check(TypeChecker & v)=0;
+    virtual WeakTypeChecker::Rtype accept_check(WeakTypeChecker & v)=0;
     virtual ~TreeNode(){}
 };
 
 template<>
 struct Jnode<NodeC::Obj>:TreeNode
 {
+    int n_;
     AcceptImp
-    TypeCheckerImp
+    TypeCheckerImp(WeakTypeChecker)
 };
 
 template<>
 struct Jnode<NodeC::Arr>:TreeNode
 {
+    int n_;
     AcceptImp
-    TypeCheckerImp
+    TypeCheckerImp(WeakTypeChecker)
 };
 
 template<>
 struct Jnode<NodeC::String> :TreeNode
 {
-    std::wstring data_;
+    std::string data_;                  ///对于obj和arr，表示成员数量
     AcceptImp
-    TypeCheckerImp
+    TypeCheckerImp(WeakTypeChecker)
 };
 
 template<>
 struct Jnode<NodeC::Number> :TreeNode
 {
-    std::wstring data_;
+    std::string data_;                  ///对于obj和arr，表示成员数量
     AcceptImp
-    TypeCheckerImp
+    TypeCheckerImp(WeakTypeChecker)
 };
 
 template<>
 struct Jnode<NodeC::Keyword> :TreeNode
 {
-    std::wstring data_;
+    bool b_{false};
     AcceptImp
-    TypeCheckerImp
+    TypeCheckerImp(WeakTypeChecker)
 };
 
 template<>
-struct Jnode<NodeC::Null> : Jnode<NodeC::Keyword>
+struct Jnode<NodeC::Null> : TreeNode
 {
     AcceptImp
-    TypeCheckerImp
+    TypeCheckerImp(WeakTypeChecker)
 };
 
 //namespace end

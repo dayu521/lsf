@@ -22,13 +22,13 @@ void Treebuilder::before_build()
     dealloc_node();
     root_=null_=new Jnode<NodeC::Obj>;
     null_->left_child_=null_->right_bro_=null_;
-    null_->key_=L"Never used!";
+    null_->key_="Never used!";
     clear_.push_back(null_);
 }
 
 void Treebuilder::after_build()
 {
-    root_->key_ = L"\"root\"";
+    root_->key_ = "root";
     root_->right_bro_=root_;
     null_->left_child_=null_->right_bro_=null_;
 }
@@ -39,7 +39,9 @@ void Treebuilder::build_obj()
     n->ele_type_=NodeC::Obj;
     n->left_child_=root_;
     n->right_bro_=n;
+    n->n_=std::get<1>(mbr_node_.top());
     root_=n;
+    mbr_node_.pop();
     clear_.push_back(root_);
 }
 
@@ -49,14 +51,16 @@ void Treebuilder::build_arr()
     n->ele_type_=NodeC::Arr;
     n->left_child_=root_;
     n->right_bro_=n;
+    n->n_=std::get<1>(mbr_node_.top());
     root_=n;
+    mbr_node_.pop();
     clear_.push_back(root_);
 }
 
 void Treebuilder::build_string(std::wstring str)
 {
-    auto n=new Jnode<NodeC::String>;
-    n->data_=std::move(std::move(str));
+    auto n=new Jnode<NodeC::String>; 
+    n->data_=to_cstring(str);
     n->ele_type_=NodeC::String;
     n->left_child_=null_;
     n->right_bro_=n;
@@ -67,7 +71,7 @@ void Treebuilder::build_string(std::wstring str)
 void Treebuilder::build_number(std::wstring str)
 {
     auto n=new Jnode<NodeC::Number>;
-    n->data_=std::move(str);
+    n->data_=to_cstring(str);
     n->ele_type_=NodeC::Number;
     n->left_child_=null_;
     n->right_bro_=n;
@@ -78,7 +82,8 @@ void Treebuilder::build_number(std::wstring str)
 void Treebuilder::build_keyword(std::wstring str)
 {
     auto n=new Jnode<NodeC::Keyword>;
-    n->data_=std::move(str);
+    if(str==L"true")
+        n->b_=true;
     n->ele_type_=NodeC::Keyword;
     n->left_child_=null_;
     n->right_bro_=n;
@@ -88,36 +93,44 @@ void Treebuilder::build_keyword(std::wstring str)
 
 void Treebuilder::build_Null(std::wstring str)
 {
-    build_keyword(str);
-    root_->ele_type_=NodeC::Null;
+    auto n=new Jnode<NodeC::Null>;
+    n->ele_type_=NodeC::Null;
+    n->left_child_=null_;
+    n->right_bro_=n;
+    root_=n;
+    clear_.push_back(root_);
 }
 
 void Treebuilder::set_memberkey(std::wstring key)
 {
-    root_->key_=key;
+    root_->key_=to_cstring(key);
 }
 
 void Treebuilder::build_null_mbr()
 {
     root_=null_;
+    mbr_node_.push({nullptr,0});
 }
 
+//当前已经有一个元素了
 void Treebuilder::start_iteration()
 {
-    mbr_node_.push(root_);//构建完成后正好清空
+    mbr_node_.push({root_,1});//构建完成后正好清空
 }
 
 void Treebuilder::move_next()
 {
-    root_->right_bro_=mbr_node_.top()->right_bro_;
-    mbr_node_.top()->right_bro_=root_;
-    mbr_node_.top()=root_;
+    auto & [current,n]=mbr_node_.top();
+    n++;
+    root_->right_bro_=current->right_bro_;
+    current->right_bro_=root_;
+    current=root_;
 }
 
 void Treebuilder::finish_iteration()
 {
     root_=root_->right_bro_;
-    mbr_node_.pop();
+//    mbr_node_.pop();  //放到arr或obj中清空，因为那时候需要存储的个数
 }
 
 void Treebuilder::dealloc_node()
@@ -139,7 +152,7 @@ void PrintNodes::visit(Jnode<NodeC::Obj> & obj)
     [[likely]]if(obj.left_child_!=faken_){
         auto j=obj.left_child_;
         do {
-            std::cout<<lsf::to_cstring(j->key_)<<" ";
+            std::cout<<j->key_<<" ";
             j=j->right_bro_;
         } while (j!=obj.left_child_);
     }
@@ -152,17 +165,17 @@ void PrintNodes::visit(Jnode<NodeC::Arr> &arr)
 
 void PrintNodes::visit(Jnode<NodeC::String> &str)
 {
-    std::cout<<lsf::to_cstring(str.data_)<<" ";
+    std::cout<<str.data_<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Number> &num)
 {
-    std::cout<<lsf::to_cstring(num.data_)<<" ";
+    std::cout<<num.data_<<" ";
 }
 
-void PrintNodes::visit(Jnode<NodeC::Keyword> &key)
+void PrintNodes::visit(Jnode<NodeC::Keyword> &key_word)
 {
-    std::cout<<lsf::to_cstring(key.data_)<<" ";
+    std::cout<<(key_word.b_?"true":"false")<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Null> &null)
@@ -198,7 +211,7 @@ void Visitor::visit_BFS(Tree roott, std::function<void ()> round_callback)
 }
 
 ///*************TypeChecker*************
-bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
+bool WeakTypeChecker::visit(Jnode<NodeC::Obj> &obj)
 {
     current_type=NodeC::Obj;
     //arr begin
@@ -208,7 +221,7 @@ bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
         jtype_.push_back(current_type);
         return true;
     }
-    std::set<std::wstring> cset{};
+    std::set<std::string> cset{};
     auto j=obj.left_child_;
     do{
         if(!j->accept_check(*this))
@@ -218,8 +231,9 @@ bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
 #else
         auto haskey=cset.end()!=cset.find(j->key_);
 #endif
-        if(haskey){
-            std::cout<<"重复key_:"<<lsf::to_cstring(j->key_)<<std::endl;
+        if(haskey){           
+            error_+="重复key_:";
+            error_+=j->key_;
             return false;
         }
         cset.insert(j->key_);
@@ -232,7 +246,7 @@ bool TypeChecker::visit(Jnode<NodeC::Obj> &obj)
     return true;
 }
 
-bool TypeChecker::visit(Jnode<NodeC::Arr> &arr)
+bool WeakTypeChecker::visit(Jnode<NodeC::Arr> &arr)
 {
     current_type=NodeC::Arr;
     //arr begin
@@ -250,7 +264,8 @@ bool TypeChecker::visit(Jnode<NodeC::Arr> &arr)
     j=j->right_bro_;
     while (j!=arr.left_child_) {
         if(!j->accept_check(*this)||!do_check(first_beg,another_beg)){
-            std::cout<<"数组类型不同:"<<lsf::to_cstring(arr.key_)<<std::endl;
+            error_+="数组类型不同:";
+            error_+=arr.key_;
             return false;
         }
         jtype_.resize(another_beg);
@@ -262,35 +277,35 @@ bool TypeChecker::visit(Jnode<NodeC::Arr> &arr)
     return true;
 }
 
-bool TypeChecker::visit(Jnode<NodeC::String> &str)
+bool WeakTypeChecker::visit(Jnode<NodeC::String> &str)
 {
     current_type=NodeC::String;
     jtype_.push_back(current_type);
     return true;
 }
 
-bool TypeChecker::visit(Jnode<NodeC::Number> &num)
+bool WeakTypeChecker::visit(Jnode<NodeC::Number> &num)
 {
     current_type=NodeC::Number;
     jtype_.push_back(current_type);
     return true;
 }
 
-bool TypeChecker::visit(Jnode<NodeC::Keyword> &key)
+bool WeakTypeChecker::visit(Jnode<NodeC::Keyword> &key)
 {
     current_type=NodeC::Keyword;
     jtype_.push_back(current_type);
     return true;
 }
 
-bool TypeChecker::visit(Jnode<NodeC::Null> &null)
+bool WeakTypeChecker::visit(Jnode<NodeC::Null> &null)
 {
     current_type=NodeC::Null;
     jtype_.push_back(current_type);
     return true;
 }
 
-bool TypeChecker::check_type(Tree roott)
+bool WeakTypeChecker::check_type(Tree roott)
 {
     jtype_.clear();
     null_=std::get<1>(roott);
@@ -298,13 +313,18 @@ bool TypeChecker::check_type(Tree roott)
     return root->accept_check(*this);
 }
 
-bool TypeChecker::do_check(int first, int another)
+bool WeakTypeChecker::do_check(int first, int another)
 {
     auto first_beg=jtype_.begin()+first;
     auto another_beg=jtype_.begin()+another;
     assert(first_beg!=jtype_.end()&&another_beg!=jtype_.end());
     auto r= std::equal(first_beg,another_beg,another_beg,jtype_.end());
     return r;
+}
+
+std::string_view WeakTypeChecker::get_error()
+{
+    return error_;
 }
 
 }
