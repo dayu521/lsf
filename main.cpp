@@ -73,7 +73,7 @@ struct People
 
 int main()
 {
-    People lf={18,true,{{"dog",2},{"duck",1},{"cat",3}}};
+    People lf={18,true,{{"dog",2},{"duck鸭子",1},{"cat",3}}};
     lsf::SerializeBuilder bu;
     lsf::serialize(lf,bu);
 

@@ -133,7 +133,7 @@ public:
 public:
     [[nodiscard]]
     bool check_type(Tree root);
-    bool do_check(int first,int another);
+    bool do_check(std::size_t first, std::size_t another);
     std::string_view get_error();
 private:
     NodeC current_type{NodeC::Error};

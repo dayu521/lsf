@@ -33,7 +33,7 @@ class FilterBuff:public BuffBase
 {
 public:
     virtual wchar_t next_char();
-    virtual void roll_back_char(int len=1);
+    virtual void roll_back_char(std::size_t len=1);
     virtual void discard_token();
     virtual std::wstring get_token();
 public:
@@ -43,7 +43,7 @@ public:
     bool test_and_skipBOM();
 private:
     std::unique_ptr<BuffBase> b_;
-    std::vector<int> history_{};
+    std::vector<std::size_t> history_{};
     Statistic stat_{};
 };
 

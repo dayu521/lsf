@@ -31,7 +31,8 @@ public:
         try {
             f_();
         }  catch (...) {
-            throw std::runtime_error("释放资源错误!");
+            //不要抛异常
+            //throw std::runtime_error("释放资源错误!");
         }
     }
     F f_;

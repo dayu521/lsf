@@ -117,7 +117,7 @@ void MBuff::discard_token()
 
 ///回滚不超过1个token
 ///溢出未考虑，留给调用者自己决定
-void MBuff::roll_back_char(int len)
+void MBuff::roll_back_char(std::size_t len)
 {
     //roolback fail
     assert(state_!=State::S0);

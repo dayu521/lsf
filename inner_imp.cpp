@@ -76,12 +76,12 @@ wchar_t FilterBuff::next_char()
         //好吧 我描述的不太好，仔细想想就明白了
         history_.push_back(0);
     }
-    history_[history_.size()-1]++;
+    history_.back()++;
     return c;
 }
 
 ///这个函数实现有毒,我跪了
-void FilterBuff::roll_back_char(int len)
+void FilterBuff::roll_back_char(std::size_t len)
 {
     assert(len>=0);
     //roll_back_char函数会断言len合法
@@ -89,7 +89,8 @@ void FilterBuff::roll_back_char(int len)
     //所以下面迭代中不会出现n<0
     b_->roll_back_char(len);
     auto n=history_.size();
-    auto llen=len;
+    long llen=len;
+    assert(len <= std::numeric_limits<decltype(llen)>::max());
     do{
         n--;    //必定存在n>=0
         llen-=history_[n];  //不会出现llen=0&&n=0
@@ -106,20 +107,20 @@ void FilterBuff::roll_back_char(int len)
 void FilterBuff::discard_token()
 {
     b_->discard_token();
-    stat_.column_last_=history_[0]=history_[history_.size()-1];
+    stat_.column_last_=history_[0]=history_.back();
     history_.resize(1);
 }
 
 std::wstring FilterBuff::get_token()
 {
-    stat_.column_last_=history_[0]=history_[history_.size()-1];
+    stat_.column_last_=history_[0]=history_.back();
     history_.resize(1);
     return b_->get_token();
 }
 
 Statistic FilterBuff::get_stat()
 {
-    stat_.column_curr_=history_[history_.size()-1];
+    stat_.column_curr_=history_.back();
     return stat_;
 }
 

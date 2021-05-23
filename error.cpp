@@ -26,15 +26,22 @@ std::string lexer_messages(Statistic stat_for_rc, Token lex_token)
 
 std::string to_cstring(const std::wstring &s)
 {
-    //msvc下MB_CUR_MAX不是常量
-    //char cc[MB_CUR_MAX];
-    char cc[6];
+
+    char cc[64];
     std::string r{};
-    for(const auto c:s){
-        auto l=wctomb(cc,c);
-        assert(l>0);
-        r.append(cc,l);
+    auto n = static_cast<std::size_t>(0);
+    auto cstr = s.c_str();
+    n = wcstombs(cc, cstr, std::extent_v<decltype(cc)>);
+
+    while (n!= static_cast<std::size_t>(-1)&&n!=0) {
+        r.append(cc, n);
+        n = wcstombs(cc,cstr+n,std::extent_v<decltype(cc)>);
     }
+    //for(const auto c:s){
+    //    auto l=wctomb(cc,c);
+    //    assert(l>0);
+    //    r.append(cc,l);
+    //}
     return r;
 }
 

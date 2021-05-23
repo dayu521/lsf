@@ -220,6 +220,7 @@ void deserialize(T & obj,const TreeNode * t)
             //(lam(args,n++)&&...)好像是等价的!
             //msvc不支持!
 //            return (...&&lam(args,n++));
+            //因为&&是短路求值,所以折叠后的表达式的括号不影响求值顺序?
             return (lam(args,n++)&&...);
         },member_info);
         n=0;

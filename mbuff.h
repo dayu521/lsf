@@ -12,7 +12,7 @@ public:
     BuffBase(){}
     virtual ~BuffBase(){}
     virtual wchar_t next_char()=0;
-    virtual void roll_back_char(int len=1)=0;
+    virtual void roll_back_char(std::size_t len=1)=0;
     virtual void discard_token()=0;
     virtual std::wstring get_token()=0;
     static constexpr auto Eof_w=WEOF;
@@ -24,7 +24,7 @@ class MBuff :public BuffBase
 
 public:
     virtual wchar_t next_char();
-    virtual void roll_back_char(int len=1);
+    virtual void roll_back_char(std::size_t len=1);
     virtual void discard_token();
     virtual std::wstring get_token();
 public:

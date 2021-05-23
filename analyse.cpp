@@ -313,7 +313,7 @@ bool WeakTypeChecker::check_type(Tree roott)
     return root->accept_check(*this);
 }
 
-bool WeakTypeChecker::do_check(int first, int another)
+bool WeakTypeChecker::do_check(std::size_t first, std::size_t another)
 {
     auto first_beg=jtype_.begin()+first;
     auto another_beg=jtype_.begin()+another;
