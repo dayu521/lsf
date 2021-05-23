@@ -29,19 +29,17 @@ std::string to_cstring(const std::wstring &s)
 
     char cc[64];
     std::string r{};
-    auto n = static_cast<std::size_t>(0);
     auto cstr = s.c_str();
-    n = wcstombs(cc, cstr, std::extent_v<decltype(cc)>);
+    std::mbstate_t state{};
+    auto n =wcsrtombs(cc,&cstr,std::extent_v<decltype(cc)>,&state);
 
-    while (n!= static_cast<std::size_t>(-1)&&n!=0) {
+    while (n!= static_cast<std::size_t>(-1)) {
         r.append(cc, n);
-        n = wcstombs(cc,cstr+n,std::extent_v<decltype(cc)>);
+        if(cstr==nullptr)
+            break;
+        n =wcsrtombs(cc,&cstr,std::extent_v<decltype(cc)>,&state);
     }
-    //for(const auto c:s){
-    //    auto l=wctomb(cc,c);
-    //    assert(l>0);
-    //    r.append(cc,l);
-    //}
+
     return r;
 }
 

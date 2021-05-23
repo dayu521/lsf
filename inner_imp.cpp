@@ -1,6 +1,7 @@
 #include<cassert>
 #include "inner_imp.h"
 #include "lexer.h"
+#include <limits>
 
 namespace lsf {
 
