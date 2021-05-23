@@ -20,12 +20,6 @@ struct GenToken
     virtual Token & current_()=0;
 };
 
-class ParserError: public lsf::BaseError
-{
-public:
-    using BaseError::BaseError;
-};
-
 class JsonParser
 {
 public:

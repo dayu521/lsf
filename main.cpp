@@ -1,15 +1,7 @@
+/*
 #include <iostream>
-#include <memory>
-#include <cassert>
-#include "lexer.h"
-#include "jsonparser.h"
-#include "mbuff.h"
-#include "error.h"
-#include "inner_imp.h"
-#include "analyse.h"
 #include "json.h"
-//#include<loki/Visitor.h>
-//#include<loki/AbstractFactory.h>
+
 using namespace std;
 struct Pe
 {
@@ -32,60 +24,16 @@ struct Hellos
 
 int main()
 {
-//    setlocale(LC_ALL,"zh_CN.UTF-8");
-    //std::locale("").name().c_str()
 
-    //设置全局c++环境,所有之后std::locale()的实例都是此locale的副本，
-    //同时设置本地c环境为用户偏好的locale，默认c环境的name好像是"C"
-//    std::locale::global(std::locale(""));
-    auto old=std::setlocale(LC_ALL,nullptr);
-    std::setlocale(LC_ALL,std::locale("").name().c_str());
+    lsf::Json j("2.txt");
+    auto ok=j.run([&](auto t,const std::string &s){
+        std::cout<<s<<std::endl;
+    });
 
-    //输入抽象
-    auto f1="2.txt";
-    auto buff=std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(f1));
-    buff->test_and_skipBOM();
-
-    //创建词法分析器
-    auto lex=std::make_shared<lsf::Lexer>(buff);
-
-    //创建语法分析器
-    lsf::JsonParser parser(std::make_unique<lsf::Ltokens>(lex));
-
-    auto builder=std::make_shared<lsf::Treebuilder>();
-
-    //设置节点构建器
-    parser.set_builder(builder);
-    try {
-        if(!parser.parser()){
-            std::cout<<lsf::parser_messages(buff->get_stat(),lex->get_token(),parser.get_expect_token());
-            return -1;
-        }
-    }  catch (const lsf::LexerError & e) {
-        std::cout<<e.what();
-        std::cout<<lsf::lexer_messages(buff->get_stat(),lex->get_token());
-        return -1;
-    }   catch(const std::runtime_error &e){
-        std::cout<<e.what();
-        return -1;
-    }
-
-    //广度优先输出
-//    lsf::PrintNodes p;
-//    p.set_null(std::get<1>(builder->get_ast()));
-//    p.visit_BFS(builder->get_ast(),[]{std::cout<<std::endl;});
-
-    //类型检查
-    lsf::WeakTypeChecker typer;
-    if(!typer.check_type(builder->get_ast())){
-        std::cout<<"类型检查失败"<<std::endl;
-        std::cout<<typer.get_error()<<std::endl;
-        return -1;
-    }
-
+    std::setlocale(LC_ALL,old);
     Hellos lf;
     try {
-        lsf::deserialize(lf,std::get<0>(builder->get_ast()));
+        lsf::deserialize(lf,j.get_output());
     }  catch (const lsf::DeserializeError &ex) {
         std::cout<<ex.what()<<std::endl;
         return -1;
@@ -96,7 +44,61 @@ int main()
 
     std::cout<<bu.get_jsonstring()<<std::endl;
 
-    std::setlocale(LC_ALL,old);
     return 0;
 }
+*/
 
+#include "json.h"
+#include <string>
+#include <vector>
+#include <iostream>
+
+//首先创建自己的结构体
+struct Pet
+{
+    std::string name;
+    int age;
+    //默认key是成员名字的字符串,此处即"age","name"
+    //struct成员顺序与json中的obj成员顺序无关，只要它们成员之间一一对应
+    JS_OBJECT(JS_MEMBER(age), JS_MEMBER(name));
+};
+struct People
+{
+    int age;
+    bool is_fat;
+    std::vector<Pet> pets;
+    //也可以指定一个key
+    JS_OBJECT(JS_MEMBER(age,"age"), JS_MEMBER(is_fat),JS_MEMBER(pets,"friends"));
+};
+
+int main()
+{
+    People lf={18,true,{{"dog",2},{"duck",1},{"cat",3}}};
+    lsf::SerializeBuilder bu;
+    lsf::serialize(lf,bu);
+
+    std::cout<<bu.get_jsonstring()<<std::endl;
+
+    std::ofstream f("example.txt");
+    if(f.is_open()){
+        f<<bu.get_jsonstring();
+        f.close();
+    }
+
+    //从文件读入
+    lsf::Json j("example.txt");
+    auto ok=j.run([&](auto t,const std::string &s){
+        lsf::ErrorType sd=t;
+        std::cout<<s<<std::endl;
+    });
+    if(!ok)
+        return -1;
+    People ml{};
+    try {
+        lsf::deserialize(ml,j.get_output());
+    }  catch (const lsf::DeserializeError &ex) {
+        std::cout<<ex.what()<<std::endl;
+        throw ex;
+    }
+
+}

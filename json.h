@@ -3,8 +3,8 @@
 #include"analyse.h"
 #include"error.h"
 #include<tuple>
-#include<cassert>
 #include<string>
+#include"inner_imp.h"
 
 namespace lsf {
 
@@ -134,11 +134,42 @@ inline auto to_tuple(T& t);
 }
 
 /*****************************/
-template<typename T>
-inline void Deserialize(T & s,TreeNode * t);
+
+class JsonContext
+{
+public:
+    virtual ~JsonContext(){}
+public:
+    virtual void set_filename(const std::string & file_name)=0;
+    virtual void run()=0;
+};
+
+enum class ErrorType{LexError,ParserError,WeakTypeCheckError,UnknowError};
+
+
+class Json
+{
+public:
+    Json(const std::string & filename);
+    [[nodiscard]]
+    bool run(std::function<void ( ErrorType et,const std::string & message)> f);
+    [[nodiscard]]
+    bool weak_type_check(std::function<void ( ErrorType et,const std::string & message)> f);
+    TreeNode * get_output()const;
+    std::string get_errors()const;
+private:
+    std::shared_ptr<FilterBuff> buff_;
+    std::unique_ptr<JsonParser> parser_;
+    std::shared_ptr<Lexer> lexer_;
+    std::shared_ptr<Treebuilder> builder;
+    std::string error_msg_;
+};
 
 template<typename T>
-void deserialize(T & obj,TreeNode * t)
+inline void Deserialize(T & s,const TreeNode * t);
+
+template<typename T>
+void deserialize(T & obj,const TreeNode * t)
 {
     auto temp=t->left_child_;
     if(temp==t){
@@ -153,6 +184,7 @@ void deserialize(T & obj,TreeNode * t)
         deserialize(*obj, t);
     } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
         auto member_info=TT::template JsonStructBase<TT>::js_static_meta_data_info();
+        constexpr auto member_size=std::tuple_size<decltype (member_info)>::value;
         if(t->ele_type_==NodeC::Null){
             obj={};
             return;
@@ -160,13 +192,13 @@ void deserialize(T & obj,TreeNode * t)
         if(t->ele_type_!=NodeC::Obj){
             throw DeserializeError("期待json对象");
         }
-        auto ot=static_cast<Jnode<NodeC::Obj>*>(t);
-        if(std::tuple_size<decltype (member_info)>::value!=ot->n_){
+        auto ot=static_cast<const Jnode<NodeC::Obj>*>(t);
+        if(member_size!=ot->n_){
             //元素数量不等
             throw DeserializeError("struct成员数量与json成员数量不同");
         }
 //        std::vector<TreeNode*> vs{};
-        TreeNode * vs[std::tuple_size<decltype (member_info)>::value]={};
+        TreeNode * vs[member_size]={};
         int n=0;
         do{
             vs[n]=temp;
@@ -176,7 +208,7 @@ void deserialize(T & obj,TreeNode * t)
         n=0;
         std::apply([&](auto&&... args) {
             auto lam=[&](auto && arg,auto n)->bool{
-                for(std::size_t i=n;i<std::extent_v<decltype (vs)>;i++){
+                for(std::size_t i=n;i<member_size;i++){
                     if(arg.name==vs[i]->key_){
                         if(n!=i)
                             std::swap(vs[n],vs[i]);
@@ -186,7 +218,9 @@ void deserialize(T & obj,TreeNode * t)
                 throw DeserializeError(std::string("找不到key:")+arg.name);
             };
             //(lam(args,n++)&&...)好像是等价的!
-            return (...&&lam(args,n++));
+            //msvc不支持!
+//            return (...&&lam(args,n++));
+            return (lam(args,n++)&&...);
         },member_info);
         n=0;
         std::apply([&](auto&&... args) {
@@ -197,7 +231,7 @@ void deserialize(T & obj,TreeNode * t)
 }
 
 template<typename T>
-void deserialize(std::vector<T> &v,TreeNode * t)
+void deserialize(std::vector<T> &v,const TreeNode * t)
 {
     auto temp=t->left_child_;
     if(temp==t){
@@ -209,7 +243,7 @@ void deserialize(std::vector<T> &v,TreeNode * t)
     }
     if(t->ele_type_!=NodeC::Arr)
         throw DeserializeError("期待json数组");
-    auto at=static_cast<Jnode<NodeC::Arr>*>(t);
+    auto at=static_cast<const Jnode<NodeC::Arr>*>(t);
     T m{};
     v.resize(at->n_);
     for(std::size_t i=0;i<at->n_;i++){
@@ -220,38 +254,38 @@ void deserialize(std::vector<T> &v,TreeNode * t)
 }
 
 template<>
-inline void Deserialize<std::string>(std::string & s,TreeNode * t)
+inline void Deserialize<std::string>(std::string & s,const TreeNode * t)
 {
     if(t->ele_type_==NodeC::String){
         //如果有错,语法分析会提前失败.下同
-        s=static_cast<Jnode<NodeC::String> *>(t)->data_;
+        s=static_cast<const Jnode<NodeC::String> *>(t)->data_;
     }else
         throw DeserializeError("序列化std::string: 期待json String");
 }
 
 template<>
-inline void Deserialize<int>(int & s,TreeNode * t)
+inline void Deserialize<int>(int & s,const TreeNode * t)
 {
     if(t->ele_type_==NodeC::Number){     
-        s=std::stoi(static_cast<Jnode<NodeC::Number> *>(t)->data_);
+        s=std::stoi(static_cast<const Jnode<NodeC::Number> *>(t)->data_);
     }else
         throw DeserializeError("序列化int: 期待json Number");
 }
 
 template<>
-inline void Deserialize<double>(double & s,TreeNode * t)
+inline void Deserialize<double>(double & s,const TreeNode * t)
 {
     if(t->ele_type_==NodeC::Number){
-        s=std::stod(static_cast<Jnode<NodeC::Number> *>(t)->data_);
+        s=std::stod(static_cast<const Jnode<NodeC::Number> *>(t)->data_);
     }else
         throw DeserializeError("序列化double: 期待json Number");
 }
 
 template<>
-inline void Deserialize<bool>(bool & b,TreeNode * t)
+inline void Deserialize<bool>(bool & b,const TreeNode * t)
 {
     if(t->ele_type_==NodeC::Keyword){
-        b=static_cast<Jnode<NodeC::Keyword> *>(t)->b_;
+        b=static_cast<const Jnode<NodeC::Keyword> *>(t)->b_;
     }else
         throw DeserializeError("序列化bool: 期待json bool");
 }
@@ -400,11 +434,6 @@ void serialize(const std::vector<T> &v,SerializeBuilder & builder)
         builder.back();
     builder.arr_end();
 }
-class json
-{
-public:
-    json();
-};
 
 namespace detail {
 
