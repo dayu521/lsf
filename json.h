@@ -151,8 +151,10 @@ class Json
 {
 public:
     Json(const std::string & filename);
+    /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
     [[nodiscard]]
     bool run(std::function<void ( ErrorType et,const std::string & message)> f);
+    /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
     [[nodiscard]]
     bool weak_type_check(std::function<void ( ErrorType et,const std::string & message)> f);
     TreeNode * get_output()const;
@@ -297,10 +299,22 @@ public:
     SerializeBuilder(){indent.push(0);}
     virtual ~SerializeBuilder(){}
     std::string get_jsonstring()const{return out_;}
-public:
+    void clear(){out_.clear();}
+public:  
+    virtual void write_value(const std::string & ele)
+    {
+        out_+=ele;
+    }
 
-    template<typename T>
-    void write_value(const T & ele);
+    virtual void write_value(const char * ele)
+    {
+        out_+=ele;
+    }
+
+    virtual void add_quotation()
+    {
+        out_+='"';
+    }
 
     virtual void write_key(std::string key)
     {
@@ -372,30 +386,33 @@ protected:
     std::stack<int> indent{};
 };
 
+template<typename T>
+void write_value(const T & v,SerializeBuilder & builder);
+
 template<>
-inline void SerializeBuilder::write_value<std::string>(const std::string & ele)
+inline void write_value<std::string>(const std::string & ele,SerializeBuilder & builder)
 {
-    out_+='"';
-    out_+=ele;
-    out_+='"';
+    builder.add_quotation();
+    builder.write_value(ele);
+    builder.add_quotation();
 }
 
 template<>
-inline void SerializeBuilder::write_value<bool>(const bool & ele)
+inline void write_value<bool>(const bool & ele,SerializeBuilder & builder)
 {
-    out_+=(ele==true?"true":"false");
+    builder.write_value(ele==true?"true":"false");
 }
 
 template<>
-inline void SerializeBuilder::write_value<int>(const int & ele)
+inline void write_value<int>(const int & ele,SerializeBuilder & builder)
 {
-    out_+=std::to_string(ele);
+    builder.write_value(std::to_string(ele));
 }
 
 template<>
-inline void SerializeBuilder::write_value<double>(const double & ele)
+inline void write_value<double>(const double & ele,SerializeBuilder & builder)
 {
-    out_+=std::to_string(ele);
+    builder.write_value(std::to_string(ele));
 }
 
 
@@ -407,7 +424,7 @@ void serialize(const T & obj,SerializeBuilder & builder)
         static_assert (!std::is_pointer_v<std::decay_t<decltype (*obj)>>,"不支持多级指针");
         assert(obj != nullptr);
         if(obj==nullptr){
-            builder.write_value<std::string>("null");
+            write_value("null",builder);
         }else
             serialize(*obj, builder);
     } else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>){
@@ -419,8 +436,9 @@ void serialize(const T & obj,SerializeBuilder & builder)
         if(std::tuple_size<decltype (member_info)>::value>0)
             builder.back();
         builder.obj_end();
-    }else
-        builder.write_value(obj);
+    }else{
+        write_value(obj,builder);
+    }
 }
 
 template<typename T>

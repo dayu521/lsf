@@ -33,11 +33,14 @@ struct People
 int main()
 {
     People lf={18,true,{{"dog",2},{"duck",1},{"cat",3}}};
+    
     lsf::SerializeBuilder bu;
+    //序列化到bu中
     lsf::serialize(lf,bu);
-
+	//标准输出打印
     std::cout<<bu.get_jsonstring()<<std::endl;
 
+    //写入到文件中
     std::ofstream f("example.txt");
     if(f.is_open()){
         f<<bu.get_jsonstring();
@@ -46,14 +49,17 @@ int main()
 
     //从文件读入
     lsf::Json j("example.txt");
+    //解析
     auto ok=j.run([&](auto t,const std::string &s){
         lsf::ErrorType sd=t;
         std::cout<<s<<std::endl;
     });
     if(!ok)
         return -1;
+    
     People ml{};
     try {
+        //序列化到People
         lsf::deserialize(ml,j.get_output());
     }  catch (const lsf::DeserializeError &ex) {
         std::cout<<ex.what()<<std::endl;
@@ -78,13 +84,13 @@ int main()
 如果需要支持其他**基本类型**(非std::vector和普通struct类型)，需要特化:
 
 ```cpp
-//从TreeNode中反序列化到基本类型T
+//从TreeNode中反序列化到类型T
 template<typename T>
 inline void Deserialize(T & s,const TreeNode * t);
 
-//序列化到json字符串
+//序列化T类型到json字符串
 template<typename T>
-void SerializeBuilder::write_value(const T & ele);
+void write_value(const T & v,SerializeBuilder & builder);
 ```
 
 #### 问题 ####
