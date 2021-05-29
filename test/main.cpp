@@ -52,6 +52,7 @@ int main()
 #include <string>
 #include <vector>
 #include <iostream>
+#include "doctest/doctest.h"
 
 //首先创建自己的结构体
 struct Pet
@@ -71,9 +72,23 @@ struct People
     JS_OBJECT(JS_MEMBER(age,"age"), JS_MEMBER(is_fat),JS_MEMBER(pets,"friends"));
 };
 
-int main()
+struct Fn
 {
-    People lf={18,true,{{"dog",2},{"duck鸭子",1},{"cat",3}}};
+    std::vector<People> lp;
+    std::string sd;
+    Pet pt;
+    JS_OBJECT(JS_MEMBER(lp,"太多人"), JS_MEMBER(sd,"蜜汁"),JS_MEMBER(pt,"疲劳"));
+};
+
+TEST_CASE("testing json serialization and deserialization")
+{
+//    People lf={18,true,{{"dog",2},{"duck鸭子",1},{"cat",3}}};
+    Fn lf={
+        {{18,true,{{"dog",2},{"duck鸭子",1},{"cat",3}}},{},{}},
+        "liad",
+        {"pl",56}
+    };
+
     lsf::SerializeBuilder bu;
     lsf::serialize(lf,bu);
 
@@ -91,9 +106,9 @@ int main()
         lsf::ErrorType sd=t;
         std::cout<<s<<std::endl;
     });
-    if(!ok)
-        return -1;
-    People ml{};
+    CHECK(ok==true);
+//    People ml{};
+    Fn ml{};
     try {
         lsf::deserialize(ml,j.get_output());
     }  catch (const lsf::DeserializeError &ex) {
