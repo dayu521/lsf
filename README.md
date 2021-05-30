@@ -4,6 +4,24 @@
 
 感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践.
 
+#### 使用cmake
+
+```bash
+cd <projectdir>
+git submodule add git@github.com:dayu521/lsf.git
+```
+
+修改你自己的cmake工程文件`CMakeLists.txt`,添加以下行:
+
+```cmake
+add_subdirectory(lsf)
+target_link_libraries(${PROJECT_NAME} lsf)
+```
+
+#### 或者
+
+把源码中`src`目录下的内容复制到你自己的工程内,它包含了所有需要的头文件与源文件.
+
 #### 用法 ####
 
 ```cpp

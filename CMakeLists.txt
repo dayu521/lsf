@@ -27,7 +27,7 @@ add_library(${PROJECT_NAME} src/mbuff.cpp
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 #set(WITH_TEST on)
-set(WITH_TEST off)
+#set(WITH_TEST off)
 message("enable test with turning WITH_TEST on ")
 
 if(WITH_TEST)
