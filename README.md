@@ -4,6 +4,8 @@
 
 感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践.
 
+欢迎issue,感谢!
+
 #### 使用cmake
 
 ```bash

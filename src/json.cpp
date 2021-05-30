@@ -11,8 +11,11 @@ Json::Json(const std::string &filename)
     //创建词法分析器
     lexer_=std::make_shared<lsf::Lexer>(buff_);
 
+    /************************/
+    wrap_lexer_=std::make_shared<FunnyTokenGen>(lexer_,buff_);
+
     //创建语法分析器
-    parser_=std::make_unique<lsf::JsonParser>(std::make_unique<lsf::Ltokens>(lexer_));
+    parser_=std::make_unique<lsf::JsonParser>(wrap_lexer_);
 
     //节点构建器
     builder=std::make_unique<Treebuilder>();
@@ -33,6 +36,7 @@ public:
         }  catch (...) {
             //不要抛异常
             //throw std::runtime_error("释放资源错误!");
+//            std::cout<<std::current_exception()<<std::endl;
         }
     }
     F f_;
@@ -56,11 +60,12 @@ bool Json::run(std::function<void (ErrorType, const std::string &)> f)
     error_msg_.clear();
     try {
         if(!parser_->parser()){
-            error_msg_+=lsf::parser_messages(buff_->get_stat(),lexer_->get_token(),parser_->get_expect_token());
+            error_msg_+=lsf::parser_messages(wrap_lexer_->token_position(),lexer_->get_token(),parser_->get_expect_token());
             f(ErrorType::ParserError,error_msg_);
+            return false;
         }
     }  catch (const lsf::LexerError & e) {
-        error_msg_+=lsf::lexer_messages(buff_->get_stat(),lexer_->get_token());
+        error_msg_+=lsf::lexer_messages(wrap_lexer_->token_position(),lexer_->get_token());
         f(ErrorType::LexError,error_msg_);
         return false;
     }   catch(const std::runtime_error &e){

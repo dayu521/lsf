@@ -54,7 +54,7 @@ void KMP::piFunc()
 //    std::cout<<std::endl;
 }
 
-FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),history_(1,1),stat_{1,1,1}
+FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),history_(1,1),p_begin_{1,1}
 {
 }
 
@@ -66,8 +66,8 @@ FilterBuff::~FilterBuff()
 wchar_t FilterBuff::next_char()
 {
     auto c=b_->next_char();
+    number_++;
     if(c==L'\n'){
-        stat_.line_++;
         //    \n \n  换行符
         //  5  2  1     数量
         //  0  1  2     数组索引
@@ -82,70 +82,99 @@ wchar_t FilterBuff::next_char()
 }
 
 ///这个函数实现有毒,我跪了
-void FilterBuff::roll_back_char(std::size_t len)
+void FilterBuff::rollback_char(std::size_t len)
 {
-    assert(len>=0);
-    //roll_back_char函数会断言len合法
-    //且history_[0]>=1
-    //所以下面迭代中不会出现n<0
-    b_->roll_back_char(len);
+    if(number_<=len){
+        this->rollback_all_chars();
+        return;
+    }
+    number_-=len;
+    b_->rollback_char(len);
     auto n=history_.size();
     long llen=len;
     assert(len <= std::numeric_limits<decltype(llen)>::max());
     do{
-        n--;    //必定存在n>=0
-        llen-=history_[n];  //不会出现llen=0&&n=0
+        n--;
+        llen-=history_[n];  //不会出现llen=0&&n=0,这种情况属于上面的if的责任
     }while(llen>=0);
+    //history_[n]就是stat_.column_curr_
     history_[n]=-llen;
     //实际上不用判断，直接操作，但一般来说，回滚只是一两个字符，
     //所以当n仅仅减少1时，直接跳过,不需要操作
     if(n<history_.size()-1){
-        stat_.line_-=history_.size()-n-1;
         history_.resize(n+1);
     }
 }
 
+void FilterBuff::rollback_all_chars()
+{
+    b_->rollback_all_chars();
+    number_=0;
+
+    history_.resize(1);
+    history_[0]=p_begin_.column_;
+}
+
+///和get_token()功能几乎相同,但丢弃缓冲区内的字符(隐含着当前处理完成,准备分析下个token)
 void FilterBuff::discard_token()
 {
     b_->discard_token();
-    stat_.column_last_=history_[0]=history_.back();
-    history_.resize(1);
 }
 
+///获取当前缓冲区的字符(假定它们被分析,且已经被认为是token了)
 std::wstring FilterBuff::get_token()
 {
-    stat_.column_last_=history_[0]=history_.back();
-    history_.resize(1);
     return b_->get_token();
 }
 
-Statistic FilterBuff::get_stat()
+Location FilterBuff::begin_location()
 {
-    stat_.column_curr_=history_.back();
-    return stat_;
+    return p_begin_;
 }
 
+void FilterBuff::record_location()
+{
+    number_=0;
+    auto old_size=history_.size();
+    //初始化history_就是初始化p_current_
+    history_[0]=history_.back();
+    history_.resize(1);
+
+    p_begin_.column_=history_.back();
+    p_begin_.line_+=old_size-1;
+}
+
+///这应该成为成员函数吗?
 bool FilterBuff::test_and_skipBOM()
 {
     wchar_t head[3]={};
     for (std::size_t i=0;i<3;i++){
         head[i]=b_->next_char();
+        if(head[i]==MBuff::Eof_w)
+            return true;
     }
     if(wcsncmp(head,L"\xEF\xBB\xBF",3)==0){
         b_->discard_token();
         return true;
     }
-    b_->roll_back_char(3);
+    b_->rollback_char(3);
     return false;
 }
 
 ///*************************///
-void Ltokens::next_()
+Location FunnyTokenGen::token_position() const
 {
+    return tk_begin_;
+}
+
+void FunnyTokenGen::next_()
+{
+    buff_->record_location();
+    tk_begin_=buff_->begin_location();
     lexer_->next_token();
 }
 
-Token &Ltokens::current_()
+Token &FunnyTokenGen::current_()
 {
     return lexer_->get_token();
 }

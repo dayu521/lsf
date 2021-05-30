@@ -4,6 +4,10 @@
 #include <fstream>
 #include <array>
 
+#ifndef BUFFER_ARRAY_SIZE
+#define BUFFER_ARRAY_SIZE 512
+#endif
+
 namespace lsf {
 
 class BuffBase
@@ -12,19 +16,21 @@ public:
     BuffBase(){}
     virtual ~BuffBase(){}
     virtual wchar_t next_char()=0;
-    virtual void roll_back_char(std::size_t len=1)=0;
+    virtual void rollback_char(std::size_t len=1)=0;
+    virtual void rollback_all_chars()=0;
     virtual void discard_token()=0;
     virtual std::wstring get_token()=0;
     static constexpr auto Eof_w=WEOF;
-    static constexpr  int BuffLen=512;
+    static constexpr std::size_t BuffLen=BUFFER_ARRAY_SIZE;
 };
 
-class MBuff :public BuffBase
+class MBuff final:public BuffBase
 {
 
 public:
     virtual wchar_t next_char();
-    virtual void roll_back_char(std::size_t len=1);
+    virtual void rollback_char(std::size_t len=1);
+    virtual void rollback_all_chars();
     virtual void discard_token();
     virtual std::wstring get_token();
 public:

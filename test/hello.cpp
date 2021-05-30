@@ -1,6 +1,11 @@
 #include<iostream>
 #include"doctest/doctest.h"
+#include"json.h"
 
 TEST_CASE("testing...") {
-    std::cout<<"hello lsf and doctest!"<<std::endl;
+    lsf::Json js("2.txt");
+    auto b=js.run([](auto,const std::string & m){
+       std::cout<<m<<std::endl;
+    });
+    REQUIRE(b==true);
 }

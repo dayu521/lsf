@@ -161,8 +161,9 @@ public:
     std::string get_errors()const;
 private:
     std::shared_ptr<FilterBuff> buff_;
-    std::unique_ptr<JsonParser> parser_;
     std::shared_ptr<Lexer> lexer_;
+    std::shared_ptr<FunnyTokenGen> wrap_lexer_;
+    std::unique_ptr<JsonParser> parser_;
     std::shared_ptr<Treebuilder> builder;
     std::string error_msg_;
 };

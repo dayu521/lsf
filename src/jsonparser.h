@@ -23,7 +23,7 @@ struct GenToken
 class JsonParser
 {
 public:
-    JsonParser(std::unique_ptr<GenToken> gen);
+    JsonParser(std::shared_ptr<GenToken> gen);
     void set_builder(std::shared_ptr<BuilderInterface> b);
     [[nodiscard]] bool parser();
     const std::vector<lsf::Type> & get_expect_token()const;
@@ -46,7 +46,7 @@ private:
     bool isTerminator(TType type);
 
 private:
-    std::unique_ptr<GenToken> gen_;
+    std::shared_ptr<GenToken> gen_;
     std::shared_ptr<BuilderInterface> builder_;
     std::vector<lsf::Type> expect_array_;
 };

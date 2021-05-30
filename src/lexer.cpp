@@ -6,7 +6,7 @@ namespace lsf {
 
 namespace Private {
 //namespace start
-bool deal_unicode_code_point(unsigned int &d, const std::wstring &s, size_t  &index);
+bool deal_unicode_code_point(wchar_t &d, const std::wstring &s, size_t  &index);
 
 bool cp_to_utf8(unsigned int cp,wchar_t & u8);
 
@@ -17,6 +17,7 @@ bool deal_escape_char(const std::wstring &s,std::wstring & d)
     decltype (s.length()) i=0;
     wchar_t c;
     d.clear();
+    wchar_t code_point=0;
     while (i<s.length()) {
         c=s[i++];
         if(c==L'\\'){
@@ -47,11 +48,7 @@ bool deal_escape_char(const std::wstring &s,std::wstring & d)
                 d+=L'\t';
                 break;
             case L'u':{
-                unsigned int code_point=0;
                 if(deal_unicode_code_point(code_point,s,i)){
-                    //必定是合法的utf码点，因此下面的转换一定成功
-//                    if(cp_to_utf8(code_point,ec))
-//                        d+=ec;
                     d+=code_point;
                 }
                 else
@@ -69,8 +66,10 @@ bool deal_escape_char(const std::wstring &s,std::wstring & d)
     return true;
 }
 
-bool deal_unicode_code_point(unsigned int & d, const std::wstring & s, size_t &index)
+bool deal_unicode_code_point(wchar_t &d, const std::wstring & s, size_t &index)
 {
+    if(s.length()-index<4)
+        return false;
     unsigned int high=0,low=0;
     wchar_t c{};
     for(int i=0;i<4;i++){
@@ -87,6 +86,8 @@ bool deal_unicode_code_point(unsigned int & d, const std::wstring & s, size_t &i
     }
     d=high;
     if(high>=0xD800 && high<=0xDBFF){
+        if(s.length()-index<6)
+            return false;
         c=s[index++];
         if(c==L'\\'){
             c=s[index++];
@@ -188,24 +189,24 @@ bool Lexer::run()
 
     }else if(c==L'\"'){//字符串
         current_token_.type_=Type::String;
-//        std::wstring s{};
         auto & s=current_token_.value_;
         s.clear();
-//        s+=c;
         c=input_->next_char();
         while (c!=L'\"') {
             if(c>=L'\u0020'&&c<=0x10FFFF){
                 s+=c;
                 c=input_->next_char();
-            }else{
+            }else{//包含eof
                 return false;
             }
         }
-//        s+=c;
-        input_->discard_token();
         std::wstring d{};
-        Private::deal_escape_char(s,d);
+        if(!Private::deal_escape_char(s,d)){
+            input_->discard_token();
+            return false;
+        }
         current_token_.value_=d;
+        input_->discard_token();
         return true;
     }else if(c==L'{'){
         current_token_=Token{Type::LBRACE,L"{"};
@@ -245,7 +246,7 @@ bool Lexer::run()
             s+=c;
             c=input_->next_char();
         }while (c==L'\u0020'||c==L'\u000a'||c==L'\u000d'||c==L'\u0009');
-        input_->roll_back_char();
+        input_->rollback_char();
         input_->discard_token();
         goto T;
     }else if((c>=L'0'&&c<=L'9')||c==L'-'){
@@ -263,7 +264,7 @@ bool Lexer::run()
             s+=c;
             c=input_->next_char();
         }
-        input_->roll_back_char();
+        input_->rollback_char();
 #if __cplusplus >= 202002L
         auto haskey=symbol_.contains(s);
 #else
@@ -276,7 +277,7 @@ bool Lexer::run()
             goto T;
         }
         else{
-            input_->roll_back_char(s.size());
+            input_->rollback_char(s.size());
             goto F;
         }
     }else
@@ -339,7 +340,7 @@ bool Lexer::try_number(wchar_t c)
                             c=input_->next_char();
                             end++;
                         }while(c>=L'0'&&c<=L'9');
-                        input_->roll_back_char();
+                        input_->rollback_char();
                         current_token_.value_=input_->get_token();
                         return true;
                     }else
@@ -355,7 +356,7 @@ bool Lexer::try_number(wchar_t c)
         goto F;
 
 F:  return false;
-T:  input_->roll_back_char(end);
+T:  input_->rollback_char(end);
     current_token_.value_=input_->get_token();
     return true;
 }
@@ -396,7 +397,7 @@ bool Lexer::try_comment(wchar_t c)
             c=input_->next_char();
         }
 
-        input_->roll_back_char();
+        input_->rollback_char();
         input_->discard_token();
         return true;
     }else

@@ -24,9 +24,10 @@ add_library(${PROJECT_NAME} src/mbuff.cpp
                             src/error.cpp
                             src/inner_imp.cpp
                             src/analyse.cpp)
+target_compile_definitions(${PROJECT_NAME} PRIVATE BUFFER_ARRAY_SIZE=256)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-#set(WITH_TEST on)
+set(WITH_TEST on)
 #set(WITH_TEST off)
 message("enable test with turning WITH_TEST on ")
 

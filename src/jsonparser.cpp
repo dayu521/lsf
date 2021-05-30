@@ -5,7 +5,7 @@
 
 namespace lsf {
 
-JsonParser::JsonParser(std::unique_ptr<GenToken> gen):gen_(std::move(gen)),
+JsonParser::JsonParser(std::shared_ptr<GenToken> gen):gen_(gen),
     expect_array_{}
 {
 

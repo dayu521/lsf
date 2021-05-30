@@ -117,14 +117,21 @@ void MBuff::discard_token()
 
 ///回滚不超过1个token
 ///溢出未考虑，留给调用者自己决定
-void MBuff::roll_back_char(std::size_t len)
+void MBuff::rollback_char(std::size_t len)
 {
     //roolback fail
     assert(state_!=State::S0);
-    //roolback fail,len overflows
-    assert(forward_-len>=lexeme_begin_-1);
-    forward_-=len;
 
+    if(len>forward_-(lexeme_begin_-1))
+        forward_=lexeme_begin_-1;
+    else
+        forward_-=len;
+
+}
+
+void MBuff::rollback_all_chars()
+{
+    forward_=lexeme_begin_-1;
 }
 
 bool MBuff::is_eof() const

@@ -5,7 +5,7 @@
         "fucks":[1,2,99,5848,54,68.3]
         },
         "bs":true,
-        "s":"hello adahs"
+        "s":"hello adahs\u\u"[]
 }
 
 //反序列化结果
