@@ -36,9 +36,9 @@ if(MSVC)
 endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-set(WITH_TEST on)
+#set(WITH_TEST on)
 #set(WITH_TEST off)
-message("enable test with turning WITH_TEST on ")
+message("enable test with : set(WITH_TEST on) ")
 
 if(WITH_TEST)
 #add test library doctest

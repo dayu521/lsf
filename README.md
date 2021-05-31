@@ -9,8 +9,8 @@
 #### 使用cmake
 
 ```bash
-cd <projectdir>
-git submodule add git@github.com:dayu521/lsf.git
+cd <projectdir>	//你的工程源码目录
+git clone --depth=1 https://github.com/dayu521/lsf.git
 ```
 
 修改你自己的cmake工程文件`CMakeLists.txt`,添加以下行:
@@ -24,10 +24,27 @@ target_link_libraries(${PROJECT_NAME} lsf)
 
 把源码中`src`目录下的内容复制到你自己的工程内,它包含了所有需要的头文件与源文件.
 
+#### test
+
+当前使用了[dcotest](https://github.com/onqtam/doctest).
+
+到lsf目录中执行:
+
+```bash
+git submodule update --init --depth 1
+```
+
+然后在你自己的`CMakeLists.txt`文件中添加:
+
+```cmake
+set(WITH_TEST on)
+```
+
 #### 用法 ####
 
 ```cpp
 #include "json.h"
+//或者include "src/json.h"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -57,7 +74,7 @@ int main()
     lsf::SerializeBuilder bu;
     //序列化到bu中
     lsf::serialize(lf,bu);
-	//标准输出打印
+    //标准输出打印
     std::cout<<bu.get_jsonstring()<<std::endl;
 
     //写入到文件中
