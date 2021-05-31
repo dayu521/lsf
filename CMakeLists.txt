@@ -12,6 +12,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#manual:cmake-generator-expressions(7)
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/source-charset:utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>")
+
+#https://stackoverflow.com/questions/33062728/cmake-link-shared-library-on-windows
+if(MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
+
 set(BUILD_SHARED_LIBS on)
 #CMAKE_SOURCE_DIR 源码顶级目录
 #CMAKE_CURRENT_SOURCE_DIR   当前CMakeLists.txt文件对应的目录
@@ -25,6 +31,9 @@ add_library(${PROJECT_NAME} src/mbuff.cpp
                             src/inner_imp.cpp
                             src/analyse.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE BUFFER_ARRAY_SIZE=256)
+if(MSVC)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE MSVC_SPECIAL)
+endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(WITH_TEST on)

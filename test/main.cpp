@@ -92,7 +92,7 @@ TEST_CASE("testing json serialization and deserialization")
     lsf::SerializeBuilder bu;
     lsf::serialize(lf,bu);
 
-    std::cout<<bu.get_jsonstring()<<std::endl;
+    //std::cout<<bu.get_jsonstring()<<std::endl;
 
     std::ofstream f("example.txt");
     if(f.is_open()){
