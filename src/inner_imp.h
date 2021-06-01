@@ -3,6 +3,7 @@
 
 #include"mbuff.h"
 #include"jsonparser.h"
+#include"constant.h"
 
 namespace lsf {
 
@@ -20,13 +21,6 @@ private:
     std::wstring pattern{};
     int pattern_len{0};
     std::vector<int> pi{};
-};
-
-struct Location
-{
-    size_t line_{0};
-    size_t column_{0};
-//    size_t column_last_{0};
 };
 
 class FilterBuff:public BuffBase

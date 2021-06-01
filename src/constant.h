@@ -18,6 +18,13 @@ enum class Type{
     END
 };
 
+struct Location
+{
+    size_t line_{0};
+    size_t column_{0};
+//    size_t column_last_{0};
+};
+
 inline const char * tokentype_to_string(Type type)
 {
     switch (type) {

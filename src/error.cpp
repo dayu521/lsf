@@ -1,6 +1,6 @@
 #include "error.h"
 #include <sstream>
-#include "inner_imp.h"
+#include"constant.h"
 namespace lsf{
 
 std::string parser_messages(Location stat_for_rc, Token lex_token, std::vector<Type> expects)

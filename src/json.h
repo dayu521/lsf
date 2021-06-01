@@ -151,12 +151,15 @@ class Json
 {
 public:
     Json(const std::string & filename);
+    Json(const Json &)=delete;
+    Json(Json &&)=default;
     /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
     [[nodiscard]]
     bool run(std::function<void ( ErrorType et,const std::string & message)> f);
     /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
     [[nodiscard]]
     bool weak_type_check(std::function<void ( ErrorType et,const std::string & message)> f);
+    ///不要使用这个函数,因为返回值的寿命是当前对象*this负责的
     TreeNode * get_output()const;
     std::string get_errors()const;
 private:
@@ -167,6 +170,15 @@ private:
     std::shared_ptr<Treebuilder> builder;
     std::string error_msg_;
 };
+
+template<typename T>
+void deserialize(T & obj,const TreeNode * t);
+
+template<typename S>
+void json_to_struct(S & s,const Json & json)
+{
+    deserialize(s,json.get_output());
+}
 
 template<typename T>
 inline void Deserialize(T & s,const TreeNode * t);
@@ -453,6 +465,12 @@ void serialize(const std::vector<T> &v,SerializeBuilder & builder)
     if(v.size()>0)
         builder.back();
     builder.arr_end();
+}
+
+template<typename S>
+void struct_to_json(const S & obj,SerializeBuilder & builder)
+{
+    serialize(obj,builder);
 }
 
 namespace detail {

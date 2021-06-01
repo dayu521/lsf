@@ -90,7 +90,7 @@ TEST_CASE("testing json serialization and deserialization")
     };
 
     lsf::SerializeBuilder bu;
-    lsf::serialize(lf,bu);
+    lsf::struct_to_json(lf,bu);
 
     //std::cout<<bu.get_jsonstring()<<std::endl;
 
@@ -110,7 +110,7 @@ TEST_CASE("testing json serialization and deserialization")
 //    People ml{};
     Fn ml{};
     try {
-        lsf::deserialize(ml,j.get_output());
+        lsf::json_to_struct(ml,j);
     }  catch (const lsf::DeserializeError &ex) {
         std::cout<<ex.what()<<std::endl;
         throw ex;

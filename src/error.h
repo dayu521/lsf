@@ -1,7 +1,6 @@
 #ifndef ERROR_H
 #define ERROR_H
 #include<string>
-#include"constant.h"
 #include"jsonparser.h"
 #include"lexer.h"
 

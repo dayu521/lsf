@@ -73,7 +73,7 @@ int main()
     
     lsf::SerializeBuilder bu;
     //序列化到bu中
-    lsf::serialize(lf,bu);
+    lsf::struct_to_json(lf,bu);
     //标准输出打印
     std::cout<<bu.get_jsonstring()<<std::endl;
 
@@ -97,12 +97,13 @@ int main()
     People ml{};
     try {
         //序列化到People
-        lsf::deserialize(ml,j.get_output());
+        lsf::json_to_struct(ml,j);
     }  catch (const lsf::DeserializeError &ex) {
         std::cout<<ex.what()<<std::endl;
         throw ex;
     }
-
+    //不可复制
+	lsf::Json * lk=new lsf::Json(std::move(j));
 }
 ```
 
@@ -123,11 +124,11 @@ int main()
 ```cpp
 //从TreeNode中反序列化到类型T
 template<typename T>
-inline void Deserialize(T & s,const TreeNode * t);
+inline void lsf::Deserialize(T & s,const TreeNode * t);
 
 //序列化T类型到json字符串
 template<typename T>
-void write_value(const T & v,SerializeBuilder & builder);
+void lsf::write_value(const T & v,SerializeBuilder & builder);
 ```
 
 #### 问题 ####
