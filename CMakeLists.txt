@@ -36,7 +36,7 @@ if(MSVC)
 endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-#set(WITH_TEST on)
+set(WITH_TEST on)
 #set(WITH_TEST off)
 message("enable test with : set(WITH_TEST on) ")
 
@@ -44,7 +44,7 @@ if(WITH_TEST)
 #add test library doctest
 add_subdirectory(doctest)
 
-add_executable(mytest test/main.cpp test/hello.cpp)
+add_executable(mytest test/main.cpp #[[test/hello.cpp]] test/test_allocator.cpp)
 target_include_directories(mytest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(mytest lsf)
 target_link_libraries(mytest doctest_with_main)

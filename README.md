@@ -103,7 +103,7 @@ int main()
         throw ex;
     }
     //不可复制
-	lsf::Json * lk=new lsf::Json(std::move(j));
+    lsf::Json * lk=new lsf::Json(std::move(j));
 }
 ```
 
@@ -128,7 +128,7 @@ inline void lsf::Deserialize(T & s,const TreeNode * t);
 
 //序列化T类型到json字符串
 template<typename T>
-void lsf::write_value(const T & v,SerializeBuilder & builder);
+inline void lsf::write_value(const T & v,SerializeBuilder & builder);
 ```
 
 #### 问题 ####

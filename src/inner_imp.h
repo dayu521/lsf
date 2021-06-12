@@ -1,6 +1,8 @@
 #ifndef INNER_IMP_H
 #define INNER_IMP_H
 
+#include<limits>
+
 #include"mbuff.h"
 #include"jsonparser.h"
 #include"constant.h"
@@ -65,6 +67,62 @@ private:
     std::shared_ptr<FilterBuff> buff_{};
     Location tk_begin_{};
 };
+
+namespace Inner {
+
+///Loki分配器
+
+class Chunk final
+{
+public:
+    Chunk()=default;
+//    Chunk(const Chunk &)=delete;
+//    Chunk(Chunk &&)=default;
+//    Chunk &  operator= ( Chunk && ) = default;
+    ~Chunk();
+
+    void init(std::size_t block_size, unsigned char n );
+    void release();
+
+    void * allocate(std::size_t block_size);
+    void deallocate(void * p,std::size_t block_size);
+
+    std::size_t available_size()const;
+    bool contain(void * p,std::size_t chunck_length)const;
+private:
+    unsigned char * mem_{};
+    ///链表头的index
+    unsigned char list_head_{};
+    ///当前可用的empty块
+    unsigned char available_n_{};
+};
+
+inline constexpr unsigned char BlockNum=std::numeric_limits<unsigned char>::max();
+
+class FixedAllocator final
+{
+public:
+    FixedAllocator(std::size_t block_size);
+    ~FixedAllocator();
+    FixedAllocator(const FixedAllocator &)=delete;
+
+    std::size_t block_size()const;
+
+    void * allocate();
+    void deallocate(void * p);
+private:
+    std::size_t block_size_{};
+    unsigned char blocks_num_=BlockNum;
+    std::vector<Chunk> pool_{};
+
+    std::size_t allocate_=0;
+    std::size_t deallocate_=0;
+private:
+    void release();
+    bool add_chunck();
+};
+
+}//namespace Inner end
 
 }
 
