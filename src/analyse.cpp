@@ -1,9 +1,11 @@
-#include "analyse.h"
-#include "error.h"
 #include<iostream>
 #include<queue>
 #include<cassert>
 #include<algorithm>
+
+#include "analyse.h"
+#include "error.h"
+#include "inner_imp.h"
 
 namespace lsf {
 
@@ -325,6 +327,26 @@ bool WeakTypeChecker::do_check(std::size_t first, std::size_t another)
 std::string_view WeakTypeChecker::get_error()
 {
     return error_;
+}
+
+void TreeNode::operator delete(void *ptr, std::size_t sz)
+{
+    if(sz>Inner::MyAllocator::MaxObjSize)
+        ::operator delete(ptr);
+    else{
+        Inner::get_singleton<Inner::MyAllocator>().deallocate(ptr,sz);
+    }
+}
+
+void *TreeNode::operator new(std::size_t count)
+{
+    if(count>Inner::MyAllocator::MaxObjSize)
+        return ::operator new(count);
+    auto p=Inner::get_singleton<Inner::MyAllocator>().allocate(count);
+    if(p==nullptr)
+//        throw std::bad_alloc("MyAllocator allocate failed");
+        throw std::bad_alloc();
+    return p;
 }
 
 }

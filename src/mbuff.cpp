@@ -149,6 +149,7 @@ void MBuff::init()
 /// 调用之前必须先打开,否则未定义
 void MBuff::read(int begin, int length)
 {
+    assert(f_.is_open());
     auto pb=&buff_[0]+begin;
     f_.read(pb,length);
     if(f_.bad())

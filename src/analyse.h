@@ -168,6 +168,8 @@ struct TreeNode
     virtual  Visitor::Rtype accept(Visitor & v)=0;
     virtual WeakTypeChecker::Rtype accept_check(WeakTypeChecker & v)=0;
     virtual ~TreeNode(){}
+    void operator delete  ( void* ptr, std::size_t sz );
+    void* operator new  ( std::size_t count );
 };
 
 template<>

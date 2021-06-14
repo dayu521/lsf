@@ -259,9 +259,10 @@ std::size_t FixedAllocator::block_size() const
 void *FixedAllocator::allocate()
 {
     if(pool_.size()>0){
-        if(pool_[allocate_].available_size()>0){
+        if(allocate_<pool_.size()&&pool_[allocate_].available_size()>0){
             return pool_[allocate_].allocate(block_size_);
         }else if(deallocate_!=allocate_&&pool_[deallocate_].available_size()>0){
+            allocate_=deallocate_;
             return pool_[deallocate_].allocate(block_size_);
         }else
             ;//we need to find a free chunk
@@ -282,20 +283,6 @@ void *FixedAllocator::allocate()
             return pool_[allocate_].allocate(block_size_);
     }
     return nullptr;
-//    void * r=nullptr;
-//    if(allocate_<0){
-//        if(add_chunck())
-//            //allocate_被add_chunck()修改了,所以作为index是安全的
-//            r=pool_[allocate_].allocate(block_size_);
-//    }else if(pool_[allocate_].available_size()==0){
-//        if(allocate_!=deallocate_&&deallocate_>-1){
-//            allocate_=deallocate_;
-//            r=pool_[allocate_].allocate(block_size_);
-//        }else{
-
-//        }
-//    }
-
 }
 
 ///如果p不指向当前分配器中的内存,则不做任何事
@@ -362,6 +349,26 @@ bool FixedAllocator::add_chunck()
     }
     allocate_=pool_.size()-1;
     return true;
+}
+
+/*****************MyAllocator******************/
+void * MyAllocator::allocate(std::size_t bytes)
+{
+    assert(bytes<=MaxObjSize);
+    auto node=tree_.find(bytes);
+    if(tree_.get_null()==node){
+        node=tree_.insert(bytes,FixedAllocator(bytes));
+        if(node==tree_.get_null())
+            return nullptr;
+    }
+    return node->value_.allocate();
+}
+
+void MyAllocator::deallocate(void *p, std::size_t bytes)
+{
+    auto node=tree_.find(bytes);
+    assert(node!=tree_.get_null());
+    node->value_.deallocate(p);
 }
 
 }//namespace Inner end

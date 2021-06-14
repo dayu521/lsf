@@ -45,7 +45,12 @@ if(WITH_TEST)
 add_subdirectory(doctest)
 
 add_executable(mytest test/main.cpp #[[test/hello.cpp]] test/test_allocator.cpp)
-target_include_directories(mytest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+target_compile_options(mytest PRIVATE -pthread)
+target_link_options(mytest PRIVATE -pthread)
+endif()
+
 target_link_libraries(mytest lsf)
 target_link_libraries(mytest doctest_with_main)
 
