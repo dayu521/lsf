@@ -10,13 +10,8 @@ struct Location;
 std::string parser_messages(Location stat_for_rc,Token lex_token,std::vector<lsf::Type> expects);
 std::string lexer_messages(Location stat_for_rc,Token lex_token);
 
-namespace detail {
-template<std::size_t >
-struct AnyType{};
-}
-
 template<std::size_t N=64>
-std::string to_cstring(const std::wstring &s,detail::AnyType<N> none={})
+std::string to_cstring(const std::wstring &s)
 {
     std::string::value_type cc[N];
     std::string r{};

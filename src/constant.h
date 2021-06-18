@@ -22,7 +22,6 @@ struct Location
 {
     size_t line_{0};
     size_t column_{0};
-//    size_t column_last_{0};
 };
 
 inline const char * tokentype_to_string(Type type)
@@ -80,12 +79,6 @@ struct BaseVisitor<R,T,Others...> : BaseVisitor<R,Others...>
     using BaseVisitor<R,Others...>::visit;
     virtual R visit(T & a)=0;
 };
-
-//template <typename ...T>
-//struct TypePackage
-//{
-//    using OriginalType=T...;
-//};
 
 template <typename T>
 struct TypeTag

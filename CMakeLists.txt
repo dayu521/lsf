@@ -41,10 +41,11 @@ set(WITH_TEST on)
 message("enable test with : set(WITH_TEST on) ")
 
 if(WITH_TEST)
-#add test library doctest
-add_subdirectory(doctest)
 
-add_executable(mytest test/main.cpp #[[test/hello.cpp]] test/test_allocator.cpp)
+add_executable(mytest
+    test/test_BST.cpp
+    test/test_usage.cpp
+    test/test_allocator.cpp)
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 target_compile_options(mytest PRIVATE -pthread)
@@ -52,6 +53,9 @@ target_link_options(mytest PRIVATE -pthread)
 endif()
 
 target_link_libraries(mytest lsf)
+
+#add test library doctest
+add_subdirectory(doctest)
 target_link_libraries(mytest doctest_with_main)
 
 configure_file(test/2.txt .)

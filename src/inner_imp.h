@@ -3,6 +3,8 @@
 
 #include<limits>
 #include<queue>
+#include<stack>
+#include<functional>
 #include<cassert>
 
 #include"mbuff.h"
@@ -77,10 +79,6 @@ namespace Inner {
 class Chunk final
 {
 public:
-    Chunk()=default;
-//    Chunk(const Chunk &)=delete;
-//    Chunk(Chunk &&)=default;
-//    Chunk &  operator= ( Chunk && ) = default;
     ~Chunk();
 
     void init(std::size_t block_size, unsigned char n );
@@ -107,7 +105,8 @@ public:
     FixedAllocator(std::size_t block_size);
     FixedAllocator()=default;
     ~FixedAllocator();
-//    FixedAllocator(const FixedAllocator &)=delete;
+    FixedAllocator(const FixedAllocator &)=delete;
+    FixedAllocator(FixedAllocator &&)=default;
 
     std::size_t block_size()const;
 
@@ -169,13 +168,26 @@ public:
     {
         return null_;
     }
+
+    template<typename Fun>
+    void set_fun(Fun&& f){fun_=f;}
+
+    void inorder_traversal();
+    void preorder_traversal();
+    void postorder_traversal();
+
+    void inorder_recursion(){assert(fun_);inorder_recursion(root_);}
+    void preorder_recursion(){assert(fun_);preorder_recursion(root_);}
+    void postorder_recursion(){assert(fun_);postorder_recursion(root_);}
 private:
-    bool insert(Node * & root, std::pair<const T &,V &> pair);
-    bool remove(Node * & root, const T & key);
+    void inorder_recursion(Node * root);
+    void preorder_recursion(Node * root);
+    void postorder_recursion(Node * root);
     void release();
 private:
     Node * root_=nullptr;
     Node * null_=nullptr;
+    std::function<void (const T & key,const V & value)> fun_{};
 };
 
 template<typename T, typename V>
@@ -250,6 +262,118 @@ typename BST<T,V>::Node * & BST<T, V>::find(const T &key)
     return *iterator;
 }
 
+template<typename T, typename V>
+void BST<T, V>::inorder_traversal()
+{
+    assert(fun_);
+    std::stack<Node *> st{};
+    st.push(root_);
+
+    while(true){
+        auto c=st.top();
+        while (c!=null_) {
+            st.push(c->left_);
+            c=st.top();
+        }
+        st.pop();
+        if(st.empty())
+            break ;
+        c=st.top();
+//        std::cout<<c->key_<<':'<<c->value_<<std::endl;
+        fun_(c->key_,c->value_);
+        st.pop();
+        st.push(c->right_);
+    }
+}
+
+template<typename T, typename V>
+void BST<T, V>::preorder_traversal()
+{
+    assert(fun_);
+    std::stack<Node *> st{};
+    st.push(root_);
+
+    while(true){
+        auto c=st.top();
+        while (c!=null_) {
+//            std::cout<<c->key_<<':'<<c->value_<<std::endl;
+            fun_(c->key_,c->value_);
+            st.push(c->left_);
+            c=st.top();
+        }
+        st.pop();
+        if(st.empty())
+            break ;
+        c=st.top();
+        st.pop();
+        st.push(c->right_);
+    }
+}
+
+template<typename T, typename V>
+void BST<T, V>::postorder_traversal()
+{
+    assert(fun_);
+    std::stack<Node *> st{};
+    st.push(root_);
+
+    while(true){
+        auto c=st.top();
+        while (c!=null_) {
+            st.push(c->left_);
+            c=st.top();
+        }
+        st.pop();
+        if(st.empty())
+            break ;
+        c=st.top();
+
+        if(c==null_){
+            st.pop();
+            c=st.top();
+            st.top()=null_;
+//            std::cout<<c->key_<<':'<<c->value_<<std::endl;
+            fun_(c->key_,c->value_);
+        }else{
+            st.push(null_);
+            st.push(c->right_);
+        }
+    }
+}
+
+template<typename T, typename V>
+void BST<T, V>::inorder_recursion(Node *root)
+{
+    if(root!=null_){
+        inorder_recursion(root->left_);
+//        std::cout<<root->key_<<':'<<root->value_<<std::endl;
+        fun_(root->key_,root->value_);
+        inorder_recursion(root->right_);
+    }
+}
+
+template<typename T, typename V>
+void BST<T, V>::preorder_recursion(Node *root)
+{
+    if(root!=null_){
+//        std::cout<<root->key_<<':'<<root->value_<<std::endl;
+        fun_(root->key_,root->value_);
+        preorder_recursion(root->left_);
+        preorder_recursion(root->right_);
+    }
+}
+
+template<typename T, typename V>
+void BST<T, V>::postorder_recursion(Node *root)
+{
+    if(root!=null_){
+        postorder_recursion(root->left_);
+        postorder_recursion(root->right_);
+//        std::cout<<root->key_<<':'<<root->value_<<std::endl;
+        fun_(root->key_,root->value_);
+    }
+}
+
 template<typename T>
 class SingletonHolder
 {
@@ -267,11 +391,13 @@ private:
 
     SingletonHolder()
     {
-        assert(p_==nullptr&&destroyed_==false);
+        assert(obj_count_==0);
+        obj_count_++;
     }
 private:
     inline thread_local static T * p_=nullptr;
     inline thread_local static bool destroyed_=false;
+    inline thread_local static int obj_count_=0;
 };
 
 template<typename T>

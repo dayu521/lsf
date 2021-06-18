@@ -4,30 +4,7 @@
 #include<stack>
 #include<functional>
 
-namespace lsf {
-//namespace start
-
-/// 暂时不考虑使用allocator，因为要自己考虑析构函数调用
-//template<typename T>
-//class LsfAlloc
-//{
-//public:
-//    static auto Allocate()->decltype (std::allocator<T>())
-//    {
-//        return std::allocator<T>();
-//    }
-//    static auto DeAllocate();
-//};
-
-//struct LinkNode
-//{
-//    LinkNode * left_child_{nullptr};
-//    LinkNode * right_bro_{nullptr};
-//    std::wstring key_;
-//    virtual ~LinkNode(){}
-//};
-
-inline constexpr const char * CXC[]={"true","false","null"};
+namespace lsf {//namespace start
 
 struct TreeNode;
 
