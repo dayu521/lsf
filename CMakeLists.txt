@@ -45,7 +45,9 @@ if(WITH_TEST)
 add_executable(mytest
     test/test_BST.cpp
     test/test_usage.cpp
-    test/test_allocator.cpp)
+    test/test_allocator.cpp
+    test/test_jsonparser.cpp
+    )
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 target_compile_options(mytest PRIVATE -pthread)

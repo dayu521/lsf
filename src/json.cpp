@@ -18,7 +18,7 @@ Json::Json(const std::string &filename)
     parser_=std::make_unique<lsf::JsonParser>(wrap_lexer_);
 
     //节点构建器
-    builder=std::make_unique<Treebuilder>();
+    builder=std::make_shared<Treebuilder>();
 
     parser_->set_builder(builder);
 }

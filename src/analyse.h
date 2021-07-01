@@ -19,6 +19,7 @@ public:
     virtual ~BuilderInterface(){}
 protected:
     friend class JsonParser;
+    friend class R_JsonParser;
     virtual void before_build()=0;
     virtual void after_build()=0;
     virtual void build_obj()=0;
