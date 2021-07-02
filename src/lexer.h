@@ -47,6 +47,10 @@ private:
     bool run();
     bool try_number(wchar_t c);
     bool try_comment(wchar_t c);
+    [[nodiscard]]
+    bool is_escaped(wchar_t & rc);
+    [[nodiscard]]
+    bool is_unicode_code_point(wchar_t & rc);
 private:
     std::shared_ptr<BuffBase> input_;
     std::set<std::wstring> symbol_;

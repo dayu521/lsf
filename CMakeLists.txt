@@ -41,24 +41,25 @@ set(WITH_TEST on)
 message("enable test with : set(WITH_TEST on) ")
 
 if(WITH_TEST)
+    include(AddGitSubmodule.cmake)
+    #add test library doctest
+    add_git_submodule(doctest)
 
-add_executable(mytest
-    test/test_BST.cpp
-    test/test_usage.cpp
-    test/test_allocator.cpp
-    test/test_jsonparser.cpp
-    )
+    add_executable(mytest
+        test/test_BST.cpp
+        test/test_usage.cpp
+        test/test_allocator.cpp
+        test/test_jsonparser.cpp
+        )
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-target_compile_options(mytest PRIVATE -pthread)
-target_link_options(mytest PRIVATE -pthread)
-endif()
+    if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+        target_compile_options(mytest PRIVATE -pthread)
+        target_link_options(mytest PRIVATE -pthread)
+    endif()
 
-target_link_libraries(mytest lsf)
+    target_link_libraries(mytest lsf)
 
-#add test library doctest
-add_subdirectory(doctest)
-target_link_libraries(mytest doctest_with_main)
+    target_link_libraries(mytest doctest_with_main)
 
-configure_file(test/2.txt .)
+    configure_file(test/2.txt .)
 endif()

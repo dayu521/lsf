@@ -28,13 +28,7 @@ target_link_libraries(${PROJECT_NAME} lsf)
 
 当前使用了[dcotest](https://github.com/onqtam/doctest).
 
-到lsf目录中执行:
-
-```bash
-git submodule update --init --depth 1
-```
-
-然后在你自己的`CMakeLists.txt`文件中添加:
+在你自己的`CMakeLists.txt`文件中添加:
 
 ```cmake
 set(WITH_TEST on)

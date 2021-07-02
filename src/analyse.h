@@ -30,7 +30,7 @@ protected:
     virtual void build_Null(std::wstring str)=0;
     virtual void set_memberkey(std::wstring key)=0;
     virtual void build_null_mbr()=0;
-    virtual void start_iteration()=0;
+    virtual void can_start_iteration()=0;
     virtual void move_next()=0;
     virtual void finish_iteration()=0;
 };
@@ -54,7 +54,7 @@ protected:
     virtual void build_Null(std::wstring str) override;
     virtual void set_memberkey(std::wstring key) override;
     virtual void build_null_mbr() override;
-    virtual void start_iteration() override;
+    virtual void can_start_iteration() override;
     virtual void move_next() override;
     virtual void finish_iteration() override;
 public:

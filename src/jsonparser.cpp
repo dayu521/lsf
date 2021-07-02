@@ -138,6 +138,7 @@ bool JsonParser::mb_ws_r()
             gen_->next_();
             if(element()){
                 builder_->set_memberkey(key);
+                builder_->can_start_iteration();
                 return memberL();
             }
             else
@@ -163,7 +164,7 @@ bool JsonParser::memberL()
     if(isTerminator(TType::RBRACE)){
         return true;
     }
-    builder_->start_iteration();
+//    builder_->start_iteration();
     while (isTerminator(TType::COMMA)) {
         gen_->next_();
         if(member()){
@@ -249,6 +250,7 @@ bool JsonParser::arr_ws_r()
     case TType::KeyWord:
     case TType::Null:{
         if(value()){
+            builder_->can_start_iteration();
             unuse();
             return elementsL();
         }
@@ -270,7 +272,7 @@ bool JsonParser::elementsL()
 {
     if(isTerminator(Type::RSQUARE))
         return true;
-    builder_->start_iteration();
+//    builder_->start_iteration();
     while(isTerminator(Type::COMMA)){
         gen_->next_();
         if(element()){
@@ -383,6 +385,8 @@ bool R_JsonParser::value()
                         }
                     }else if (isTerminator(TType::RBRACE)) {
                         builder_->build_null_mbr();
+                        sw.push(AnyThing);
+                        break;
                     }else{
                         expect_array_.push_back(TType::String);
                         expect_array_.push_back(TType::RBRACE);
@@ -441,11 +445,12 @@ bool R_JsonParser::value()
             unuse();
             builder_->set_memberkey(keys.top());
             keys.pop();
+            builder_->can_start_iteration();
             if(isTerminator(TType::RBRACE)){
                 sw.pop();
-                sw.push(Value0);
+                sw.push(AnyThing);
             }else{
-                builder_->start_iteration();
+//                builder_->start_iteration();
                 nums.push(1);
                 sw.push(While1);
                 sw.push(AnyThing);
@@ -515,11 +520,12 @@ bool R_JsonParser::value()
             }
         }else if (w==Value2) {
             unuse();
+            builder_->can_start_iteration();
             if(isTerminator(Type::RSQUARE)){
                 sw.pop();
-                sw.push(Value0);
+                sw.push(AnyThing);
             }else{
-                builder_->start_iteration();
+//                builder_->start_iteration();
                 nums.push(1);
                 sw.push(While2);
                 sw.push(AnyThing);

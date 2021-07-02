@@ -115,7 +115,7 @@ void Treebuilder::build_null_mbr()
 }
 
 //当前已经有一个元素了
-void Treebuilder::start_iteration()
+void Treebuilder::can_start_iteration()
 {
     mbr_node_.push({root_,1});//构建完成后正好清空
 }

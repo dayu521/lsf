@@ -6,65 +6,8 @@ namespace lsf {
 
 namespace Private {
 //namespace start
-bool deal_unicode_code_point(wchar_t &d, const std::wstring &s, size_t  &index);
 
 bool cp_to_utf8(unsigned int cp,wchar_t & u8);
-
-bool wstring_to_double(const std::wstring & s,double & d);
-
-bool deal_escape_char(const std::wstring &s,std::wstring & d)
-{
-    decltype (s.length()) i=0;
-    wchar_t c;
-    d.clear();
-    wchar_t code_point=0;
-    while (i<s.length()) {
-        c=s[i++];
-        if(c==L'\\'){
-            c=s[i++];
-            switch (c) {
-            case L'\"':
-                d+=L'\"';
-                break;
-            case L'\\':
-                d+=L'\\';
-                break;
-            case L'/':
-                d+=L'/';
-                break;
-            case L'b':
-                d+=L'\b';
-                break;
-            case L'f':
-                d+=L'\f';
-                break;
-            case L'n':
-                d+=L'\n';
-                break;
-            case L'r':
-                d+=L'\r';
-                break;
-            case L't':
-                d+=L'\t';
-                break;
-            case L'u':{
-                if(deal_unicode_code_point(code_point,s,i)){
-                    d+=code_point;
-                }
-                else
-                    return false;
-                break;
-            }
-            default:
-                return false;
-            }
-        }
-        else
-            d+=c;
-//        c=s[i++];
-    }
-    return true;
-}
 
 bool deal_unicode_code_point(wchar_t &d, const std::wstring & s, size_t &index)
 {
@@ -192,20 +135,20 @@ bool Lexer::run()
         auto & s=current_token_.value_;
         s.clear();
         c=input_->next_char();
-        while (c!=L'\"') {
+        // ("\\")
+        while (c!=L'"') {
             if(c>=L'\u0020'&&c<=0x10FFFF){
+                if(c==L'\\'&&!is_escaped(c)){
+                    input_->discard_token();
+                    return false;
+                }
                 s+=c;
                 c=input_->next_char();
-            }else{//包含eof
+            }else {//包含eof
+                input_->discard_token();
                 return false;
             }
         }
-        std::wstring d{};
-        if(!Private::deal_escape_char(s,d)){
-            input_->discard_token();
-            return false;
-        }
-        current_token_.value_=d;
         input_->discard_token();
         return true;
     }else if(c==L'{'){
@@ -403,6 +346,96 @@ bool Lexer::try_comment(wchar_t c)
     }else
         ;
 F:  return false;
+}
+
+bool Lexer::is_escaped(wchar_t &rc)
+{
+    assert(rc==L'\\');
+    auto c=rc;
+    wchar_t code_point=0;
+    c=input_->next_char();
+    switch (c) {
+    case L'\"':
+        rc=L'\"';
+        break;
+    case L'\\':
+        rc=L'\\';
+        break;
+    case L'/':
+        rc=L'/';
+        break;
+    case L'b':
+        rc=L'\b';
+        break;
+    case L'f':
+        rc=L'\f';
+        break;
+    case L'n':
+        rc=L'\n';
+        break;
+    case L'r':
+        rc=L'\r';
+        break;
+    case L't':
+        rc=L'\t';
+        break;
+    case L'u':{
+        rc=L'u';
+        return is_unicode_code_point(rc);
+    }
+    default:
+        return false;
+    }
+    return true;
+}
+
+bool Lexer::is_unicode_code_point(wchar_t &rc)
+{
+    assert(rc==L'u');
+    unsigned int high=0,low=0;
+    wchar_t c{};
+    for(int i=0;i<4;i++){
+        c=input_->next_char();
+        high*=16;
+        if(c>=L'A'&&c<=L'F'){
+            high+=c-L'A'+10;
+        }else if(c>=L'a'&&c<=L'f'){
+            high+=c-L'a'+10;
+        }else if(c>=L'0'&&c<=L'9'){
+            high+=c-L'0';
+        }else
+            return false;
+    }
+    rc=high;
+    if(high>=0xD800 && high<=0xDBFF){
+        c=input_->next_char();
+        if(c==L'\\'){
+            c=input_->next_char();
+            if(c==L'u'){
+                for(int i=0;i<4;i++){
+                    c=input_->next_char();
+                    low*=16;
+                    if(c>=L'A'&&c<=L'F'){
+                        low+=c-L'A'+10;
+                    }else if(c>=L'a'&&c<=L'f'){
+                        low+=c-L'a'+10;
+                    }else if(c>=L'0'&&c<=L'9'){
+                        low+=c-L'0';
+                    }else
+                        return false;
+                }
+                if(low>=0xdc00&&low<=0xdfff){
+                    //https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Surrogates
+                    rc=0x10000+(high-0xd800)*0x400+(low-0xdc00);
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        }
+        return false;
+    }
+    return true;
 }
 
 }
