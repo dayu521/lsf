@@ -51,6 +51,7 @@ private:
     std::vector<lsf::Type> expect_array_;
 };
 
+//把递归下降转换成循环
 class R_JsonParser
 {
 public:
@@ -61,17 +62,8 @@ public:
 private:
     using TType=lsf::Type;
     bool json();
-//    bool element();
+    ///不建议对此函数有任何想法,因为全是复杂的令人难过的转换逻辑,
     bool value();
-//    bool obj();
-//    bool mb_ws();
-//    bool mb_ws_r();
-//    bool memberL();
-//    bool member();
-//    bool array();
-//    bool arr_ws();
-//    bool arr_ws_r();
-//    bool elementsL();
     bool unuse();
 
     bool isTerminator(TType type);

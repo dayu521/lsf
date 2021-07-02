@@ -3,11 +3,19 @@
     "p":{
         "name":"小明",
         "age":18,
-        "fucks":"[1,2,99,5848,54,68.3]"
+        "fucks":[1,2,99,5848,54,68.3]
      },
     "bs":true,
     "s":"hello adahs",
-    "dsbsag好地方回复回复":null
+    "dsbsag好地方回复回复":{
+        "name":"小明",
+        "age":18,
+        "fucks":{
+            "a": 55.226500,
+            "bs": true,
+            "s": "hello adahs"
+            }
+     }
 }
 
 //反序列化结果

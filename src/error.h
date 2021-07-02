@@ -1,6 +1,8 @@
 #ifndef ERROR_H
 #define ERROR_H
 #include<string>
+#include<cassert>
+
 #include"jsonparser.h"
 #include"lexer.h"
 
@@ -22,11 +24,12 @@ std::string to_cstring(const std::wstring &s)
     while (n!= static_cast<std::size_t>(-1)) {
         r.append(cc, n);
         if(cstr==nullptr)
-            break;
+            return r;
         n =wcsrtombs(cc,&cstr,std::extent_v<decltype(cc)>,&state);
     }
-
-    return r;
+    //转换错误
+    //https://en.cppreference.com/w/cpp/string/multibyte/wcsrtombs
+    assert(false);
 }
 
 //namespace end
