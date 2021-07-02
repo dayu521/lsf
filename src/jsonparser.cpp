@@ -334,6 +334,7 @@ bool R_JsonParser::json()
 {
     unuse();
     if (value()) {
+        unuse();
         if (isTerminator(TType::END)) {
             builder_->after_build();
             return true;

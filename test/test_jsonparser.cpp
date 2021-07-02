@@ -27,5 +27,11 @@ TEST_CASE("test jsonparser")
 
     parser_->set_builder(builder);
 
+    auto old=std::setlocale(LC_ALL,nullptr);
+    std::setlocale(LC_ALL,std::locale("").name().c_str());
     CHECK_EQ(parser_->parser(),true);
+#ifdef MSVC_SPECIAL
+        old = "C";
+#endif // MSVC_SPECIAL
+    std::setlocale(LC_ALL, old);
 }
