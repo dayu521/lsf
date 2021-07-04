@@ -52,10 +52,10 @@ bool Json::run(std::function<void (ErrorType, const std::string &)> f)
     //同时设置本地c环境为用户偏好的locale，默认c环境的name好像是"C"
     //std::locale::global(std::locale(""));
 
-    auto old=std::setlocale(LC_ALL,nullptr);
+    const auto old=std::setlocale(LC_ALL,nullptr);
     std::setlocale(LC_ALL,std::locale("").name().c_str());
     detail::Guard guard([old]{
-        auto restore = old;
+        const auto restore = old;
 #ifdef MSVC_SPECIAL
         restore = "C";
 #endif // MSVC_SPECIAL

@@ -424,6 +424,8 @@ T & get_singleton()
 class MyAllocator
 {
 public:
+    MyAllocator()=default;
+    MyAllocator(const MyAllocator &)=delete;
     void * allocate(std::size_t bytes);
     void deallocate(void * p, std::size_t bytes);
 

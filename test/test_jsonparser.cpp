@@ -1,4 +1,6 @@
+#include<chrono>
 #include<iostream>
+
 #include"doctest/doctest.h"
 
 #include"jsonparser.h"
@@ -30,7 +32,15 @@ TEST_CASE("test jsonparser")
     auto old=std::setlocale(LC_ALL,nullptr);
     std::setlocale(LC_ALL,std::locale("").name().c_str());
 
+    auto start = std::chrono::steady_clock::now();
     auto ok=parser_->parser();
+    auto end = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double> diff = end-start;
+    std::cout << "Time to parser: "<<diff.count() << " s\n";
+
+    const auto & all=lsf::Inner::get_singleton<lsf::Inner::MyAllocator>();
+
     std::string error_msg;
     if(!ok){
         error_msg+=lsf::parser_messages(wrap_lexer_->token_position(),lexer_->get_token(),parser_->get_expect_token());
@@ -42,16 +52,28 @@ TEST_CASE("test jsonparser")
         old = "C";
 #endif // MSVC_SPECIAL
     std::setlocale(LC_ALL, old);
-
+    lsf::SerializeBuilder bu;
+    lsf::TreeNode2string(std::get<0>(builder->get_ast()),bu);
+    std::cout<<bu.get_jsonstring()<<std::endl;
 }
 
 
-//TEST_CASE("test jsonparser")
-//{
-//    lsf::Json j("22.txt");
-//    auto ok=j.run([&](auto t,const std::string &s){
-//        lsf::ErrorType sd=t;
-//        std::cout<<s<<std::endl;
-//    });
-//    CHECK(ok==true);
-//}
+TEST_CASE("test jsonparser compare")
+{
+    lsf::Json j("2.txt");
+
+    auto start = std::chrono::steady_clock::now();
+    auto ok=j.run([&](auto t,const std::string &s){
+        lsf::ErrorType sd=t;
+        std::cout<<s<<std::endl;
+    });
+    auto end = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double> diff = end-start;
+    std::cout << "Time to parser: "<<diff.count() << " s\n";
+
+    CHECK(ok==true);
+//    lsf::SerializeBuilder bu;
+//    lsf::TreeNode2string(j.get_output(),bu);
+//    std::cout<<bu.get_jsonstring()<<std::endl;
+}

@@ -473,6 +473,57 @@ void struct_to_json(const S & obj,SerializeBuilder & builder)
     serialize(obj,builder);
 }
 
+//I can't find out a better function name
+inline void TreeNode2string(TreeNode * root,SerializeBuilder & sb)
+{
+    if(root->left_child_==root){
+        return ;
+    }
+    if(root->ele_type_==NodeC::Obj){
+        sb.obj_start();
+        auto i=root->left_child_;
+        if(i->right_bro_==i){
+            if(i->left_child_!=i)
+                sb.write_key(i->key_);
+            TreeNode2string(i,sb);
+        }else{
+            do{
+                sb.write_key(i->key_);
+                TreeNode2string(i,sb);
+                sb.forward_next();
+                i=i->right_bro_;
+            }while(root->left_child_!=i);
+            sb.back();
+        }
+        sb.obj_end();
+    }else if(root->ele_type_==NodeC::Arr){
+        sb.arr_start();
+        auto i=root->left_child_;
+        if(i->right_bro_==i){
+            TreeNode2string(i,sb);
+        }else{
+            do{
+                TreeNode2string(i,sb);
+                sb.forward_next();
+                i=i->right_bro_;
+            }while(root->left_child_!=i);
+            sb.back();
+        }
+        sb.arr_end();
+    }else if(root->ele_type_==NodeC::String){
+        sb.add_quotation();
+        sb.write_value(static_cast<const Jnode<NodeC::String> *>(root)->data_);
+        sb.add_quotation();
+    }else if(root->ele_type_==NodeC::Number){
+        sb.write_value(static_cast<const Jnode<NodeC::Number> *>(root)->data_);
+    }else if(root->ele_type_==NodeC::Keyword){
+        sb.write_value(static_cast<const Jnode<NodeC::Keyword> *>(root)->b_?"true":"false");
+    }else if(root->ele_type_==NodeC::Null){
+        sb.write_value("null");
+    }else
+        ;//never be here
+}
+
 namespace detail {
 
 

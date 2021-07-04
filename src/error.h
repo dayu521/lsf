@@ -30,6 +30,7 @@ std::string to_cstring(const std::wstring &s)
     //转换错误
     //https://en.cppreference.com/w/cpp/string/multibyte/wcsrtombs
     assert(false);
+    return r;
 }
 
 //namespace end
