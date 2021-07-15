@@ -311,7 +311,7 @@ class SerializeBuilder
 public:
     SerializeBuilder(){indent.push(0);}
     virtual ~SerializeBuilder(){}
-    std::string get_jsonstring()const{return out_;}
+    std::string_view get_jsonstring()const{return out_;}
     void clear(){out_.clear();}
 public:  
     virtual void write_value(const std::string & ele)
@@ -371,7 +371,7 @@ public:
     }
     virtual void obj_end()
     {
-        out_+='\n';       
+        out_+='\n';
         auto i=indent.top();
         indent.pop();
         while (i-1>0) {
@@ -390,9 +390,10 @@ public:
             i--;
         }
     }
-    virtual void back()
+    virtual void back(std::size_t i=2)
     {
-        out_.resize(out_.size()-indent.top()*4-2);
+        //todo:check overflow
+        out_.resize(out_.size()-indent.top()*4-i);
     }
 protected:
     std::string out_{};
@@ -482,10 +483,13 @@ inline void TreeNode2string(TreeNode * root,SerializeBuilder & sb)
     if(root->ele_type_==NodeC::Obj){
         sb.obj_start();
         auto i=root->left_child_;
+        //fixed: empty member takes up a new line
         if(i->right_bro_==i){
-            if(i->left_child_!=i)
+            if(i->left_child_!=i){
                 sb.write_key(i->key_);
-            TreeNode2string(i,sb);
+                TreeNode2string(i,sb);
+            }else
+                sb.back(1);
         }else{
             do{
                 sb.write_key(i->key_);
@@ -500,7 +504,10 @@ inline void TreeNode2string(TreeNode * root,SerializeBuilder & sb)
         sb.arr_start();
         auto i=root->left_child_;
         if(i->right_bro_==i){
-            TreeNode2string(i,sb);
+            if(i->left_child_!=i)
+                TreeNode2string(i,sb);
+            else
+                sb.back(1);
         }else{
             do{
                 TreeNode2string(i,sb);
@@ -521,7 +528,7 @@ inline void TreeNode2string(TreeNode * root,SerializeBuilder & sb)
     }else if(root->ele_type_==NodeC::Null){
         sb.write_value("null");
     }else
-        ;//never be here
+        throw std::runtime_error("TreeNode2string() failed");//never be here
 }
 
 namespace detail {

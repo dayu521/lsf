@@ -54,7 +54,9 @@ TEST_CASE("test jsonparser")
     std::setlocale(LC_ALL, old);
     lsf::SerializeBuilder bu;
     lsf::TreeNode2string(std::get<0>(builder->get_ast()),bu);
-    std::cout<<bu.get_jsonstring()<<std::endl;
+    std::ofstream f("22.txt");
+    f<<bu.get_jsonstring();
+//    std::cout<<bu.get_jsonstring()<<std::endl;
 }
 
 
@@ -76,4 +78,6 @@ TEST_CASE("test jsonparser compare")
 //    lsf::SerializeBuilder bu;
 //    lsf::TreeNode2string(j.get_output(),bu);
 //    std::cout<<bu.get_jsonstring()<<std::endl;
+//    std::ofstream f("44.txt");
+//    f<<bu.get_jsonstring();
 }

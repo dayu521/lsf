@@ -279,6 +279,7 @@ void BST<T, V>::inorder_traversal()
         if(st.empty())
             break ;
         c=st.top();
+
 //        std::cout<<c->key_<<':'<<c->value_<<std::endl;
         fun_(c->key_,c->value_);
         st.pop();
@@ -305,6 +306,7 @@ void BST<T, V>::preorder_traversal()
         if(st.empty())
             break ;
         c=st.top();
+
         st.pop();
         st.push(c->right_);
     }

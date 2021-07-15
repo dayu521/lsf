@@ -8,7 +8,7 @@ TEST_CASE("test bst...") {
     MESSAGE("初始化BST数据");
     BST<int,int> t{};
 //    const auto &&keys={1,2,3,8,574,89};
-    const auto &&keys={1,2,6,55,13,9,3,8,574,89};
+    const auto &&keys={1,891,51,23,14,37,28,100,66,58,59,2,6,55,13,9,3,8,574,89};
     for(auto i: keys){
         t.insert(i,i);
     }

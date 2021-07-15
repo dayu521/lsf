@@ -572,6 +572,7 @@ bool R_JsonParser::value()
 
     }
 return true;
+//以下注释是中间步骤，作为文档形式的一部分出现于此
 /*
     auto type=gen_->current_().type_;
     if(type==Type::LBRACE){
