@@ -36,11 +36,12 @@ if(MSVC)
 endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-set(WITH_TEST on)
+# set(WITH_TEST on)
 #set(WITH_TEST off)
-message("enable test with : set(WITH_TEST on) ")
+message("============you can enable test by command-line args with : -D WITH_TEST=on==============")
 
 if(WITH_TEST)
+message("doctest enabled")
     include(AddGitSubmodule.cmake)
     #add test library doctest
     add_git_submodule(doctest)
@@ -62,4 +63,5 @@ if(WITH_TEST)
     target_link_libraries(mytest doctest_with_main)
 
     configure_file(test/2.txt .)
+    configure_file(test/22.txt .)
 endif()

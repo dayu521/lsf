@@ -3,13 +3,27 @@
 解析json文件,反序列化到c++结构;以及从c++结构序列化到json.用到了c++17标准.
 
 感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践.
+感谢[dcotest](https://github.com/onqtam/doctest).
 
 欢迎issue,感谢!
 
-#### 使用cmake
+### 编译
 
 ```bash
-cd <projectdir>	//你的工程源码目录
+
+    cd ~ && mkdir lsf && cd lsf #or replace name 'lsf' with something else name
+    git clone --depth=1 https://github.com/dayu521/lsf.git
+    cd lsf && mkdir build && cd build
+    cmake .. #或者,打开测试 cmake .. -D WITH_TEST=on
+    make
+    
+```
+
+### 使用
+#### 1.通过cmake
+
+```bash
+cd <projectdir>	#你的工程源码目录
 git clone --depth=1 https://github.com/dayu521/lsf.git
 ```
 
@@ -20,23 +34,16 @@ add_subdirectory(lsf)
 target_link_libraries(${PROJECT_NAME} lsf)
 ```
 
-#### 或者
+#### 2.复制源码
 
-把源码中`src`目录下的内容复制到你自己的工程内,它包含了所有需要的头文件与源文件.
+当前不依赖三方库,除了标准库,以及测试库`doctest`.
+所以,把源码中`src`目录下的内容复制到你自己的工程内,它包含了所有需要的头文件与源文件.
 
-#### test
 
-当前使用了[dcotest](https://github.com/onqtam/doctest).
-
-在你自己的`CMakeLists.txt`文件中添加:
-
-```cmake
-set(WITH_TEST on)
-```
-
-#### 用法 ####
+#### 列子代码 ####
 
 ```cpp
+//包含合适的头文件
 #include "json.h"
 //或者include "src/json.h"
 #include <string>
@@ -127,7 +134,7 @@ inline void lsf::write_value(const T & v,SerializeBuilder & builder);
 
 #### 问题 ####
 
-- 不处理字符编码问题，因为实在搞不定
+- 不处理字符编码问题，因为实在搞不定(因为采用了宽字符,并且默认与当前系统字符编码一致,但愿一般不会出问题- -)
 - 不支持继承
 - 保留空白.标准json不接受注释,但也是保留c和c++风格的注释(留下了支持的接口)
 - 详细文档都会开放,其实也没什么,大家都能找到
