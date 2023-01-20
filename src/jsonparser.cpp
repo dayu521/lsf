@@ -242,26 +242,37 @@ bool JsonParser::arr_ws()
 //arr_ws_r.node=value.node+elementsL.node
 bool JsonParser::arr_ws_r()
 {
-    switch (gen_->current_().type_) {
-    case TType::LBRACE:
-    case TType::LSQUARE:
-    case TType::String:
-    case TType::Number:
-    case TType::KeyWord:
-    case TType::Null:{
+//    switch (gen_->current_().type_) {
+//    case TType::LBRACE:
+//    case TType::LSQUARE:
+//    case TType::String:
+//    case TType::Number:
+//    case TType::KeyWord:
+//    case TType::Null:{
+//        if(value()){
+//            builder_->can_start_iteration();
+//            unuse();
+//            return elementsL();
+//        }
+//        return false;
+//    }
+//    case TType::RSQUARE:
+////        root_ = null_;
+//        builder_->build_null_mbr();
+//        return true;
+//    default:
+//        expect_array_.assign({TType::RSQUARE});
+//        return false;
+//    }
+    if(gen_->current_().type_==TType::RSQUARE){
+        builder_->build_null_mbr();
+        return true;
+    }else{
         if(value()){
             builder_->can_start_iteration();
             unuse();
             return elementsL();
         }
-        return false;
-    }
-    case TType::RSQUARE:
-//        root_ = null_;
-        builder_->build_null_mbr();
-        return true;
-    default:
-        expect_array_.assign({TType::RSQUARE});
         return false;
     }
 }
