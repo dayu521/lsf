@@ -273,6 +273,7 @@ bool JsonParser::arr_ws_r()
             unuse();
             return elementsL();
         }
+        expect_array_.push_back({TType::RSQUARE});
         return false;
     }
 }
