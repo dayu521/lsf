@@ -1,9 +1,13 @@
 {
     "a":55.2265,
     "p":{
-        "name":"小明",
-        "age":18,
+       /*
+       "name":"小明",
+        "age":true,
         "fucks":[1,2,99,5848,54,68.3]
+        */
+        "age":{"a1":null}
+        ,"cc":[[1,2,false],[]]
      },
     "bs":true,
     "s":"hello adahs",

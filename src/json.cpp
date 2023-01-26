@@ -1,5 +1,8 @@
+#include<iostream>
+
 #include "json.h"
 #include "inner_imp.h"
+#include "lexer.h"
 namespace lsf {
 
 Json::Json(const std::string &filename)

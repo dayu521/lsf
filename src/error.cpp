@@ -1,6 +1,9 @@
-#include "error.h"
 #include <sstream>
+
+#include "error.h"
 #include"constant.h"
+#include"lexer.h"
+
 namespace lsf{
 
 std::string parser_messages(Location stat_for_rc, Token lex_token, std::vector<Type> expects)

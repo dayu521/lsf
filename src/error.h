@@ -2,13 +2,13 @@
 #define ERROR_H
 #include<string>
 #include<cassert>
-
-#include"jsonparser.h"
-#include"lexer.h"
+#include<vector>
 
 namespace lsf {
 //namespace start
 struct Location;
+struct Token;
+enum class Type;
 std::string parser_messages(Location stat_for_rc,Token lex_token,std::vector<lsf::Type> expects);
 std::string lexer_messages(Location stat_for_rc,Token lex_token);
 

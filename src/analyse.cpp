@@ -1,7 +1,8 @@
-#include<iostream>
+//#include<iostream>
 #include<queue>
 #include<cassert>
 #include<algorithm>
+#include<set>
 
 #include "analyse.h"
 #include "error.h"
@@ -131,7 +132,7 @@ void Treebuilder::move_next()
 
 void Treebuilder::finish_iteration()
 {
-    root_=root_->right_bro_;
+//    root_=root_->right_bro_;
 //    mbr_node_.pop();  //放到arr或obj中清空，因为那时候需要存储的个数
 }
 
@@ -154,7 +155,7 @@ void PrintNodes::visit(Jnode<NodeC::Obj> & obj)
     [[likely]]if(obj.left_child_!=faken_){
         auto j=obj.left_child_;
         do {
-            std::cout<<j->key_<<" ";
+//            std::cout<<j->key_<<" ";
             j=j->right_bro_;
         } while (j!=obj.left_child_);
     }
@@ -167,22 +168,22 @@ void PrintNodes::visit(Jnode<NodeC::Arr> &arr)
 
 void PrintNodes::visit(Jnode<NodeC::String> &str)
 {
-    std::cout<<str.data_<<" ";
+//    std::cout<<str.data_<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Number> &num)
 {
-    std::cout<<num.data_<<" ";
+//    std::cout<<num.data_<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Keyword> &key_word)
 {
-    std::cout<<(key_word.b_?"true":"false")<<" ";
+//    std::cout<<(key_word.b_?"true":"false")<<" ";
 }
 
 void PrintNodes::visit(Jnode<NodeC::Null> &null)
 {
-    std::cout<<"null"<<" ";
+//    std::cout<<"null"<<" ";
 }
 
 void Visitor::visit_BFS(Tree roott, std::function<void ()> round_callback)
