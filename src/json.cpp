@@ -60,7 +60,9 @@ bool Json::run(std::function<void (ErrorType, const std::string &)> f)
     detail::Guard guard([old]{
         const auto restore = old;
 #ifdef MSVC_SPECIAL
-        restore = "C";
+        const auto restore = "C";
+#else
+        const auto restore = old;
 #endif // MSVC_SPECIAL
         std::setlocale(LC_ALL, restore);
     });
