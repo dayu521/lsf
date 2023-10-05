@@ -58,7 +58,6 @@ bool Json::run(std::function<void (ErrorType, const std::string &)> f)
     const auto old=std::setlocale(LC_ALL,nullptr);
     std::setlocale(LC_ALL,std::locale("").name().c_str());
     detail::Guard guard([old]{
-        const auto restore = old;
 #ifdef MSVC_SPECIAL
         const auto restore = "C";
 #else

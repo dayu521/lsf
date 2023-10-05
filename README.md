@@ -14,9 +14,9 @@
     cd ~ && mkdir lsf && cd lsf #or replace name 'lsf' with something else name
     git clone --depth=1 https://github.com/dayu521/lsf.git
     cd lsf && mkdir build && cd build
-    cmake .. #或者,打开测试 cmake .. -D WITH_TEST=on
-    make
-    
+    cmake ..
+    cmake --build .
+
 ```
 
 ### 使用
