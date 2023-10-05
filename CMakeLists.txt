@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 project(lsf LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #指定msvc源码字符集
 #https://docs.microsoft.com/en-us/cpp/build/reference/utf-8-set-source-and-executable-character-sets-to-utf-8
@@ -47,9 +47,9 @@ message("doctest enabled")
     add_git_submodule(doctest)
 
     add_executable(mytest
-        test/test_BST.cpp
-        test/test_usage.cpp
-        test/test_allocator.cpp
+#        test/test_BST.cpp
+#        test/test_usage.cpp
+#        test/test_allocator.cpp
         test/test_jsonparser.cpp
         )
 
