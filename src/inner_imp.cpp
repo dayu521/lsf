@@ -327,6 +327,7 @@ void FixedAllocator::deallocate(void *p)
         pool_.back().release();
         pool_.pop_back();
         deallocate_=0;
+        allocate_--;
     }
 }
 
