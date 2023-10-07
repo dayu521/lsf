@@ -18,7 +18,8 @@ if(MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
-set(BUILD_SHARED_LIBS on)
+#打开作为共享库编译
+#set(BUILD_SHARED_LIBS on)
 #CMAKE_SOURCE_DIR 源码顶级目录
 #CMAKE_CURRENT_SOURCE_DIR   当前CMakeLists.txt文件对应的目录
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR})
