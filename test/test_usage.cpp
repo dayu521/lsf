@@ -117,3 +117,39 @@ TEST_CASE("testing json serialization and deserialization")
     }
 
 }
+
+TEST_CASE("testing json serialization and deserialization 2")
+{
+    //    People lf={18,true,{{"dog",2},{"duck鸭子",1},{"cat",3}}};
+    Fn lf={
+        {{18,true,{{"dog",2},{"duck鸭子",1},{"cat",3}}},{},{}},
+            "liad",
+            {"pl",56}
+        };
+
+    lsf::SerializeBuilder bu;
+    lsf::struct_to_json(lf,bu);
+
+    std::cout<<bu.get_jsonstring()<<std::endl;
+
+    std::ofstream f("example.txt");
+    if(f.is_open()){
+        f<<bu.get_jsonstring();
+        f.close();
+        std::cout<<"writing to example.txt done"<<std::endl;
+    }
+
+    bu.clear();
+
+    //从文件读入
+    std::cout<<"reading from example.txt "<<std::endl;
+    lsf::Json j("example.txt");
+    auto ok=j.run([&](auto t,const std::string &s){
+        lsf::ErrorType sd=t;
+        std::cout<<s<<std::endl;
+    });
+    CHECK(ok==true);
+    lsf::TreeNode2string(j.get_output(),bu);
+    std::cout<<bu.get_jsonstring()<<std::endl;
+
+}

@@ -49,7 +49,7 @@ message("doctest enabled")
 
     add_executable(mytest
 #        test/test_BST.cpp
-#        test/test_usage.cpp
+       test/test_usage.cpp
 #        test/test_allocator.cpp
         test/test_jsonparser.cpp
         )
