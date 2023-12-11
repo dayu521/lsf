@@ -40,7 +40,7 @@ void Treebuilder::build_obj()
 {
     auto n=new Jnode<NodeC::Obj>;
     n->ele_type_=NodeC::Obj;
-    n->left_child_=root_;
+    n->left_child_=root_->right_bro_;
     n->right_bro_=n;
     n->n_=std::get<1>(mbr_node_.top());
     root_=n;
@@ -52,7 +52,7 @@ void Treebuilder::build_arr()
 {
     auto n=new Jnode<NodeC::Arr>;
     n->ele_type_=NodeC::Arr;
-    n->left_child_=root_;
+    n->left_child_=root_->right_bro_;
     n->right_bro_=n;
     n->n_=std::get<1>(mbr_node_.top());
     root_=n;
