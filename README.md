@@ -2,10 +2,12 @@
 
 解析json文件,反序列化到c++结构;以及从c++结构序列化到json.用到了c++20标准([module](https://en.cppreference.com/w/cpp/language/modules)).
 
+最低也支持c++17.
+
 感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践.
 感谢[dcotest](https://github.com/onqtam/doctest).
 
-### 编译
+### 编译(c++20以上)
 
 ---
 
@@ -27,13 +29,15 @@ xmake:
     xmake f -m debug --toolchain=clang
     xmake -rvDw
 ```
-### 使用
+### 使用(c++20)
 #### 1.xmake
+
 如果你的项目是通过xmake进行构建的
 
 在你的工程目录下clone当前项目
 
 然后在你的xmake.lua工程文件中引用即可
+
 ```lua
 includes("lsf_module")
 target("your project name")
@@ -41,10 +45,25 @@ target("your project name")
     add_includedirs("lsf_module/src/public")
 ```
 
+### 使用(c++17)
+#### 1.通过cmake
+
+```bash
+cd <projectdir>	#你的工程源码目录
+git clone --depth=1 https://github.com/dayu521/lsf.git
+```
+
+修改你自己的cmake工程文件`CMakeLists.txt`,添加以下行:
+
+```cmake
+add_subdirectory(lsf)
+target_link_libraries(${PROJECT_NAME} lsf)
+```
+
 #### 2.复制源码
 
 当前不依赖三方库,除了标准库,以及测试库`doctest`.
-所以,把源码中`src`目录下的内容复制到你自己的工程内,它包含了所有需要的头文件与源文件.
+所以,把源码中`src/old`目录下的内容复制到你自己的工程内,它包含了所有需要的头文件与源文件.
 
 
 #### 列子代码 ####

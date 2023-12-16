@@ -1,10 +1,13 @@
 module;
-#include "analyse.h"
-#include "inner_imp.h"
-#include "lexer.h"
-#include "error.h"
+#include <string>
+#include <memory>
+#include <functional>
 
 module lsf;
+
+import :analyze;
+import :error;
+import :lexer;
 
 namespace lsf
 {

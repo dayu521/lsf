@@ -1,11 +1,13 @@
 module;
-#include "analyse.h"
-#include "error.h"
 #include <tuple>
 #include <string>
-#include "inner_imp.h"
+#include <vector>
+#include <stdexcept>
 
 module lsf;
+import :analyze;
+import :error;
+import :inner_imp;
 
 namespace lsf
 {

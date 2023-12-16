@@ -9,6 +9,7 @@ target("lsf")
     add_includedirs("src/inner")
     set_policy("build.c++.modules", true)
     set_languages("c++23")
+    add_defines("BUFFER_ARRAY_SIZE=256")
 
     if is_os("windows") then
         add_defines("MSVC_SPECIAL")

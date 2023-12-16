@@ -35,7 +35,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE BUFFER_ARRAY_SIZE=256)
 if(MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE MSVC_SPECIAL)
 endif()
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/old)
 
 # set(WITH_TEST on)
 #set(WITH_TEST off)
