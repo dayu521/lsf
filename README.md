@@ -32,7 +32,7 @@ xmake:
 
 直接在你的xmake.lua工程文件中引用即可
 ```lua
-includes("lsf-module")
+includes("lsf_module")
 ```
 
 #### 2.复制源码

@@ -1,4 +1,4 @@
 
 #include"xx.h"
 
-export import lsf;
+import lsf;

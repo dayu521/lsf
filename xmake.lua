@@ -4,7 +4,7 @@ set_languages("c++23")
 
 target("lsf")
     set_kind("static")
-    add_files("src/public/*.ixx","src/module/*.ixx","src/inner/*.cpp")
+    add_files("src/public/*.ixx","src/module_impl/*.ixx","src/inner/*.cpp")
     add_includedirs("src/inner")
     set_policy("build.c++.modules", true)
     set_languages("c++23")
