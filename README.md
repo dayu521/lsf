@@ -1,37 +1,38 @@
 ### json 解析器
 
-解析json文件,反序列化到c++结构;以及从c++结构序列化到json.用到了c++17标准.
+解析json文件,反序列化到c++结构;以及从c++结构序列化到json.用到了c++20标准([module](https://en.cppreference.com/w/cpp/language/modules)).
 
 感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践.
 感谢[dcotest](https://github.com/onqtam/doctest).
 
-欢迎issue,感谢!
-
 ### 编译
 
+---
+
+cmake:
+
+当前[cmake3.28](https://cmake.org/cmake/help/v3.28/manual/cmake-cxxmodules.7.html) 提供了module支持,它需要gcc14,但我并未编译通过.
+
+且使用clang也不能编译成功
+
+---
+
+xmake:
+
+使用clang16进行编译
+
 ```bash
-
-    cd ~ && mkdir lsf && cd lsf #or replace name 'lsf' with something else name
-    git clone --depth=1 https://github.com/dayu521/lsf.git
-    cd lsf && mkdir build && cd build
-    cmake ..
-    cmake --build .
-
+    cd <project-path>
+    xmake c -va 
+    xmake f -m debug --toolchain=clang
+    xmake -rvDw
 ```
-
 ### 使用
-#### 1.通过cmake
+#### 1.通过xmake
 
-```bash
-cd <projectdir>	#你的工程源码目录
-git clone --depth=1 https://github.com/dayu521/lsf.git
-```
-
-修改你自己的cmake工程文件`CMakeLists.txt`,添加以下行:
-
-```cmake
-add_subdirectory(lsf)
-target_link_libraries(${PROJECT_NAME} lsf)
+直接在你的xmake.lua工程文件中引用即可
+```lua
+includes("lsf-module")
 ```
 
 #### 2.复制源码

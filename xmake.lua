@@ -7,6 +7,7 @@ target("lsf")
     add_files("src/public/*.ixx","src/module/*.ixx","src/inner/*.cpp")
     add_includedirs("src/inner")
     set_policy("build.c++.modules", true)
+    set_languages("c++23")
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io

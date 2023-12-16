@@ -126,10 +126,6 @@ constexpr std::size_t arity() {
   return detail::arity_impl<std::decay_t<T>>().size();
 }
 
-
-template <typename T>
-inline auto to_tuple(T& t);
-
 //namespace detail end
 }
 

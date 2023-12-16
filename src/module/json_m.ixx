@@ -299,9 +299,6 @@ namespace lsf
             return detail::arity_impl<std::decay_t<T>>().size();
         }
 
-        template <typename T>
-        inline auto to_tuple(T &t);
-
         // namespace detail end
     }
 
@@ -329,7 +326,7 @@ namespace lsf
     void deserialize(T &obj, const TreeNode *t);
 
     template <typename T>
-    inline void Deserialize(T &s, const TreeNode *t);
+    void Deserialize(T &s, const TreeNode *t);
 
     template <typename T>
     void deserialize(T &obj, const TreeNode *t)
