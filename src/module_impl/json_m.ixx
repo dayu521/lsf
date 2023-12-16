@@ -320,5 +320,90 @@ namespace lsf
         builder.arr_end();
     }
 
+    void TreeNode2string(TreeNode *root, SerializeBuilder &sb);
+
+    void json_to_string(Json & json, SerializeBuilder &sb){
+        TreeNode2string(json.get_output(),sb);
+    }
+
+    // I can't find out a better function name
+    void TreeNode2string(TreeNode *root, SerializeBuilder &sb)
+    {
+        if (root->left_child_ == root)
+        {
+            return;
+        }
+        if (root->ele_type_ == NodeC::Obj)
+        {
+            sb.obj_start();
+            auto i = root->left_child_;
+            // fixed: empty member takes up a new line
+            if (i->right_bro_ == i)
+            {
+                if (i->left_child_ != i)
+                {
+                    sb.write_key(i->key_);
+                    TreeNode2string(i, sb);
+                }
+                else
+                    sb.back(1);
+            }
+            else
+            {
+                do
+                {
+                    sb.write_key(i->key_);
+                    TreeNode2string(i, sb);
+                    sb.forward_next();
+                    i = i->right_bro_;
+                } while (root->left_child_ != i);
+                sb.back();
+            }
+            sb.obj_end();
+        }
+        else if (root->ele_type_ == NodeC::Arr)
+        {
+            sb.arr_start();
+            auto i = root->left_child_;
+            if (i->right_bro_ == i)
+            {
+                if (i->left_child_ != i)
+                    TreeNode2string(i, sb);
+                else
+                    sb.back(1);
+            }
+            else
+            {
+                do
+                {
+                    TreeNode2string(i, sb);
+                    sb.forward_next();
+                    i = i->right_bro_;
+                } while (root->left_child_ != i);
+                sb.back();
+            }
+            sb.arr_end();
+        }
+        else if (root->ele_type_ == NodeC::String)
+        {
+            sb.add_quotation();
+            sb.write_value(static_cast<const Jnode<NodeC::String> *>(root)->data_);
+            sb.add_quotation();
+        }
+        else if (root->ele_type_ == NodeC::Number)
+        {
+            sb.write_value(static_cast<const Jnode<NodeC::Number> *>(root)->data_);
+        }
+        else if (root->ele_type_ == NodeC::Keyword)
+        {
+            sb.write_value(static_cast<const Jnode<NodeC::Keyword> *>(root)->b_ ? "true" : "false");
+        }
+        else if (root->ele_type_ == NodeC::Null)
+        {
+            sb.write_value("null");
+        }
+        else
+            throw std::runtime_error("TreeNode2string() failed"); // never be here
+    }
     // namespace end
 }

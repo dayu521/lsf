@@ -28,11 +28,17 @@ xmake:
     xmake -rvDw
 ```
 ### 使用
-#### 1.通过xmake
+#### 1.xmake
+如果你的项目是通过xmake进行构建的
 
-直接在你的xmake.lua工程文件中引用即可
+在你的工程目录下clone当前项目
+
+然后在你的xmake.lua工程文件中引用即可
 ```lua
 includes("lsf_module")
+target("your project name")
+    add_deps("lsf")
+    add_includedirs("lsf_module/src/public")
 ```
 
 #### 2.复制源码

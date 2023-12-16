@@ -1,8 +1,8 @@
 module;
-#include <iostream>
-#include "json.h"
+#include "analyse.h"
 #include "inner_imp.h"
 #include "lexer.h"
+#include "error.h"
 
 module lsf;
 
@@ -29,6 +29,10 @@ namespace lsf
 
         parser_->set_builder(builder);
     }
+
+    //https://en.cppreference.com/w/cpp/memory/unique_ptr
+    //https://www.cnblogs.com/misteo/p/14062426.html
+    Json::~Json()=default;
 
     namespace detail
     {

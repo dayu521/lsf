@@ -1,13 +1,29 @@
 module;
-#include "analyse.h"
-#include "error.h"
+// #include "analyse.h"
+#include <functional>
+#include <memory>
+#include <stack>
 #include <tuple>
 #include <string>
-#include "inner_imp.h"
+// #include "inner_imp.h"
 export module lsf;
+
+namespace lsf
+{
+    class FilterBuff;
+    class Lexer;
+    class FunnyTokenGen;
+    class JsonParser;
+    class Treebuilder;
+
+    enum class NodeC;
+
+    struct TreeNode;
+}
 
 export namespace lsf
 {
+
     enum class ErrorType
     {
         LexError,
@@ -15,12 +31,15 @@ export namespace lsf
         WeakTypeCheckError,
         UnknowError
     };
+
     class Json
     {
     public:
         Json(const std::string &filename);
         Json(const Json &) = delete;
         Json(Json &&) = default;
+        //https://en.cppreference.com/w/cpp/memory/unique_ptr
+        ~Json();
         /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
         [[nodiscard]] bool run(std::function<void(ErrorType et, const std::string &message)> f);
         /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
@@ -139,94 +158,16 @@ export namespace lsf
     };
 
     template <typename S>
-    void struct_to_json(const S &obj, SerializeBuilder &builder)
+    void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
     {
         serialize(obj, builder);
     }
 
     template <typename S>
-    void json_to_struct(S &s, const Json &json)
+    void json_to_struct(const Json &json,S &s)
     {
         deserialize(s, json.get_output());
     }
 
-    // I can't find out a better function name
-    inline void TreeNode2string(TreeNode *root, SerializeBuilder &sb)
-    {
-        if (root->left_child_ == root)
-        {
-            return;
-        }
-        if (root->ele_type_ == NodeC::Obj)
-        {
-            sb.obj_start();
-            auto i = root->left_child_;
-            // fixed: empty member takes up a new line
-            if (i->right_bro_ == i)
-            {
-                if (i->left_child_ != i)
-                {
-                    sb.write_key(i->key_);
-                    TreeNode2string(i, sb);
-                }
-                else
-                    sb.back(1);
-            }
-            else
-            {
-                do
-                {
-                    sb.write_key(i->key_);
-                    TreeNode2string(i, sb);
-                    sb.forward_next();
-                    i = i->right_bro_;
-                } while (root->left_child_ != i);
-                sb.back();
-            }
-            sb.obj_end();
-        }
-        else if (root->ele_type_ == NodeC::Arr)
-        {
-            sb.arr_start();
-            auto i = root->left_child_;
-            if (i->right_bro_ == i)
-            {
-                if (i->left_child_ != i)
-                    TreeNode2string(i, sb);
-                else
-                    sb.back(1);
-            }
-            else
-            {
-                do
-                {
-                    TreeNode2string(i, sb);
-                    sb.forward_next();
-                    i = i->right_bro_;
-                } while (root->left_child_ != i);
-                sb.back();
-            }
-            sb.arr_end();
-        }
-        else if (root->ele_type_ == NodeC::String)
-        {
-            sb.add_quotation();
-            sb.write_value(static_cast<const Jnode<NodeC::String> *>(root)->data_);
-            sb.add_quotation();
-        }
-        else if (root->ele_type_ == NodeC::Number)
-        {
-            sb.write_value(static_cast<const Jnode<NodeC::Number> *>(root)->data_);
-        }
-        else if (root->ele_type_ == NodeC::Keyword)
-        {
-            sb.write_value(static_cast<const Jnode<NodeC::Keyword> *>(root)->b_ ? "true" : "false");
-        }
-        else if (root->ele_type_ == NodeC::Null)
-        {
-            sb.write_value("null");
-        }
-        else
-            throw std::runtime_error("TreeNode2string() failed"); // never be here
-    }
+    void json_to_string(Json & json, SerializeBuilder &sb);
 } // namespace lsf

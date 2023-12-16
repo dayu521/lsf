@@ -2,12 +2,18 @@ add_rules("mode.debug", "mode.release")
 
 set_languages("c++23")
 
+
 target("lsf")
     set_kind("static")
     add_files("src/public/*.ixx","src/module_impl/*.ixx","src/inner/*.cpp")
     add_includedirs("src/inner")
     set_policy("build.c++.modules", true)
     set_languages("c++23")
+
+    if is_os("windows") then
+        add_defines("MSVC_SPECIAL")
+        add_cxxflags("/source-charset:utf-8>")
+    end
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
