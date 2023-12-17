@@ -4,7 +4,8 @@ module;
 #include <vector>
 #include <stdexcept>
 
-module lsf;
+export module lsf:x;
+import lsf;
 import :analyze;
 import :inner_imp;
 
@@ -244,19 +245,19 @@ namespace lsf
 
     void Visitable2string(Visitable *root, SerializeBuilder &sb);
 
-    void json_to_string(Json &json, SerializeBuilder &sb)
+    export void json_to_string(Json &json, SerializeBuilder &sb)
     {
 
         Visitable2string(std::get<0>(json.builder->get_ast()), sb);
     }
 
-    template <typename S>
+    export template <typename S>
     void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
     {
         serialize(obj, builder);
     }
 
-    template <typename S>
+    export template <typename S>
     void json_to_struct(const Json &json, S &s)
     {
         deserialize(s, std::get<0>(json.builder->get_ast()));

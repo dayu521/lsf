@@ -7,6 +7,8 @@ module;
 
 export module lsf;
 
+// import :x;
+
 namespace lsf
 {
     class FilterBuff;
@@ -162,13 +164,13 @@ export namespace lsf
         std::stack<int> indent{};
     };
 
-    template <typename S>
-    void struct_to_jsonstr(const S &obj, SerializeBuilder &builder);
+    // template <typename S>
+    // void struct_to_jsonstr(const S &obj, SerializeBuilder &builder);
 
-    template <typename S>
-    void json_to_struct(const Json &json, S &s);
+    // template <typename S>
+    // void json_to_struct(const Json &json, S &s);
 
-    void json_to_string(Json &json, SerializeBuilder &sb);
+    // void json_to_string(Json &json, SerializeBuilder &sb);
 
 } // namespace lsf
 
