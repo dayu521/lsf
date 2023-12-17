@@ -18,8 +18,6 @@ namespace lsf
     class Treebuilder;
 
     enum class NodeC;
-
-    struct TreeNode;
 }
 
 export namespace lsf
@@ -33,21 +31,38 @@ export namespace lsf
         UnknowError
     };
 
+    class SerializeBuilder;
+    class Json;
+    
+    template <typename S>
+    void struct_to_jsonstr(const S &obj, SerializeBuilder &builder);
+
+    template <typename S>
+    void json_to_struct(const Json &json, S &s);
+
+    void json_to_string(Json &json, SerializeBuilder &sb);
+
     class Json
     {
     public:
         Json(const std::string &filename);
         Json(const Json &) = delete;
         Json(Json &&) = default;
-        //https://en.cppreference.com/w/cpp/memory/unique_ptr
+        // https://en.cppreference.com/w/cpp/memory/unique_ptr
         ~Json();
         /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
         [[nodiscard]] bool run(std::function<void(ErrorType et, const std::string &message)> f);
         /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
         [[nodiscard]] bool weak_type_check(std::function<void(ErrorType et, const std::string &message)> f);
         /// 不要使用这个函数,因为返回值的寿命是当前对象*this负责的
-        TreeNode *get_output() const;
+
         std::string get_errors() const;
+
+    public:
+        friend void json_to_string(Json &json, SerializeBuilder &sb);
+
+        template <typename S>
+        friend void json_to_struct(const Json &json, S &s);
 
     private:
         std::shared_ptr<FilterBuff> buff_;
@@ -57,6 +72,7 @@ export namespace lsf
         std::shared_ptr<Treebuilder> builder;
         std::string error_msg_;
     };
+
     class SerializeBuilder
     {
     public:
@@ -158,17 +174,72 @@ export namespace lsf
         std::stack<int> indent{};
     };
 
-    template <typename S>
-    void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
-    {
-        serialize(obj, builder);
-    }
-
-    template <typename S>
-    void json_to_struct(const Json &json,S &s)
-    {
-        deserialize(s, json.get_output());
-    }
-
-    void json_to_string(Json & json, SerializeBuilder &sb);
 } // namespace lsf
+
+// 宏使用
+namespace lsf::detail
+{
+
+    template <typename T, typename U, typename NAMETUPLE>
+    struct MI
+    {
+        NAMETUPLE name;
+        T U::*member;
+        typedef T type;
+    };
+
+    template <typename T, typename U>
+    constexpr auto makeMemberInfo(const char *name, T U::*member)
+        -> MI<T, U, const char *>
+    {
+        return {name, member};
+    }
+
+    struct instance
+    {
+        template <typename Type>
+        operator Type() const;
+    };
+    // struct Hellos
+    //{
+    //     int a;
+    //     std::string s;
+    //     bool bs;
+    // };
+    // struct Mk:Hellos
+    //{
+    // };
+    // int tr(Mk n);
+    // excess elements in struct initializer
+    // instance()转换成Hellos,所以无法初始化基类成员
+    // auto xst=tr(Mk{instance(),instance()});
+
+    template <typename Aggregate, typename IndexSequence = std::index_sequence<>,
+              // 当下面偏特化中的std::void_t替换失败时，选择这个主模板
+              typename = void>
+    struct arity_impl : IndexSequence
+    {
+    };
+
+    template <typename Aggregate, std::size_t... Indices>
+    struct arity_impl<Aggregate, std::index_sequence<Indices...>,
+                      // 偏特化与主模板之间的SFINAE
+                      std::void_t<
+                          decltype(Aggregate{
+                              // 丢弃前一个表达式的值，然后返回后一个表达式的值
+                              (static_cast<void>(Indices), std::declval<instance>())...,
+                              std::declval<instance>()})>>
+        : arity_impl<Aggregate,
+                     // 当前参数包与当前参数包的个数,它们都是std::size_t类型
+                     std::index_sequence<Indices..., sizeof...(Indices)>>
+    {
+    };
+
+    template <typename T>
+    constexpr std::size_t arity()
+    {
+        return detail::arity_impl<std::decay_t<T>>().size();
+    }
+
+    // namespace detail end
+}

@@ -12,14 +12,26 @@ export module lsf:analyze;
 import :constant;
 import :error;
 import :inner_imp;
-// import :parser_tree;
+import :parser_tree;
 
 // 如果需要主模块的声明,则也需要显式导入
 //  import lsf;
 
 namespace lsf
 {
-  
+    template <auto token>
+    struct Jnode;
+
+    template <typename T1, typename T2>
+    struct VisitableTree;
+
+    class Visitor;
+    class WeakTypeChecker;
+
+    using Visitable = VisitableTree<Visitor, WeakTypeChecker>;
+
+    /// 第一个指向root_,第二个指向null_
+    using Tree = std::tuple<Visitable *, Visitable *>;
 
     ///********************Visitor*****************
     // 以下产生5个纯虚函数,且返回类型都是void,可通过Visitor::Rtype访问到
@@ -70,7 +82,7 @@ namespace lsf
 
     private:
         NodeC current_type{NodeC::Error};
-        TreeNode *null_{};
+        Visitable *null_{};
         std::vector<NodeC> jtype_{};
         std::string error_{};
     };
@@ -78,7 +90,7 @@ namespace lsf
     class PrintNodes : public Visitor
     {
     public:
-        void set_null(TreeNode *nul);
+        void set_null(Visitable *nul);
 
     private:
         virtual void visit(Jnode<NodeC::Obj> &) override;
@@ -87,17 +99,104 @@ namespace lsf
         virtual void visit(Jnode<NodeC::Number> &num) override;
         virtual void visit(Jnode<NodeC::Keyword> &key) override;
         virtual void visit(Jnode<NodeC::Null> &null) override;
-        TreeNode *faken_{};
+        Visitable *faken_{};
     };
 
+#define AcceptImp(Visitorx) \
+    virtual Visitorx::Rtype accept(Visitorx &v) override{ return v.visit(*this); }
 
+    template <>
+    struct VisitableTree<Visitor, WeakTypeChecker> : public TreeNode<VisitableTree<Visitor, WeakTypeChecker>>
+    {
+        virtual Visitor::Rtype accept(Visitor &v) = 0;
+        virtual WeakTypeChecker::Rtype accept(WeakTypeChecker &v) = 0;
+        virtual ~VisitableTree()=default;
+    };
+
+    template <>
+    struct Jnode<NodeC::Obj> : Visitable
+    {
+        int n_;
+        AcceptImp(Visitor)
+            AcceptImp(WeakTypeChecker)
+    };
+
+    template <>
+    struct Jnode<NodeC::Arr> : Visitable
+    {
+        int n_;
+        AcceptImp(Visitor)
+            AcceptImp(WeakTypeChecker)
+    };
+
+    template <>
+    struct Jnode<NodeC::String> : Visitable
+    {
+        std::string data_; /// 对于obj和arr，表示成员数量
+        AcceptImp(Visitor)
+            AcceptImp(WeakTypeChecker)
+    };
+
+    template <>
+    struct Jnode<NodeC::Number> : Visitable
+    {
+        std::string data_; /// 对于obj和arr，表示成员数量
+        AcceptImp(Visitor)
+            AcceptImp(WeakTypeChecker)
+    };
+
+    template <>
+    struct Jnode<NodeC::Keyword> : Visitable
+    {
+        bool b_{false};
+        AcceptImp(Visitor)
+            AcceptImp(WeakTypeChecker)
+    };
+
+    template <>
+    struct Jnode<NodeC::Null> : Visitable
+    {
+        AcceptImp(Visitor)
+            AcceptImp(WeakTypeChecker)
+    };
+
+    class Treebuilder : public ParserResultBuilder
+    {
+    public:
+        virtual ~Treebuilder();
+
+    protected:
+        friend class JsonParser;
+        virtual void before_build() override;
+        virtual void after_build() override;
+        virtual void build_obj() override;
+        virtual void build_arr() override;
+        virtual void build_string(std::wstring str) override;
+        virtual void build_number(std::wstring str) override;
+        virtual void build_keyword(std::wstring str) override;
+        virtual void build_Null(std::wstring str) override;
+        virtual void set_memberkey(std::wstring key) override;
+        virtual void build_null_mbr() override;
+        virtual void can_start_iteration() override;
+        virtual void move_next() override;
+        virtual void finish_iteration() override;
+
+    public:
+        Tree get_ast();
+        void dealloc_node();
+
+    private:
+        Visitable *root_{nullptr};
+        std::stack<std::tuple<Visitable *, int>> mbr_node_{};
+        std::vector<Visitable *> clear_{};
+        Visitable *null_{nullptr};
+    };
 
 } // namespace lsf
 
-
 namespace lsf
 {
-     Treebuilder::~Treebuilder()
+    Treebuilder::~Treebuilder()
     {
         dealloc_node();
     }
@@ -233,7 +332,7 @@ namespace lsf
         clear_.clear();
     }
 
-    void PrintNodes::set_null(TreeNode *nul)
+    void PrintNodes::set_null(Visitable *nul)
     {
         faken_ = nul;
     }
@@ -277,7 +376,7 @@ namespace lsf
 
     void Visitor::visit_BFS(Tree roott, std::function<void()> round_callback)
     {
-        std::queue<TreeNode *> c{};
+        std::queue<Visitable *> c{};
         auto [root, faken] = roott;
         c.push(root);
         int x = 1, y = 0;
@@ -293,7 +392,7 @@ namespace lsf
                 do
                 {
                     y++;
-                    c.push(j);
+                    c.push(j->get_this());
                     j = j->right_bro_;
                 } while (j != i->left_child_);
             }
@@ -322,7 +421,7 @@ namespace lsf
         auto j = obj.left_child_;
         do
         {
-            if (!j->accept_check(*this))
+            if (!j->get_this()->accept(*this))
                 return false;
 #if __cplusplus >= 202002L
             auto haskey = cset.contains(j->key_);
@@ -358,13 +457,13 @@ namespace lsf
         }
         auto first_beg = jtype_.size();
         auto j = arr.left_child_;
-        if (!j->accept_check(*this))
+        if (!j->get_this()->accept(*this))
             return false;
         auto another_beg = jtype_.size();
         j = j->right_bro_;
         while (j != arr.left_child_)
         {
-            if (!j->accept_check(*this) || !do_check(first_beg, another_beg))
+            if (!j->get_this()->accept(*this) || !do_check(first_beg, another_beg))
             {
                 error_ += "数组类型不同:";
                 error_ += arr.key_;
@@ -412,7 +511,7 @@ namespace lsf
         jtype_.clear();
         null_ = std::get<1>(roott);
         auto root = std::get<0>(roott);
-        return root->accept_check(*this);
+        return root->accept(*this);
     }
 
     bool WeakTypeChecker::do_check(std::size_t first, std::size_t another)
@@ -429,24 +528,4 @@ namespace lsf
         return error_;
     }
 
-    void TreeNode::operator delete(void *ptr, std::size_t sz)
-    {
-        if (sz > Inner::MyAllocator::MaxObjSize)
-            ::operator delete(ptr);
-        else
-        {
-            Inner::get_singleton<Inner::MyAllocator>().deallocate(ptr, sz);
-        }
-    }
-
-    void *TreeNode::operator new(std::size_t count)
-    {
-        if (count > Inner::MyAllocator::MaxObjSize)
-            return ::operator new(count);
-        auto p = Inner::get_singleton<Inner::MyAllocator>().allocate(count);
-        if (p == nullptr)
-            //        throw std::bad_alloc("MyAllocator allocate failed");
-            throw std::bad_alloc();
-        return p;
-    }
 } // namespace lsf

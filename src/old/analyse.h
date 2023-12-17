@@ -13,10 +13,10 @@ enum  class NodeC:char{Obj,Arr,String,Number,Keyword,Null,Error};
 template<auto token>
 struct Jnode;
 
-class BuilderInterface
+class ParserResultBuilder
 {
 public:
-    virtual ~BuilderInterface(){}
+    virtual ~ParserResultBuilder(){}
 protected:
     friend class JsonParser;
     friend class R_JsonParser;
@@ -38,7 +38,7 @@ protected:
 /// 第一个指向root_,第二个指向null_
 using Tree=std::tuple<TreeNode *,TreeNode *>;
 
-class Treebuilder :public BuilderInterface
+class Treebuilder :public ParserResultBuilder
 {
 public:
     virtual ~Treebuilder();

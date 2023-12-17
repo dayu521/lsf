@@ -1,17 +1,16 @@
 module;
-#include<limits>
-#include<queue>
-#include<stack>
-#include<functional>
-#include<cassert>
-#include<string>
-#include<memory>
+#include <limits>
+#include <queue>
+#include <stack>
+#include <functional>
+#include <cassert>
+#include <string>
+#include <memory>
 
 export module lsf:inner_imp;
 
 import :constant;
 import :mbuff;
-import :jsonparser;
 
 namespace lsf
 {
@@ -62,6 +61,13 @@ namespace lsf
     };
 
     class Lexer;
+
+    struct GenToken
+    {
+        virtual ~GenToken() {}
+        virtual void next_() = 0;
+        virtual Token &current_() = 0;
+    };
 
     class FunnyTokenGen : public lsf::GenToken
     {

@@ -8,6 +8,7 @@ module lsf;
 import :analyze;
 import :error;
 import :lexer;
+import :jsonparser;
 
 namespace lsf
 {
@@ -118,11 +119,6 @@ namespace lsf
             return false;
         }
         return true;
-    }
-
-    TreeNode *Json::get_output() const
-    {
-        return std::get<0>(builder->get_ast());
     }
 
     std::string Json::get_errors() const

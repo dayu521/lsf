@@ -13,7 +13,7 @@ JsonParser::JsonParser(std::shared_ptr<GenToken> gen):gen_(gen),
 
 }
 
-void JsonParser::set_builder(std::shared_ptr<BuilderInterface> b)
+void JsonParser::set_builder(std::shared_ptr<ParserResultBuilder> b)
 {
     builder_=b;
 }
@@ -325,7 +325,7 @@ expect_array_{}
 
 }
 
-void R_JsonParser::set_builder(std::shared_ptr<BuilderInterface> b)
+void R_JsonParser::set_builder(std::shared_ptr<ParserResultBuilder> b)
 {
     builder_=b;
 }

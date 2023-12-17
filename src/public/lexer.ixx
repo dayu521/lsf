@@ -12,13 +12,6 @@ namespace lsf
 
     class BuffBase;
 
-    struct Token
-    {
-        using Type = lsf::Type;
-        Type type_;
-        std::wstring value_{};
-    };
-
     class LexerError : public lsf::BaseError
     {
         using BaseError::BaseError;

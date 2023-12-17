@@ -23,6 +23,13 @@ namespace lsf
         END
     };
 
+    struct Token
+    {
+        using Type = lsf::Type;
+        Type type_;
+        std::wstring value_{};
+    };
+
     struct Location
     {
         size_t line_{0};

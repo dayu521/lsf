@@ -17,6 +17,7 @@ namespace lsf
         using BaseError::BaseError;
     };
 
+    /*
     namespace detail
     {
 
@@ -83,7 +84,7 @@ namespace lsf
 
         // namespace detail end
     }
-
+*/
     /*****************************/
 
     class JsonContext
@@ -97,13 +98,13 @@ namespace lsf
     };
 
     template <typename T>
-    void deserialize(T &obj, const TreeNode *t);
+    void deserialize(T &obj, const Visitable *t);
 
     template <typename T>
-    void Deserialize(T &s, const TreeNode *t);
+    void Deserialize(T &s, const Visitable *t);
 
     template <typename T>
-    void deserialize(T &obj, const TreeNode *t)
+    void deserialize(T &obj, const Visitable *t)
     {
         auto temp = t->left_child_;
         if (temp == t)
@@ -139,8 +140,8 @@ namespace lsf
                 // 元素数量不等
                 throw DeserializeError("struct成员数量与json成员数量不同");
             }
-            //        std::vector<TreeNode*> vs{};
-            TreeNode *vs[member_size] = {};
+            //        std::vector<Visitable*> vs{};
+            Visitable *vs[member_size] = {};
             int n = 0;
             do
             {
@@ -177,7 +178,7 @@ namespace lsf
     }
 
     template <typename T>
-    void deserialize(std::vector<T> &v, const TreeNode *t)
+    void deserialize(std::vector<T> &v, const Visitable *t)
     {
         auto temp = t->left_child_;
         if (temp == t)
@@ -203,7 +204,7 @@ namespace lsf
     }
 
     template <>
-    inline void Deserialize<std::string>(std::string &s, const TreeNode *t)
+    inline void Deserialize<std::string>(std::string &s, const Visitable *t)
     {
         if (t->ele_type_ == NodeC::String)
         {
@@ -215,7 +216,7 @@ namespace lsf
     }
 
     template <>
-    inline void Deserialize<int>(int &s, const TreeNode *t)
+    inline void Deserialize<int>(int &s, const Visitable *t)
     {
         if (t->ele_type_ == NodeC::Number)
         {
@@ -226,7 +227,7 @@ namespace lsf
     }
 
     template <>
-    inline void Deserialize<double>(double &s, const TreeNode *t)
+    inline void Deserialize<double>(double &s, const Visitable *t)
     {
         if (t->ele_type_ == NodeC::Number)
         {
@@ -237,7 +238,7 @@ namespace lsf
     }
 
     template <>
-    inline void Deserialize<bool>(bool &b, const TreeNode *t)
+    inline void Deserialize<bool>(bool &b, const Visitable *t)
     {
         if (t->ele_type_ == NodeC::Keyword)
         {
@@ -322,14 +323,28 @@ namespace lsf
         builder.arr_end();
     }
 
-    void TreeNode2string(TreeNode *root, SerializeBuilder &sb);
+    void Visitable2string(Visitable *root, SerializeBuilder &sb);
 
-    void json_to_string(Json & json, SerializeBuilder &sb){
-        TreeNode2string(json.get_output(),sb);
+    void json_to_string(Json &json, SerializeBuilder &sb)
+    {
+
+        Visitable2string(std::get<0>(json.builder->get_ast()), sb);
+    }
+
+    template <typename S>
+    void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
+    {
+        serialize(obj, builder);
+    }
+
+    template <typename S>
+    void json_to_struct(const Json &json, S &s)
+    {
+        deserialize(s, std::get<0>(json.builder->get_ast()));
     }
 
     // I can't find out a better function name
-    void TreeNode2string(TreeNode *root, SerializeBuilder &sb)
+    void Visitable2string(Visitable *root, SerializeBuilder &sb)
     {
         if (root->left_child_ == root)
         {
@@ -345,7 +360,7 @@ namespace lsf
                 if (i->left_child_ != i)
                 {
                     sb.write_key(i->key_);
-                    TreeNode2string(i, sb);
+                    Visitable2string(i->get_this(), sb);
                 }
                 else
                     sb.back(1);
@@ -355,7 +370,7 @@ namespace lsf
                 do
                 {
                     sb.write_key(i->key_);
-                    TreeNode2string(i, sb);
+                    Visitable2string(i->get_this(), sb);
                     sb.forward_next();
                     i = i->right_bro_;
                 } while (root->left_child_ != i);
@@ -370,7 +385,7 @@ namespace lsf
             if (i->right_bro_ == i)
             {
                 if (i->left_child_ != i)
-                    TreeNode2string(i, sb);
+                    Visitable2string(i->get_this(), sb);
                 else
                     sb.back(1);
             }
@@ -378,7 +393,7 @@ namespace lsf
             {
                 do
                 {
-                    TreeNode2string(i, sb);
+                    Visitable2string(i->get_this(), sb);
                     sb.forward_next();
                     i = i->right_bro_;
                 } while (root->left_child_ != i);
@@ -405,7 +420,7 @@ namespace lsf
             sb.write_value("null");
         }
         else
-            throw std::runtime_error("TreeNode2string() failed"); // never be here
+            throw std::runtime_error("Visitable2string() failed"); // never be here
     }
     // namespace end
 }

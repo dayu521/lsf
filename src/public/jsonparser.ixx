@@ -1,10 +1,11 @@
 module;
-#include<memory>
-#include<vector>
+#include <memory>
+#include <vector>
 
 export module lsf:jsonparser;
 
 import :constant;
+import :parser_tree;
 
 namespace lsf
 {
@@ -13,20 +14,11 @@ namespace lsf
 
     class PError;
 
-    class BuilderInterface;
-
-    struct GenToken
-    {
-        virtual ~GenToken() {}
-        virtual void next_() = 0;
-        virtual Token &current_() = 0;
-    };
-
     class JsonParser
     {
     public:
         JsonParser(std::shared_ptr<GenToken> gen);
-        void set_builder(std::shared_ptr<BuilderInterface> b);
+        void set_builder(std::shared_ptr<ParserResultBuilder> b);
         [[nodiscard]] bool parser();
         const std::vector<lsf::Type> &get_expect_token() const;
 
@@ -50,7 +42,7 @@ namespace lsf
 
     private:
         std::shared_ptr<GenToken> gen_;
-        std::shared_ptr<BuilderInterface> builder_;
+        std::shared_ptr<ParserResultBuilder> builder_;
         std::vector<lsf::Type> expect_array_;
     };
 
@@ -59,7 +51,7 @@ namespace lsf
     {
     public:
         R_JsonParser(std::shared_ptr<GenToken> gen);
-        void set_builder(std::shared_ptr<BuilderInterface> b);
+        void set_builder(std::shared_ptr<ParserResultBuilder> b);
         [[nodiscard]] bool parser();
         const std::vector<lsf::Type> &get_expect_token() const;
 
@@ -74,7 +66,7 @@ namespace lsf
 
     private:
         std::shared_ptr<GenToken> gen_;
-        std::shared_ptr<BuilderInterface> builder_;
+        std::shared_ptr<ParserResultBuilder> builder_;
         std::vector<lsf::Type> expect_array_;
     };
 
