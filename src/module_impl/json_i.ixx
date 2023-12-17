@@ -5,7 +5,7 @@ module;
 
 module lsf;
 
-// import :analyze;
+import :analyze;
 import :lexer;
 import :jsonparser;
 
@@ -28,14 +28,16 @@ namespace lsf
         parser_ = std::make_unique<lsf::JsonParser>(wrap_lexer_);
 
         // 节点构建器
-        builder = std::make_shared<Treebuilder>();
+        builder = std::make_shared<TreeBuilder>();
 
         parser_->set_builder(builder);
     }
 
-    //https://en.cppreference.com/w/cpp/memory/unique_ptr
-    //https://www.cnblogs.com/misteo/p/14062426.html
-    Json::~Json()=default;
+    // https://en.cppreference.com/w/cpp/memory/unique_ptr
+    // https://www.cnblogs.com/misteo/p/14062426.html
+    Json::~Json() {
+        builder->dealloc_node();
+    }
 
     namespace detail
     {

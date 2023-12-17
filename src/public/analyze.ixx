@@ -52,7 +52,7 @@ namespace lsf
                         Jnode<NodeC::Null>>
     {
     public:
-        virtual ~Visitor() {}
+        virtual ~Visitor() = default;
         virtual void visit_BFS(Tree root, std::function<void()> round_callback);
     };
     ///********************************
@@ -76,6 +76,7 @@ namespace lsf
         virtual bool visit(Jnode<NodeC::Null> &null) override;
 
     public:
+        virtual ~WeakTypeChecker() = default;
         [[nodiscard]] bool check_type(Tree root);
         bool do_check(std::size_t first, std::size_t another);
         std::string_view get_error();
@@ -103,14 +104,14 @@ namespace lsf
     };
 
 #define AcceptImp(Visitorx) \
-    virtual Visitorx::Rtype accept(Visitorx &v) override{ return v.visit(*this); }
+    virtual Visitorx::Rtype accept(Visitorx &v) override { return v.visit(*this); }
 
     template <>
     struct VisitableTree<Visitor, WeakTypeChecker> : public TreeNode<VisitableTree<Visitor, WeakTypeChecker>>
     {
         virtual Visitor::Rtype accept(Visitor &v) = 0;
         virtual WeakTypeChecker::Rtype accept(WeakTypeChecker &v) = 0;
-        virtual ~VisitableTree()=default;
+        virtual ~VisitableTree() = default;
     };
 
     template <>
@@ -160,13 +161,9 @@ namespace lsf
             AcceptImp(WeakTypeChecker)
     };
 
-    class Treebuilder : public ParserResultBuilder
+    class TreeBuilder : public ParserResultBuilder
     {
     public:
-        virtual ~Treebuilder(){dealloc_node();}
-
-    protected:
-        friend class JsonParser;
         virtual void before_build() override;
         virtual void after_build() override;
         virtual void build_obj() override;
@@ -182,7 +179,15 @@ namespace lsf
         virtual void finish_iteration() override;
 
     public:
+    ///Fixme 这里无法自定义析构函数 2023-12-17 当前使用clang 16.0.6
+        // ~TreeBuilder() { dealloc_node(); }
+        ~TreeBuilder()=default;
+        // ~TreeBuilder(){}
+    public:
+        //TODO 当此函数被调用后,对象就由接收方负责
         Tree get_ast();
+        /// BUG
+        /// FIXME 销毁时,这里需要手动调用.
         void dealloc_node();
 
     private:
@@ -196,17 +201,17 @@ namespace lsf
 
 namespace lsf
 {
-    // Treebuilder::~Treebuilder()
+    // TreeBuilder::~TreeBuilder()
     // {
     //     dealloc_node();
     // }
 
-    Tree Treebuilder::get_ast()
+    Tree TreeBuilder::get_ast()
     {
         return {root_, null_};
     }
 
-    void Treebuilder::before_build()
+    void TreeBuilder::before_build()
     {
         dealloc_node();
         root_ = null_ = new Jnode<NodeC::Obj>;
@@ -215,14 +220,14 @@ namespace lsf
         clear_.push_back(null_);
     }
 
-    void Treebuilder::after_build()
+    void TreeBuilder::after_build()
     {
         root_->key_ = "root";
         root_->right_bro_ = root_;
         null_->left_child_ = null_->right_bro_ = null_;
     }
 
-    void Treebuilder::build_obj()
+    void TreeBuilder::build_obj()
     {
         auto n = new Jnode<NodeC::Obj>;
         n->ele_type_ = NodeC::Obj;
@@ -234,7 +239,7 @@ namespace lsf
         clear_.push_back(root_);
     }
 
-    void Treebuilder::build_arr()
+    void TreeBuilder::build_arr()
     {
         auto n = new Jnode<NodeC::Arr>;
         n->ele_type_ = NodeC::Arr;
@@ -246,7 +251,7 @@ namespace lsf
         clear_.push_back(root_);
     }
 
-    void Treebuilder::build_string(std::wstring str)
+    void TreeBuilder::build_string(std::wstring str)
     {
         auto n = new Jnode<NodeC::String>;
         n->data_ = to_cstring(str);
@@ -257,7 +262,7 @@ namespace lsf
         clear_.push_back(root_);
     }
 
-    void Treebuilder::build_number(std::wstring str)
+    void TreeBuilder::build_number(std::wstring str)
     {
         auto n = new Jnode<NodeC::Number>;
         n->data_ = to_cstring(str);
@@ -268,7 +273,7 @@ namespace lsf
         clear_.push_back(root_);
     }
 
-    void Treebuilder::build_keyword(std::wstring str)
+    void TreeBuilder::build_keyword(std::wstring str)
     {
         auto n = new Jnode<NodeC::Keyword>;
         if (str == L"true")
@@ -280,7 +285,7 @@ namespace lsf
         clear_.push_back(root_);
     }
 
-    void Treebuilder::build_Null(std::wstring str)
+    void TreeBuilder::build_Null(std::wstring str)
     {
         auto n = new Jnode<NodeC::Null>;
         n->ele_type_ = NodeC::Null;
@@ -290,24 +295,24 @@ namespace lsf
         clear_.push_back(root_);
     }
 
-    void Treebuilder::set_memberkey(std::wstring key)
+    void TreeBuilder::set_memberkey(std::wstring key)
     {
         root_->key_ = to_cstring(key);
     }
 
-    void Treebuilder::build_null_mbr()
+    void TreeBuilder::build_null_mbr()
     {
         root_ = null_;
         mbr_node_.push({nullptr, 0});
     }
 
     // 当前已经有一个元素了
-    void Treebuilder::can_start_iteration()
+    void TreeBuilder::can_start_iteration()
     {
         mbr_node_.push({root_, 1}); // 构建完成后正好清空
     }
 
-    void Treebuilder::move_next()
+    void TreeBuilder::move_next()
     {
         auto &[current, n] = mbr_node_.top();
         n++;
@@ -316,13 +321,13 @@ namespace lsf
         current = root_;
     }
 
-    void Treebuilder::finish_iteration()
+    void TreeBuilder::finish_iteration()
     {
         //    root_=root_->right_bro_;
         //    mbr_node_.pop();  //放到arr或obj中清空，因为那时候需要存储的个数
     }
 
-    void Treebuilder::dealloc_node()
+    void TreeBuilder::dealloc_node()
     {
         for (auto &i : clear_)
         {

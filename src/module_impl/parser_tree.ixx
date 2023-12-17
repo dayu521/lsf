@@ -17,7 +17,8 @@ namespace lsf
         Null,
         Error
     };
-
+    
+    //TODO 需要使用concept进行约束
     template <typename T>
     struct TreeNode
     {
@@ -62,11 +63,9 @@ namespace lsf
     class ParserResultBuilder
     {
     public:
-        virtual ~ParserResultBuilder() {}
+        virtual ~ParserResultBuilder() =default;
 
-    protected:
-        friend class JsonParser;
-        friend class R_JsonParser;
+    public:
         virtual void before_build() = 0;
         virtual void after_build() = 0;
         virtual void build_obj() = 0;

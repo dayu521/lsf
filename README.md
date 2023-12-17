@@ -38,6 +38,8 @@ xmake:
 
 然后在你的xmake.lua工程文件中引用即可
 
+> 再次,编译release版本出错,~ ~
+
 ```lua
 includes("lsf_module")
 target("your project name")
@@ -71,7 +73,6 @@ target_link_libraries(${PROJECT_NAME} lsf)
 ```cpp
 //包含合适的头文件
 #include "json.h"
-//或者include "src/json.h"
 #include <string>
 #include <vector>
 #include <iostream>

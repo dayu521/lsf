@@ -7,18 +7,17 @@ module;
 
 export module lsf;
 
-import :analyze;
-
 namespace lsf
 {
     class FilterBuff;
     class Lexer;
     class FunnyTokenGen;
     class JsonParser;
-
+    class TreeBuilder;
     // enum class NodeC;
 }
 
+//TODO 修改接口,此接口很迷惑
 export namespace lsf
 {
 
@@ -31,15 +30,6 @@ export namespace lsf
     };
 
     class SerializeBuilder;
-    class Json;
-    
-    template <typename S>
-    void struct_to_jsonstr(const S &obj, SerializeBuilder &builder);
-
-    template <typename S>
-    void json_to_struct(const Json &json, S &s);
-
-    void json_to_string(Json &json, SerializeBuilder &sb);
 
     class Json
     {
@@ -53,7 +43,6 @@ export namespace lsf
         [[nodiscard]] bool run(std::function<void(ErrorType et, const std::string &message)> f);
         /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
         [[nodiscard]] bool weak_type_check(std::function<void(ErrorType et, const std::string &message)> f);
-        /// 不要使用这个函数,因为返回值的寿命是当前对象*this负责的
 
         std::string get_errors() const;
 
@@ -68,7 +57,7 @@ export namespace lsf
         std::shared_ptr<Lexer> lexer_;
         std::shared_ptr<FunnyTokenGen> wrap_lexer_;
         std::unique_ptr<JsonParser> parser_;
-        std::shared_ptr<Treebuilder> builder;
+        std::shared_ptr<TreeBuilder> builder;
         std::string error_msg_;
     };
 
@@ -172,6 +161,14 @@ export namespace lsf
         std::string out_{};
         std::stack<int> indent{};
     };
+
+    template <typename S>
+    void struct_to_jsonstr(const S &obj, SerializeBuilder &builder);
+
+    template <typename S>
+    void json_to_struct(const Json &json, S &s);
+
+    void json_to_string(Json &json, SerializeBuilder &sb);
 
 } // namespace lsf
 

@@ -10,16 +10,10 @@ export module lsf:jsonparser;
 
 import :constant;
 import :parser_tree;
-import :analyze;
 import :lexer;
 
 namespace lsf
 {
-
-    struct Token;
-
-    class PError;
-
     class JsonParser
     {
     public:

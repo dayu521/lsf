@@ -24,13 +24,13 @@ endif()
 #CMAKE_CURRENT_SOURCE_DIR   当前CMakeLists.txt文件对应的目录
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(${PROJECT_NAME} src/mbuff.cpp
-                            src/lexer.cpp
-                            src/jsonparser.cpp
-                            src/json.cpp
-                            src/error.cpp
-                            src/inner_imp.cpp
-                            src/analyse.cpp)
+add_library(${PROJECT_NAME} src/old/mbuff.cpp
+                            src/old/lexer.cpp
+                            src/old/jsonparser.cpp
+                            src/old/json.cpp
+                            src/old/error.cpp
+                            src/old/inner_imp.cpp
+                            src/old/analyse.cpp)
 target_compile_definitions(${PROJECT_NAME} PRIVATE BUFFER_ARRAY_SIZE=256)
 if(MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE MSVC_SPECIAL)
@@ -40,6 +40,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/sr
 # set(WITH_TEST on)
 #set(WITH_TEST off)
 message("============you can enable test by command-line args with : -D WITH_TEST=on==============")
+message("TODO: those tests will be moved to other place")
 
 if(WITH_TEST)
 message("doctest enabled")
