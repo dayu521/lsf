@@ -5,8 +5,7 @@ module;
 
 module lsf;
 
-import :analyze;
-import :error;
+// import :analyze;
 import :lexer;
 import :jsonparser;
 

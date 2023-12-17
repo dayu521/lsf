@@ -10,7 +10,7 @@ module;
 export module lsf:analyze;
 
 import :constant;
-import :error;
+
 import :inner_imp;
 import :parser_tree;
 
@@ -163,7 +163,7 @@ namespace lsf
     class Treebuilder : public ParserResultBuilder
     {
     public:
-        virtual ~Treebuilder();
+        virtual ~Treebuilder(){dealloc_node();}
 
     protected:
         friend class JsonParser;
@@ -196,10 +196,10 @@ namespace lsf
 
 namespace lsf
 {
-    Treebuilder::~Treebuilder()
-    {
-        dealloc_node();
-    }
+    // Treebuilder::~Treebuilder()
+    // {
+    //     dealloc_node();
+    // }
 
     Tree Treebuilder::get_ast()
     {

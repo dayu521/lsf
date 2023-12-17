@@ -6,7 +6,6 @@ module;
 
 module lsf;
 import :analyze;
-import :error;
 import :inner_imp;
 
 namespace lsf

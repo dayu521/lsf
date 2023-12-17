@@ -7,7 +7,7 @@ module;
 
 export module lsf;
 
-// import :analyze;
+import :analyze;
 
 namespace lsf
 {
@@ -15,9 +15,8 @@ namespace lsf
     class Lexer;
     class FunnyTokenGen;
     class JsonParser;
-    class Treebuilder;
 
-    enum class NodeC;
+    // enum class NodeC;
 }
 
 export namespace lsf
@@ -177,7 +176,7 @@ export namespace lsf
 } // namespace lsf
 
 // 宏使用
-namespace lsf::detail
+export namespace lsf::detail
 {
 
     template <typename T, typename U, typename NAMETUPLE>
