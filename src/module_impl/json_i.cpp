@@ -2,12 +2,14 @@ module;
 #include <string>
 #include <memory>
 #include <functional>
+#include <clocale>
 
 module lsf;
 
 import :analyze;
 import :lexer;
 import :jsonparser;
+import :inner_imp;
 
 namespace lsf
 {

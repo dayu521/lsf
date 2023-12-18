@@ -1,20 +1,21 @@
 add_rules("mode.debug", "mode.release")
 
-set_languages("c++23")
+set_languages("c++20")
 
 
 target("lsf")
     set_kind("static")
-    add_files("src/public/*.ixx","src/module_impl/*.ixx")
+    add_files("src/public/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp")
     -- add_files("src/old/*.cpp")
     add_includedirs("src/old")
     set_policy("build.c++.modules", true)
-    set_languages("c++23")
     add_defines("BUFFER_ARRAY_SIZE=256")
 
     if is_os("windows") then
         add_defines("MSVC_SPECIAL")
-        add_cxxflags("/source-charset:utf-8>")
+        add_cxxflags("/source-charset:utf-8")
+        -- add_cxxflags("/experimental:module",{force = true})
+        -- add_cxxflags("/std:c++latest",{force = true})
     end
 
 --

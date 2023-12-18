@@ -7,7 +7,7 @@ module;
 
 export module lsf;
 
-// import :x;
+import :analyze;
 
 namespace lsf
 {
@@ -15,7 +15,7 @@ namespace lsf
     class Lexer;
     class FunnyTokenGen;
     class JsonParser;
-    class TreeBuilder;
+    // class TreeBuilder;
     // enum class NodeC;
 }
 

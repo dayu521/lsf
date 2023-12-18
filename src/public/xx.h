@@ -47,4 +47,4 @@
 #define JS_MEMBER(...) CAT(N_,GET_N(__VA_ARGS__))(__VA_ARGS__)
 
 #define JS_OBJECT(...) JS_OBJECT_INTERNAL_IMPL(std::make_tuple(__VA_ARGS__))
-/*宏定义结束*/
+//

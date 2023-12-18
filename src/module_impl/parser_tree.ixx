@@ -1,7 +1,7 @@
 module;
 #include <string>
 
-module lsf:parser_tree;
+export module lsf:parser_tree;
 
 import :inner_imp;
 
