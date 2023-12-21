@@ -6,10 +6,10 @@ module;
 
 module lsf;
 
-import :analyze;
-import :lexer;
-import :jsonparser;
-import :inner_imp;
+// import :analyze;
+// import :lexer;
+// import :jsonparser;
+// import :inner_imp;
 
 namespace lsf
 {

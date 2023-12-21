@@ -63,8 +63,6 @@ namespace lsf
         std::size_t number_{0};
     };
 
-    class Lexer;
-
     struct GenToken
     {
         virtual ~GenToken() {}

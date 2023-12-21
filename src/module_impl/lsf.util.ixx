@@ -226,6 +226,20 @@ namespace lsf
     }
 
     template <typename T>
+    void serialize(const std::vector<T> &v, SerializeBuilder &builder)
+    {
+        builder.arr_start();
+        for (auto &&i : v)
+        {
+            serialize(i, builder);
+            builder.forward_next();
+        }
+        if (v.size() > 0)
+            builder.back();
+        builder.arr_end();
+    }
+
+    template <typename T>
     void serialize(const T &obj, SerializeBuilder &builder)
     {
         using TT = std::decay_t<T>;
@@ -257,19 +271,6 @@ namespace lsf
         }
     }
 
-    template <typename T>
-    void serialize(const std::vector<T> &v, SerializeBuilder &builder)
-    {
-        builder.arr_start();
-        for (auto &&i : v)
-        {
-            serialize(i, builder);
-            builder.forward_next();
-        }
-        if (v.size() > 0)
-            builder.back();
-        builder.arr_end();
-    }
 
     // export template <typename S>
     // void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
