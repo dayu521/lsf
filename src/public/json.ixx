@@ -10,17 +10,6 @@ export module lsf;
 export import :util;
 export import :struct_help;
 
-<<<<<<< Updated upstream
-namespace lsf
-{
-    class FilterBuff;
-    class Lexer;
-    class FunnyTokenGen;
-    class JsonParser;
-    class TreeBuilder;
-    // enum class NodeC;
-}
-=======
 import :analyze;
 import :lexer;
 import :jsonparser;
@@ -35,7 +24,6 @@ import :inner_imp;
 //     class TreeBuilder;
 //     // enum class NodeC;
 // }
->>>>>>> Stashed changes
 
 // TODO 修改接口,此接口很迷惑
 
