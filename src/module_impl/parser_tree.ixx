@@ -60,6 +60,7 @@ namespace lsf
         return p;
     }
 
+//for jsonparser
     class ParserResultBuilder
     {
     public:
