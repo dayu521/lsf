@@ -44,8 +44,7 @@ namespace lsf
     std::string lexer_messages(Location stat_for_rc, Token lex_token)
     {
         std::stringstream s{};
-        s << "当前词法单元:\n"
-          << "  " << lsf::tokentype_to_string(lex_token.type_) << ":" << to_cstring(lex_token.value_)
+        s << "  " << lsf::tokentype_to_string(lex_token.type_) << " : " << to_cstring(lex_token.value_)
           << "\n位于:" << stat_for_rc.line_ << "行," << stat_for_rc.column_ << "列";
         return s.str();
     }
@@ -171,6 +170,11 @@ namespace lsf
         // namespace end
     }
 
+    // Lexer::Lexer():Lexer(std::shared_ptr<lsf::BuffBase>(nullptr))
+    // {
+
+    // }
+
     lsf::Lexer::Lexer(std::shared_ptr<lsf::BuffBase> input) : input_(input)
     {
         const wchar_t *l[] = {
@@ -193,6 +197,10 @@ namespace lsf
         }
         return current_token_;
     }
+
+    // void Lexer::set_buff_base(std::shared_ptr<lsf::BuffBase> input){
+    //     input_=input;
+    // }
 
     bool Lexer::run()
     {
@@ -281,7 +289,9 @@ namespace lsf
                 s += c;
                 c = input_->next_char();
             } while (c == L'\u0020' || c == L'\u000a' || c == L'\u000d' || c == L'\u0009');
+            // 当前读到了空白的下一个字符,所以回滚
             input_->rollback_char();
+            // 然后前进
             input_->discard_token();
             goto T;
         }
@@ -290,39 +300,41 @@ namespace lsf
             current_token_.type_ = Type::Number;
             return try_number(c);
         }
-        else if (c >= L'\u0020' && c <= 0x10FFFF)
+        else if (c >= L'\u0020' && c <= 0x10FFFF) //
         {
+            // Fixme 这里是有一些逻辑不清晰
             current_token_.type_ = Type::KeyWord;
             auto &s = current_token_.value_;
             s.clear();
-            if (c == L'_')
-            {
-                s += c;
-                c = input_->next_char();
-            }
             while ((c >= L'a' && c <= L'z') || (c >= L'A' && c <= L'Z') || c == L'_')
             {
                 s += c;
                 c = input_->next_char();
             }
-            input_->rollback_char();
-#if __cplusplus >= 202002L
-            auto haskey = symbol_.contains(s);
-#else
-            auto haskey = symbol_.end() != symbol_.find(s);
-#endif
-            if (haskey)
+            // 无法解析为关键字
+            if (s.size() == 0)
             {
-                if (s == L"null")
-                    current_token_.type_ = Type::Null;
-                input_->discard_token();
-                goto T;
+                s += c;
             }
             else
             {
-                input_->rollback_char(s.size());
-                goto F;
+                input_->rollback_char();
+#if __cplusplus >= 202002L
+                auto haskey = symbol_.contains(s);
+#else
+                auto haskey = symbol_.end() != symbol_.find(s);
+#endif
+                if (haskey)
+                {
+                    if (s == L"null")
+                        current_token_.type_ = Type::Null;
+                    input_->discard_token();
+                    goto T;
+                }
             }
+
+            input_->rollback_char(s.size());
+            goto F;
         }
         else
             goto F;
@@ -439,7 +451,7 @@ namespace lsf
             c = input_->next_char();
             while (true)
             {
-                if (c == MBuff::Eof_w)
+                if (c == BuffBase::Eof_w)
                     goto F;
                 if (c == L'*')
                 {
@@ -461,7 +473,7 @@ namespace lsf
             c = input_->next_char();
             while (true)
             {
-                if (c == MBuff::Eof_w)
+                if (c == BuffBase::Eof_w)
                     goto F;
                 if (c == L'\n' || c == L'\t' || c == L'\r')
                     break;

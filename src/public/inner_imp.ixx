@@ -47,11 +47,12 @@ namespace lsf
 
     public:
         FilterBuff(std::unique_ptr<BuffBase> buff);
+        FilterBuff():FilterBuff(std::unique_ptr<BuffBase>(nullptr)){}
+        void set_buff_base(std::unique_ptr<BuffBase> buff);
         ~FilterBuff();
         /// 调用前需要已经调用了this->discard_token()或this->get_token()
         Location begin_location();
         void record_location();
-        bool test_and_skipBOM();
 
     private:
         std::unique_ptr<BuffBase> b_;
@@ -74,6 +75,8 @@ namespace lsf
     {
     public:
         FunnyTokenGen(std::shared_ptr<lsf::Lexer> l, std::shared_ptr<FilterBuff> b) : lexer_(l), buff_(b), tk_begin_(b->begin_location()) {}
+
+        // FunnyTokenGen(std::shared_ptr<lsf::Lexer> l):FunnyTokenGen(l,std::shared_ptr<FilterBuff>()){}
         /// token 开始的位置,相对于文件的行与列
         Location token_position() const;
         // GenToken interface
@@ -559,6 +562,10 @@ FilterBuff::FilterBuff(std::unique_ptr<BuffBase> buff):b_(std::move(buff)),histo
 {
 }
 
+void FilterBuff::set_buff_base(std::unique_ptr<BuffBase> buff){
+    b_=std::move(buff);
+}
+
 FilterBuff::~FilterBuff()
 {
 
@@ -643,23 +650,6 @@ void FilterBuff::record_location()
 
     p_begin_.column_=history_.back();
     p_begin_.line_+=old_size-1;
-}
-
-///这应该成为成员函数吗?
-bool FilterBuff::test_and_skipBOM()
-{
-    wchar_t head[3]={};
-    for (std::size_t i=0;i<3;i++){
-        head[i]=b_->next_char();
-        if(head[i]==MBuff::Eof_w)
-            return true;
-    }
-    if(wcsncmp(head,L"\xEF\xBB\xBF",3)==0){
-        b_->discard_token();
-        return true;
-    }
-    b_->rollback_char(3);
-    return false;
 }
 
 ///*************************///

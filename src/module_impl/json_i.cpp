@@ -14,11 +14,11 @@ module lsf;
 namespace lsf
 {
 
-    Json::Json(const std::string &filename)
+    Json::Json()
     {
-        // 输入抽象
-        buff_ = std::make_shared<lsf::FilterBuff>(std::make_unique<lsf::MBuff>(filename));
-        buff_->test_and_skipBOM();
+        // BUG 需要重新初始化这块
+        // // 输入抽象
+        buff_ = std::make_shared<lsf::FilterBuff>();
 
         // 创建词法分析器
         lexer_ = std::make_shared<lsf::Lexer>(buff_);
@@ -37,7 +37,8 @@ namespace lsf
 
     // https://en.cppreference.com/w/cpp/memory/unique_ptr
     // https://www.cnblogs.com/misteo/p/14062426.html
-    Json::~Json() {
+    Json::~Json()
+    {
         builder->dealloc_node();
     }
 
@@ -89,13 +90,17 @@ namespace lsf
         {
             if (!parser_->parser())
             {
-                error_msg_ += lsf::parser_messages(wrap_lexer_->token_position(), lexer_->get_token(), parser_->get_expect_token());
+                error_msg_ +="当前期待以下词法单元:\n";
+                error_msg_ += lsf::parser_messages(parser_->get_expect_token());
+                error_msg_+= "当前词法单元是:\n";
+                error_msg_+=lsf::lexer_messages(wrap_lexer_->token_position(), lexer_->get_token());
                 f(ErrorType::ParserError, error_msg_);
                 return false;
             }
         }
         catch (const lsf::LexerError &e)
         {
+            error_msg_+="当前期待以下词法单元";
             error_msg_ += lsf::lexer_messages(wrap_lexer_->token_position(), lexer_->get_token());
             f(ErrorType::LexError, error_msg_);
             return false;

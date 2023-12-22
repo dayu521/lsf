@@ -3,9 +3,9 @@ module;
 
 export module lsf:struct_help;
 
-export namespace lsf::detail
+//用于在struct中定义成员信息
+export namespace lsf::wrapper
 {
-
     template <typename T, typename U, typename NAMETUPLE>
     struct MI
     {
@@ -21,6 +21,11 @@ export namespace lsf::detail
         return {name, member};
     }
 
+} // namespace lsf::wrapper
+
+//未使用
+namespace lsf::detail
+{
     struct instance
     {
         template <typename Type>
@@ -68,4 +73,4 @@ export namespace lsf::detail
     }
 
     // namespace detail end
-}   
+}

@@ -1,4 +1,6 @@
-
+#ifndef XX_H
+#define XX_H
+#include<tuple>
 /*宏定义开始*/
 #define BRACKET_L() (
 #define BRACKET_R() )
@@ -39,11 +41,13 @@
     }                                                                                                                  \
   }
 
-#define N_01(member,...) lsf::detail::makeMemberInfo(#member, &JS_OBJECT_T::member)
-#define N_02(member,name1,...) lsf::detail::makeMemberInfo(name1, &JS_OBJECT_T::member)
+#define N_01(member,...) lsf::wrapper::makeMemberInfo(#member, &JS_OBJECT_T::member)
+#define N_02(member,name1,...) lsf::wrapper::makeMemberInfo(name1, &JS_OBJECT_T::member)
 #define N_03(member,name1,...)/*暂时不实现*/
 
 /*#define JS_MEMBER(member,...) lsf::detail::makeMemberInfo(name, &JS_OBJECT_T::member)*/
 #define JS_MEMBER(...) CAT(N_,GET_N(__VA_ARGS__))(__VA_ARGS__)
 
 #define JS_OBJECT(...) JS_OBJECT_INTERNAL_IMPL(std::make_tuple(__VA_ARGS__))
+
+#endif

@@ -5,7 +5,7 @@ set_languages("c++20")
 
 target("lsf")
     set_kind("static")
-    add_files("src/public/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp")
+    add_files("src/public/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm")
     -- add_files("src/old/*.cpp")
     add_includedirs("src/old")
     set_policy("build.c++.modules", true)

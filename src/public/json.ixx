@@ -10,10 +10,13 @@ export module lsf;
 export import :util;
 export import :struct_help;
 
+export import :json_src;
+
 import :analyze;
 import :lexer;
 import :jsonparser;
 import :inner_imp;
+import :tp;
 
 // namespace lsf
 // {
@@ -27,7 +30,7 @@ import :inner_imp;
 
 // TODO 修改接口,此接口很迷惑
 
-// 流,解析器,
+// 流,解析器,解析树,json字符串构建器,struct_to_jsonstr,解析树到struct,解析树到jsonstr
 export namespace lsf
 {
 
@@ -53,7 +56,7 @@ export namespace lsf
     class Json
     {
     public:
-        Json(const std::string &filename);
+        Json();
         Json(const Json &) = delete;
         Json(Json &&) = default;
         // https://en.cppreference.com/w/cpp/memory/unique_ptr
@@ -64,6 +67,9 @@ export namespace lsf
         [[nodiscard]] bool weak_type_check(std::function<void(ErrorType et, const std::string &message)> f);
 
         std::string get_errors() const;
+
+        template <InputSource T>
+        void set_input(std::unique_ptr<T> input);
 
     public:
         friend void json_to_string(Json &json, SerializeBuilder &sb);
@@ -80,6 +86,14 @@ export namespace lsf
         std::string error_msg_;
     };
 
+    template <InputSource T>
+    void Json::set_input(std::unique_ptr<T> input)
+    {
+        input->before_read();
+        // 输入抽象
+        buff_->set_buff_base(std::make_unique<MBuff<T>>( std::move(input)));
+    }
+
     // template <typename S>
     // void struct_to_jsonstr(const S &obj, SerializeBuilder &builder);
 
@@ -88,13 +102,13 @@ export namespace lsf
 
     void json_to_string(Json &json, SerializeBuilder &sb);
 
-     template <typename S>
+    template <typename S>
     void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
     {
         serialize(obj, builder);
     }
 
- template <typename S>
+    template <typename S>
     void json_to_struct(const Json &json, S &s)
     {
         deserialize(s, std::get<0>(json.builder->get_ast()));
