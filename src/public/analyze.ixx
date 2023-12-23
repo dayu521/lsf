@@ -13,6 +13,7 @@ import :constant;
 
 import :inner_imp;
 import :parser_tree;
+import :tree_builder;
 
 // 如果需要主模块的声明,则也需要显式导入
 //  import lsf;
@@ -133,7 +134,7 @@ namespace lsf
     template <>
     struct Jnode<NodeC::String> : Visitable
     {
-        std::string data_; /// 对于obj和arr，表示成员数量
+        std::string data_; 
         AcceptImp(Visitor)
             AcceptImp(WeakTypeChecker)
     };
@@ -141,7 +142,7 @@ namespace lsf
     template <>
     struct Jnode<NodeC::Number> : Visitable
     {
-        std::string data_; /// 对于obj和arr，表示成员数量
+        std::string data_; 
         AcceptImp(Visitor)
             AcceptImp(WeakTypeChecker)
     };

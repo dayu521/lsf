@@ -90,7 +90,7 @@ namespace lsf
         {
             if (!parser_->parser())
             {
-                error_msg_ +="当前期待以下词法单元:\n";
+                error_msg_ +="语法解析出错,当前期待以下词法单元:\n";
                 error_msg_ += lsf::parser_messages(parser_->get_expect_token());
                 error_msg_+= "当前词法单元是:\n";
                 error_msg_+=lsf::lexer_messages(wrap_lexer_->token_position(), lexer_->get_token());
@@ -100,7 +100,7 @@ namespace lsf
         }
         catch (const lsf::LexerError &e)
         {
-            error_msg_+="当前期待以下词法单元";
+            error_msg_+="词法解析出错,当前期待以下词法单元";
             error_msg_ += lsf::lexer_messages(wrap_lexer_->token_position(), lexer_->get_token());
             f(ErrorType::LexError, error_msg_);
             return false;

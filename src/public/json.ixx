@@ -89,16 +89,9 @@ export namespace lsf
     template <InputSource T>
     void Json::set_input(std::unique_ptr<T> input)
     {
-        input->before_read();
         // 输入抽象
         buff_->set_buff_base(std::make_unique<MBuff<T>>( std::move(input)));
     }
-
-    // template <typename S>
-    // void struct_to_jsonstr(const S &obj, SerializeBuilder &builder);
-
-    // template <typename S>
-    // void json_to_struct(const Json &json, S &s);
 
     void json_to_string(Json &json, SerializeBuilder &sb);
 
