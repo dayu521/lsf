@@ -25,7 +25,6 @@ namespace lsf
         TreeNode<T> *left_child_{nullptr}; /// 左孩子
         TreeNode<T> *right_bro_{nullptr};  /// 右兄弟
 
-        std::string key_;              /// 作为对象成员的key
         NodeC ele_type_{NodeC::Error}; /// json类型标识
 
         void operator delete(void *ptr, std::size_t sz);

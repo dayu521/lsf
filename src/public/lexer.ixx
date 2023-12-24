@@ -41,14 +41,6 @@ namespace lsf
         std::wstring error_;
     };
 
-    std::string lexer_messages(Location stat_for_rc, Token lex_token)
-    {
-        std::stringstream s{};
-        s << "  " << lsf::tokentype_to_string(lex_token.type_) << " : " << to_cstring(lex_token.value_)
-          << "\n位于:" << stat_for_rc.line_ << "行," << stat_for_rc.column_ << "列";
-        return s.str();
-    }
-
 }
 
 namespace lsf

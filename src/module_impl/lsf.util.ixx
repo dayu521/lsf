@@ -11,6 +11,7 @@ export module lsf:util;
 // import lsf;
 import :analyze;
 import :inner_imp;
+import :json_src;
 
 namespace lsf
 {
@@ -157,7 +158,8 @@ namespace lsf
         if (t->ele_type_ == NodeC::String)
         {
             // 如果有错,语法分析会提前失败.下同
-            s = static_cast<const Jnode<NodeC::String> *>(t)->data_;
+            auto str=static_cast<const Jnode<NodeC::String> *>(t);
+            s = to_cstring(str->get_ref_str_(str->data_));
         }
         else
             throw DeserializeError("序列化std::string: 期待json String");
@@ -168,7 +170,8 @@ namespace lsf
     {
         if (t->ele_type_ == NodeC::Number)
         {
-            s = std::stoi(static_cast<const Jnode<NodeC::Number> *>(t)->data_);
+            auto num=static_cast<const Jnode<NodeC::Number> *>(t);
+            s = std::stoi(num->get_ref_str_(num->data_));
         }
         else
             throw DeserializeError("序列化int: 期待json Number");
@@ -179,7 +182,8 @@ namespace lsf
     {
         if (t->ele_type_ == NodeC::Number)
         {
-            s = std::stod(static_cast<const Jnode<NodeC::Number> *>(t)->data_);
+            auto dob=static_cast<const Jnode<NodeC::Number> *>(t);
+            s = std::stod(dob->get_ref_str_(dob->data_));
         }
         else
             throw DeserializeError("序列化double: 期待json Number");

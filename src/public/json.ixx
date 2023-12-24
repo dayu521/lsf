@@ -18,16 +18,6 @@ import :jsonparser;
 import :inner_imp;
 import :tp;
 
-// namespace lsf
-// {
-//     class FilterBuff;
-//     class Lexer;
-//     class FunnyTokenGen;
-//     class JsonParser;
-//     class TreeBuilder;
-//     // enum class NodeC;
-// }
-
 // TODO 修改接口,此接口很迷惑
 
 // 流,解析器,解析树,json字符串构建器,struct_to_jsonstr,解析树到struct,解析树到jsonstr

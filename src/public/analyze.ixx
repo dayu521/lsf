@@ -6,6 +6,7 @@ module;
 #include <vector>
 #include <queue>
 #include <set>
+#include <utility>
 
 export module lsf:analyze;
 
@@ -33,6 +34,18 @@ namespace lsf
 
     /// 第一个指向root_,第二个指向null_
     using Tree = std::tuple<Visitable *, Visitable *>;
+
+    struct str_ref : std::pair<std::size_t, std::size_t>
+    {
+        auto begin()
+        {
+            return std::get<0>(*this);
+        }
+        auto end()
+        {
+            return std::get<1>(*this);
+        }
+    };
 
     ///********************Visitor*****************
     // 以下产生5个纯虚函数,且返回类型都是void,可通过Visitor::Rtype访问到
@@ -80,13 +93,14 @@ namespace lsf
         virtual ~WeakTypeChecker() = default;
         [[nodiscard]] bool check_type(Tree root);
         bool do_check(std::size_t first, std::size_t another);
-        std::string_view get_error();
+        std::pair<std::string, std::wstring> get_error();
 
     private:
         NodeC current_type{NodeC::Error};
         Visitable *null_{};
         std::vector<NodeC> jtype_{};
         std::string error_{};
+        std::wstring src_{};
     };
 
     class PrintNodes : public Visitor
@@ -107,12 +121,20 @@ namespace lsf
 #define AcceptImp(Visitorx) \
     virtual Visitorx::Rtype accept(Visitorx &v) override { return v.visit(*this); }
 
+    using ff = std::function<std::wstring(str_ref)>;
+
     template <>
     struct VisitableTree<Visitor, WeakTypeChecker> : public TreeNode<VisitableTree<Visitor, WeakTypeChecker>>
     {
+        // 用于访问
         virtual Visitor::Rtype accept(Visitor &v) = 0;
         virtual WeakTypeChecker::Rtype accept(WeakTypeChecker &v) = 0;
         virtual ~VisitableTree() = default;
+
+        /// 作为对象成员的key
+        // 因为基本上所有
+        str_ref key_;
+        ff get_ref_str_;
     };
 
     template <>
@@ -134,7 +156,8 @@ namespace lsf
     template <>
     struct Jnode<NodeC::String> : Visitable
     {
-        std::string data_; 
+        str_ref data_;
+        ff get_ref_str_;
         AcceptImp(Visitor)
             AcceptImp(WeakTypeChecker)
     };
@@ -142,7 +165,8 @@ namespace lsf
     template <>
     struct Jnode<NodeC::Number> : Visitable
     {
-        std::string data_; 
+        str_ref data_;
+        ff get_ref_str_;
         AcceptImp(Visitor)
             AcceptImp(WeakTypeChecker)
     };
@@ -180,22 +204,29 @@ namespace lsf
         virtual void finish_iteration() override;
 
     public:
-    ///Fixme 这里无法自定义析构函数 2023-12-17 当前使用clang 16.0.6
+        /// Fixme 这里无法自定义析构函数 2023-12-17 当前使用clang 16.0.6
         // ~TreeBuilder() { dealloc_node(); }
-        ~TreeBuilder()=default;
+        ~TreeBuilder() = default;
         // ~TreeBuilder(){}
     public:
-        //TODO 当此函数被调用后,对象就由接收方负责
+        // TODO 当此函数被调用后,对象就由接收方负责
         Tree get_ast();
         /// BUG
         /// FIXME 销毁时,这里需要手动调用.
         void dealloc_node();
+
+        std::wstring get_ref_str(str_ref sr)
+        {
+            return str_cache_.substr(sr.first, sr.second);
+        }
 
     private:
         Visitable *root_{nullptr};
         std::stack<std::tuple<Visitable *, int>> mbr_node_{};
         std::vector<Visitable *> clear_{};
         Visitable *null_{nullptr};
+
+        std::wstring str_cache_;
     };
 
 } // namespace lsf
@@ -217,13 +248,12 @@ namespace lsf
         dealloc_node();
         root_ = null_ = new Jnode<NodeC::Obj>;
         null_->left_child_ = null_->right_bro_ = null_;
-        null_->key_ = "Never used!";
         clear_.push_back(null_);
     }
 
     void TreeBuilder::after_build()
     {
-        root_->key_ = "root";
+        // root_->key_ = "root";
         root_->right_bro_ = root_;
         null_->left_child_ = null_->right_bro_ = null_;
     }
@@ -255,7 +285,11 @@ namespace lsf
     void TreeBuilder::build_string(std::wstring str)
     {
         auto n = new Jnode<NodeC::String>;
-        n->data_ = to_cstring(str);
+        n->data_.first = str_cache_.size();
+        n->data_.second = str.size();
+        n->get_ref_str_ = [this](str_ref a)
+        { return this->get_ref_str(a); };
+        str_cache_ += std::move(str);
         n->ele_type_ = NodeC::String;
         n->left_child_ = null_;
         n->right_bro_ = n;
@@ -266,7 +300,11 @@ namespace lsf
     void TreeBuilder::build_number(std::wstring str)
     {
         auto n = new Jnode<NodeC::Number>;
-        n->data_ = to_cstring(str);
+        n->data_.first = str_cache_.size();
+        n->data_.second = str.size();
+        n->get_ref_str_ = [this](str_ref a)
+        { return this->get_ref_str(a); };
+        str_cache_ += std::move(str);
         n->ele_type_ = NodeC::Number;
         n->left_child_ = null_;
         n->right_bro_ = n;
@@ -298,7 +336,16 @@ namespace lsf
 
     void TreeBuilder::set_memberkey(std::wstring key)
     {
-        root_->key_ = to_cstring(key);
+        // root_->key_ = to_cstring(key);
+        auto n = root_;
+        n->key_.first = str_cache_.size();
+        n->key_.second = key.size();
+        if (n->get_ref_str_ == nullptr)
+        {
+            n->get_ref_str_ = [this](str_ref a)
+            { return this->get_ref_str(a); };
+        }
+        str_cache_ += std::move(key);
     }
 
     void TreeBuilder::build_null_mbr()
@@ -423,24 +470,24 @@ namespace lsf
             jtype_.push_back(current_type);
             return true;
         }
-        std::set<std::string> cset{};
+        std::set<str_ref> cset{};
         auto j = obj.left_child_;
         do
         {
             if (!j->get_this()->accept(*this))
                 return false;
 #if __cplusplus >= 202002L
-            auto haskey = cset.contains(j->key_);
+            auto haskey = cset.contains(j->get_this()->key_);
 #else
-            auto haskey = cset.end() != cset.find(j->key_);
+            auto haskey = cset.end() != cset.find(j->get_this()->key_);
 #endif
             if (haskey)
             {
                 error_ += "重复key_:";
-                error_ += j->key_;
+                src_ += j->get_this()->get_ref_str_(j->get_this()->key_);
                 return false;
             }
-            cset.insert(j->key_);
+            cset.insert(j->get_this()->key_);
             j = j->right_bro_;
         } while (j != obj.left_child_);
         // 因为是共享的,所以需要重新赋值.其他地方类似
@@ -472,7 +519,7 @@ namespace lsf
             if (!j->get_this()->accept(*this) || !do_check(first_beg, another_beg))
             {
                 error_ += "数组类型不同:";
-                error_ += arr.key_;
+                src_ += arr.get_this()->get_ref_str_(arr.get_this()->key_);
                 return false;
             }
             jtype_.resize(another_beg);
@@ -529,9 +576,9 @@ namespace lsf
         return r;
     }
 
-    std::string_view WeakTypeChecker::get_error()
+    std::pair<std::string, std::wstring> WeakTypeChecker::get_error()
     {
-        return error_;
+        return {error_, src_};
     }
 
 } // namespace lsf

@@ -14,110 +14,108 @@ import :analyze;
 import :inner_imp;
 import :jsonparser;
 import :util;
+import :json_src;
 
 namespace lsf
 {
-     void SerializeBuilder::write_value(const std::string &ele)
-        {
-            out_ += ele;
-        }
+    void SerializeBuilder::write_value(const std::string &ele)
+    {
+        out_ += ele;
+    }
 
-        void SerializeBuilder::write_value(const char *ele)
-        {
-            out_ += ele;
-        }
+    void SerializeBuilder::write_value(const char *ele)
+    {
+        out_ += ele;
+    }
 
-     void SerializeBuilder::add_quotation()
-        {
-            out_ += '"';
-        }
+    void SerializeBuilder::add_quotation()
+    {
+        out_ += '"';
+    }
 
-      void SerializeBuilder::write_key(std::string key)
+    void SerializeBuilder::write_key(std::string key)
+    {
+        out_ += '"';
+        out_ += key;
+        out_ += '"';
+        out_ += ": ";
+    }
+    void SerializeBuilder::arr_start()
+    {
+        out_ += '[';
+        out_ += '\n';
+        indent.push(indent.top() + 1);
+        auto i = indent.top();
+        while (i > 0)
         {
-            out_ += '"';
-            out_ += key;
-            out_ += '"';
-            out_ += ": ";
+            out_ += "    ";
+            i--;
         }
-      void SerializeBuilder::arr_start()
+    }
+    void SerializeBuilder::arr_end()
+    {
+        out_ += '\n';
+        auto i = indent.top();
+        indent.pop();
+        while (i - 1 > 0)
         {
-            out_ += '[';
-            out_ += '\n';
-            indent.push(indent.top() + 1);
-            auto i = indent.top();
-            while (i > 0)
-            {
-                out_ += "    ";
-                i--;
-            }
+            out_ += "    ";
+            i--;
         }
-       void SerializeBuilder::arr_end()
+        out_ += ']';
+    }
+    void SerializeBuilder::obj_start()
+    {
+        out_ += '{';
+        out_ += '\n';
+        indent.push(indent.top() + 1);
+        auto i = indent.top();
+        while (i > 0)
         {
-            out_ += '\n';
-            auto i = indent.top();
-            indent.pop();
-            while (i - 1 > 0)
-            {
-                out_ += "    ";
-                i--;
-            }
-            out_ += ']';
+            out_ += "    ";
+            i--;
         }
-       void SerializeBuilder::obj_start()
+    }
+    void SerializeBuilder::obj_end()
+    {
+        out_ += '\n';
+        auto i = indent.top();
+        indent.pop();
+        while (i - 1 > 0)
         {
-            out_ += '{';
-            out_ += '\n';
-            indent.push(indent.top() + 1);
-            auto i = indent.top();
-            while (i > 0)
-            {
-                out_ += "    ";
-                i--;
-            }
+            out_ += "    ";
+            i--;
         }
-       void SerializeBuilder::obj_end()
+        out_ += '}';
+    }
+    void SerializeBuilder::forward_next()
+    {
+        out_ += ',';
+        out_ += '\n';
+        auto i = indent.top();
+        while (i > 0)
         {
-            out_ += '\n';
-            auto i = indent.top();
-            indent.pop();
-            while (i - 1 > 0)
-            {
-                out_ += "    ";
-                i--;
-            }
-            out_ += '}';
+            out_ += "    ";
+            i--;
         }
-      void SerializeBuilder::forward_next()
-        {
-            out_ += ',';
-            out_ += '\n';
-            auto i = indent.top();
-            while (i > 0)
-            {
-                out_ += "    ";
-                i--;
-            }
-        }
-     void SerializeBuilder::back(std::size_t i)
-        {
-            // todo:check overflow
-            out_.resize(out_.size() - indent.top() * 4 - i);
-        }
+    }
+    void SerializeBuilder::back(std::size_t i)
+    {
+        // todo:check overflow
+        out_.resize(out_.size() - indent.top() * 4 - i);
+    }
 } // namespace lsf
 
 namespace lsf
 {
 
-   
     void Visitable2string(Visitable *root, SerializeBuilder &sb);
 
-     void json_to_string(Json &json, SerializeBuilder &sb)
+    void json_to_string(Json &json, SerializeBuilder &sb)
     {
-
+        LocaleGuard lg;
         Visitable2string(std::get<0>(json.builder->get_ast()), sb);
     }
-
-
 
     // I can't find out a better function name
     void Visitable2string(Visitable *root, SerializeBuilder &sb)
@@ -135,7 +133,7 @@ namespace lsf
             {
                 if (i->left_child_ != i)
                 {
-                    sb.write_key(i->key_);
+                    sb.write_key(to_cstring(i->get_this()->get_ref_str_(i->get_this()->key_)));
                     Visitable2string(i->get_this(), sb);
                 }
                 else
@@ -145,7 +143,7 @@ namespace lsf
             {
                 do
                 {
-                    sb.write_key(i->key_);
+                    sb.write_key(to_cstring(i->get_this()->get_ref_str_(i->get_this()->key_)));
                     Visitable2string(i->get_this(), sb);
                     sb.forward_next();
                     i = i->right_bro_;
@@ -180,12 +178,14 @@ namespace lsf
         else if (root->ele_type_ == NodeC::String)
         {
             sb.add_quotation();
-            sb.write_value(static_cast<const Jnode<NodeC::String> *>(root)->data_);
+            auto str=static_cast<const Jnode<NodeC::String> *>(root);
+            sb.write_value(to_cstring(str->get_ref_str_(str->data_)));
             sb.add_quotation();
         }
         else if (root->ele_type_ == NodeC::Number)
         {
-            sb.write_value(static_cast<const Jnode<NodeC::Number> *>(root)->data_);
+            auto num=static_cast<const Jnode<NodeC::Number> *>(root);
+            sb.write_value(to_cstring(num->get_ref_str_(num->data_)));
         }
         else if (root->ele_type_ == NodeC::Keyword)
         {
