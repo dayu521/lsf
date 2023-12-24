@@ -4,6 +4,7 @@ module;
 #include <stack>
 #include <tuple>
 #include <string>
+#include <optional>
 
 export module lsf;
 
@@ -52,9 +53,9 @@ export namespace lsf
         // https://en.cppreference.com/w/cpp/memory/unique_ptr
         ~Json();
         /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
-        [[nodiscard]] bool run(std::function<void(ErrorType et, const std::string &message)> f);
+        [[nodiscard]] std::optional<std::shared_ptr<TreeBuilder>> run();
         /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
-        [[nodiscard]] bool weak_type_check(std::function<void(ErrorType et, const std::string &message)> f);
+        [[nodiscard]] bool weak_type_check(std::shared_ptr<TreeBuilder> builder);
 
         std::string get_errors() const;
 
@@ -72,7 +73,6 @@ export namespace lsf
         std::shared_ptr<Lexer> lexer_;
         std::shared_ptr<FunnyTokenGen> wrap_lexer_;
         std::unique_ptr<JsonParser> parser_;
-        std::shared_ptr<TreeBuilder> builder;
         std::string error_msg_;
     };
 
@@ -83,7 +83,7 @@ export namespace lsf
         buff_->set_buff_base(std::make_unique<MBuff<T>>( std::move(input)));
     }
 
-    void json_to_string(Json &json, SerializeBuilder &sb);
+    void json_to_string(std::shared_ptr<TreeBuilder> builder, SerializeBuilder &sb);
 
     template <typename S>
     void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
@@ -92,9 +92,9 @@ export namespace lsf
     }
 
     template <typename S>
-    void json_to_struct(const Json &json, S &s)
+    void json_to_struct(std::shared_ptr<TreeBuilder> builder, S &s)
     {
-        deserialize(s, std::get<0>(json.builder->get_ast()));
+        deserialize(s, std::get<0>(builder->get_ast()));
     }
 
 } // namespace lsf

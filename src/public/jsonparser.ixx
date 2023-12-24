@@ -4,7 +4,6 @@ module;
 #include <cassert>
 #include <limits>
 #include <stack>
-#include <sstream>
 
 export module lsf:jsonparser;
 
@@ -18,8 +17,7 @@ namespace lsf
     {
     public:
         JsonParser(std::shared_ptr<GenToken> gen);
-        void set_builder(std::shared_ptr<ParserResultBuilder> b);
-        [[nodiscard]] bool parser();
+        [[nodiscard]] bool parser(std::shared_ptr<ParserResultBuilder>);
         const std::vector<lsf::Type> &get_expect_token() const;
 
     private:
@@ -45,21 +43,6 @@ namespace lsf
         std::shared_ptr<ParserResultBuilder> builder_;
         std::vector<lsf::Type> expect_array_;
     };
-
-    std::string parser_messages( std::vector<Type> expects)
-    {
-        std::stringstream s{};
-        for (const auto &i : expects)
-            s << "  " << tokentype_to_string(i) << '\n';
-        return s.str();
-            
-        // s << "当前语法期待以下词法单元:\n";
-        // for (const auto &i : expects)
-        //     s << "  " << tokentype_to_string(i) << '\n';
-        // // Fixme 这里不能只是调用词法错误,因为可能没有词法错误
-        // s << lexer_messages(stat_for_rc, lex_token) << '\n';
-        // return s.str();
-    }
 
     // 把递归下降转换成循环
     class R_JsonParser
@@ -96,19 +79,17 @@ namespace lsf
     {
     }
 
-    void JsonParser::set_builder(std::shared_ptr<ParserResultBuilder> b)
+    bool JsonParser::parser(std::shared_ptr<ParserResultBuilder> builder)
     {
-        builder_ = b;
-    }
-
-    bool JsonParser::parser()
-    {
+        builder_=builder;
         assert(builder_ && gen_);
         builder_->before_build();
         expect_array_.clear(); // 之后push_back或assign都一样
 
         gen_->next_();
-        return json();
+        auto ok=json();
+        builder_.reset();
+        return ok;
     }
 
     const std::vector<Type> &JsonParser::get_expect_token() const

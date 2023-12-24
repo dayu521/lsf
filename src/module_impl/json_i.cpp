@@ -3,6 +3,8 @@ module;
 #include <memory>
 #include <functional>
 #include <clocale>
+#include <sstream>
+#include <optional>
 
 module lsf;
 
@@ -23,18 +25,12 @@ namespace lsf
 
         // 创建语法分析器
         parser_ = std::make_unique<lsf::JsonParser>(wrap_lexer_);
-
-        // 节点构建器
-        builder = std::make_shared<TreeBuilder>();
-
-        parser_->set_builder(builder);
     }
 
     // https://en.cppreference.com/w/cpp/memory/unique_ptr
     // https://www.cnblogs.com/misteo/p/14062426.html
     Json::~Json()
     {
-        builder->dealloc_node();
     }
 
     std::string lexer_messages(Location stat_for_rc, Token lex_token)
@@ -45,38 +41,44 @@ namespace lsf
         return s.str();
     }
 
-    bool Json::run(std::function<void(ErrorType, const std::string &)> f)
+    std::string parser_messages(std::vector<Type> expects)
+    {
+        std::stringstream s{};
+        for (const auto &i : expects)
+            s << "  " << tokentype_to_string(i) << '\n';
+        return s.str();
+    }
+
+    std::optional<std::shared_ptr<TreeBuilder>> Json::run()
     {
         error_msg_.clear();
+        auto b = std::make_shared<TreeBuilder>();
         try
         {
-            if (!parser_->parser())
+            if (!parser_->parser(b))
             {
                 error_msg_ += "语法解析出错,当前期待以下词法单元:\n";
                 error_msg_ += lsf::parser_messages(parser_->get_expect_token());
                 error_msg_ += "当前词法单元是:\n";
                 error_msg_ += lsf::lexer_messages(wrap_lexer_->token_position(), lexer_->get_token());
-                f(ErrorType::ParserError, error_msg_);
-                return false;
+                return b;
             }
         }
         catch (const lsf::LexerError &e)
         {
-            error_msg_ += "词法解析出错,当前期待以下词法单元";
+            error_msg_ += "词法解析出错,当前期待以下词法单元 \n";
             error_msg_ += lsf::lexer_messages(wrap_lexer_->token_position(), lexer_->get_token());
-            f(ErrorType::LexError, error_msg_);
-            return false;
+            return std::nullopt;
         }
         catch (const std::runtime_error &e)
         {
             error_msg_ += e.what();
-            f(ErrorType::UnknowError, error_msg_);
-            return false;
+            return std::nullopt;
         }
-        return true;
+        return b;
     }
 
-    bool Json::weak_type_check(std::function<void(ErrorType et, const std::string &message)> f)
+    bool Json::weak_type_check(std::shared_ptr<TreeBuilder> builder)
     {
         // TODO 修改环境
         LocaleGuard lg;
@@ -88,7 +90,6 @@ namespace lsf
             error_msg_ += typer.get_error().first;
             error_msg_ += to_cstring(typer.get_error().second);
             error_msg_ += '\n';
-            f(ErrorType::WeakTypeCheckError, error_msg_);
             return false;
         }
         return true;

@@ -111,10 +111,10 @@ namespace lsf
 
     void Visitable2string(Visitable *root, SerializeBuilder &sb);
 
-    void json_to_string(Json &json, SerializeBuilder &sb)
+    void json_to_string(std::shared_ptr<TreeBuilder> builder, SerializeBuilder &sb)
     {
         LocaleGuard lg;
-        Visitable2string(std::get<0>(json.builder->get_ast()), sb);
+        Visitable2string(std::get<0>(builder->get_ast()), sb);
     }
 
     // I can't find out a better function name

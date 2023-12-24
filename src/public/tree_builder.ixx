@@ -5,6 +5,7 @@ export module lsf:tree_builder;
 
 namespace lsf
 {
+    //TODO 提供是否是对象成员的上下文信息,这样,可以创建合适的节点,不必在所有节点都携带key属性
     class ParserResultBuilder
     {
     public:
