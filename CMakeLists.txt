@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.28)
 
 project(lsf LANGUAGES CXX)
 
@@ -33,33 +33,3 @@ if(MSVC)
 endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/old)
 
-# set(WITH_TEST on)
-#set(WITH_TEST off)
-message("============you can enable test by command-line args with : -D WITH_TEST=on==============")
-message("TODO: those tests will be moved to other place")
-
-if(WITH_TEST)
-message("doctest enabled")
-    include(AddGitSubmodule.cmake)
-    #add test library doctest
-    add_git_submodule(doctest)
-
-    add_executable(mytest
-#        test/test_BST.cpp
-       test/test_usage.cpp
-#        test/test_allocator.cpp
-        test/test_jsonparser.cpp
-        )
-
-    if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-        target_compile_options(mytest PRIVATE -pthread)
-        target_link_options(mytest PRIVATE -pthread)
-    endif()
-
-    target_link_libraries(mytest lsf)
-
-    target_link_libraries(mytest doctest_with_main)
-
-    configure_file(test/2.txt .)
-    configure_file(test/22.txt .)
-endif()

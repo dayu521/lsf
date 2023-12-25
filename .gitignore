@@ -7,3 +7,6 @@
 /out/build/x64-Debug
 /CMakeSettings.json
 /lsf.pro.user
+/.vscode
+/.xmake
+/build

@@ -10,6 +10,7 @@ target("lsf")
     add_includedirs("src/old")
     set_policy("build.c++.modules", true)
     add_defines("BUFFER_ARRAY_SIZE=256")
+    add_ldflags("-static")
 
     if is_os("windows") then
         add_defines("MSVC_SPECIAL")
