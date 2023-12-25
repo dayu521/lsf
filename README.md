@@ -2,8 +2,6 @@
 
 解析json文件,反序列化到c++结构;以及从c++结构序列化到json.用到了c++20标准([module](https://en.cppreference.com/w/cpp/language/modules)).
 
-最低也支持c++17.
-
 感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践.
 感谢[dcotest](https://github.com/onqtam/doctest).
 
@@ -52,21 +50,6 @@ includes("lsf_module")
 target("your project name")
     add_deps("lsf")
     add_includedirs("lsf_module/src/public")
-```
-
-### 使用(c++17)
-#### 1.通过cmake
-
-```bash
-cd <projectdir>	#你的工程源码目录
-git clone --depth=1 https://github.com/dayu521/lsf.git
-```
-
-修改你自己的cmake工程文件`CMakeLists.txt`,添加以下行:
-
-```cmake
-add_subdirectory(lsf)
-target_link_libraries(${PROJECT_NAME} lsf)
 ```
 
 #### 列子代码 ####
@@ -135,43 +118,7 @@ int t()
     std::cout << bu.get_jsonstring() << std::endl;
     return 0;
 #else
-    People lf={18,true,{{"dog",2},{"duck",1},{"cat",3}}};
-    
-    lsf::SerializeBuilder bu;
-    //序列化到bu中
-    lsf::struct_to_json(lf,bu);
-    //标准输出打印
-    std::cout<<bu.get_jsonstring()<<std::endl;
-
-    //写入到文件中
-    std::ofstream f("example.txt");
-    if(f.is_open()){
-        f<<bu.get_jsonstring();
-        f.close();
-        return -1;
-    }
-
-    //从文件读入
-    lsf::Json j("example.txt");
-    //解析
-    auto ok=j.run([&](auto t,const std::string &s){
-        lsf::ErrorType sd=t;
-        std::cout<<s<<std::endl;
-    });
-    if(!ok)
-        return -1;
-    
-    People ml{};
-    try {
-        //序列化到People
-        lsf::json_to_struct(ml,j);
-    }  catch (const lsf::DeserializeError &ex) {
-        std::cout<<ex.what()<<std::endl;
-        throw ex;
-    }
-    //不可复制
-    lsf::Json * lk=new lsf::Json(std::move(j));
-    return 0;
+   return 0;
 #endif
 }
 

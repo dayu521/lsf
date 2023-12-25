@@ -49,6 +49,8 @@ file(GLOB module_imp  "src/module_impl/*.cpp")
 set(target_name2 ${PROJECT_NAME})
 add_library(${target_name2} ${module_src} ${module_imp})
 
+target_include_directories(${target_name2} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/public)
+
 target_sources(${target_name2} PUBLIC  
 FILE_SET CXX_MODULES 
 FILES  ${module_src})
