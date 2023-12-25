@@ -26,7 +26,6 @@ namespace lsf
     {
         impl()
         {
-            // BUG 需要重新初始化这块
             // // 输入抽象
             buff_ = std::make_shared<lsf::FilterBuff>();
 
@@ -51,18 +50,6 @@ namespace lsf
     }
     Json::Json() : impl_(std::make_unique<impl>())
     {
-        // BUG 需要重新初始化这块
-        // // 输入抽象
-        // buff_ = std::make_shared<lsf::FilterBuff>();
-
-        // // 创建词法分析器
-        // lexer_ = std::make_shared<lsf::Lexer>(buff_);
-
-        // /************************/
-        // wrap_lexer_ = std::make_shared<FunnyTokenGen>(lexer_, buff_);
-
-        // // 创建语法分析器
-        // parser_ = std::make_unique<lsf::JsonParser>(wrap_lexer_);
     }
 
     // https://en.cppreference.com/w/cpp/memory/unique_ptr

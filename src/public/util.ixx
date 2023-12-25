@@ -37,6 +37,12 @@ namespace lsf
         std::stack<int> indent{};
     };
 
+    export template <typename T>
+    void write_value(const T &v, SerializeBuilder &builder);
+
+    export template <typename T>
+    void Deserialize(T &s, const Visitable *t);
+
     class DeserializeError : public BaseError
     {
         using BaseError::BaseError;
@@ -44,9 +50,6 @@ namespace lsf
 
     template <typename T>
     void deserialize(T &obj, const Visitable *t);
-
-    template <typename T>
-    void Deserialize(T &s, const Visitable *t);
 
     template <typename T>
     void deserialize(T &obj, const Visitable *t)
@@ -154,7 +157,7 @@ namespace lsf
         if (t->ele_type_ == NodeC::String)
         {
             // 如果有错,语法分析会提前失败.下同
-            auto str=static_cast<const Jnode<NodeC::String> *>(t);
+            auto str = static_cast<const Jnode<NodeC::String> *>(t);
             s = to_cstring(str->get_ref_str_(str->data_));
         }
         else
@@ -166,7 +169,7 @@ namespace lsf
     {
         if (t->ele_type_ == NodeC::Number)
         {
-            auto num=static_cast<const Jnode<NodeC::Number> *>(t);
+            auto num = static_cast<const Jnode<NodeC::Number> *>(t);
             s = std::stoi(num->get_ref_str_(num->data_));
         }
         else
@@ -178,7 +181,7 @@ namespace lsf
     {
         if (t->ele_type_ == NodeC::Number)
         {
-            auto dob=static_cast<const Jnode<NodeC::Number> *>(t);
+            auto dob = static_cast<const Jnode<NodeC::Number> *>(t);
             s = std::stod(dob->get_ref_str_(dob->data_));
         }
         else
@@ -196,8 +199,7 @@ namespace lsf
             throw DeserializeError("序列化bool: 期待json bool");
     }
 
-    template <typename T>
-    void write_value(const T &v, SerializeBuilder &builder);
+    ////////////////////序列化
 
     template <>
     inline void write_value<std::string>(const std::string &ele, SerializeBuilder &builder)
@@ -271,16 +273,4 @@ namespace lsf
         }
     }
 
-
-    // export template <typename S>
-    // void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
-    // {
-    //     serialize(obj, builder);
-    // }
-
-    // export template <typename S>
-    // void json_to_struct(const Json &json, S &s)
-    // {
-    //     deserialize(s, std::get<0>(json.builder->get_ast()));
-    // }
 } // namespace lsf

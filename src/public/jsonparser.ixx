@@ -4,6 +4,7 @@ module;
 #include <cassert>
 #include <limits>
 #include <stack>
+#include <string>
 
 export module lsf:jsonparser;
 

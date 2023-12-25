@@ -62,12 +62,6 @@ add_subdirectory(lsf)
 target_link_libraries(${PROJECT_NAME} lsf)
 ```
 
-#### 2.复制源码
-
-当前不依赖三方库,除了标准库,以及测试库`doctest`.
-所以,把源码中`src/old`目录下的内容复制到你自己的工程内,它包含了所有需要的头文件与源文件.
-
-
 #### 列子代码 ####
 
 ```cpp
@@ -95,8 +89,45 @@ struct People
     JS_OBJECT(JS_MEMBER(age,"age"), JS_MEMBER(is_fat),JS_MEMBER(pets,"friends"));
 };
 
-int main()
+int t()
 {
+#if __cpp_modules
+    
+    lsf::Json j;
+    lsf::SerializeBuilder bu;
+
+    // 解析
+    auto res = j.run(std::make_unique<lsf::FileSource>("1.json"));
+    if (!res)
+    {
+        std::cout << j.get_errors() << std::endl;
+        return -1;
+    }
+    lsf::json_to_string(*res, bu);
+    std::cout << bu.get_jsonstring() << std::endl;
+
+    auto res2 = j.run(std::make_unique<lsf::StrSource>(R"(
+        {
+            "dasd":"aasdaffa",
+            "faa阿萨德撒安抚":5,
+            "达到loo5":null
+        }
+    )"));
+    if (!res2)
+    {
+        std::cout << j.get_errors() << std::endl;
+        return -1;
+    }
+    bu.clear();
+    lsf::json_to_string(*res2, bu);
+    std::cout << bu.get_jsonstring() << std::endl;
+
+    bu.clear();
+    People lf = {18, true, {{"dog", 2}, {"duck", 1}, {"cat", 3}}};
+    lsf::struct_to_jsonstr(lf, bu);
+    std::cout << bu.get_jsonstring() << std::endl;
+    return 0;
+#else
     People lf={18,true,{{"dog",2},{"duck",1},{"cat",3}}};
     
     lsf::SerializeBuilder bu;
@@ -110,6 +141,7 @@ int main()
     if(f.is_open()){
         f<<bu.get_jsonstring();
         f.close();
+        return -1;
     }
 
     //从文件读入
@@ -132,6 +164,13 @@ int main()
     }
     //不可复制
     lsf::Json * lk=new lsf::Json(std::move(j));
+    return 0;
+#endif
+}
+
+int main()
+{
+    return t();
 }
 ```
 
@@ -152,11 +191,11 @@ int main()
 ```cpp
 //从TreeNode中反序列化到类型T
 template<typename T>
-inline void lsf::Deserialize(T & s,const TreeNode * t);
+void lsf::Deserialize(T & s,const TreeNode * t);
 
 //序列化T类型到json字符串
 template<typename T>
-inline void lsf::write_value(const T & v,SerializeBuilder & builder);
+void lsf::write_value(const T & v,SerializeBuilder & builder);
 ```
 
 #### 问题 ####

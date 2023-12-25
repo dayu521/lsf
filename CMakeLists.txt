@@ -24,13 +24,9 @@ endif()
 #CMAKE_CURRENT_SOURCE_DIR   当前CMakeLists.txt文件对应的目录
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(${PROJECT_NAME} src/old/mbuff.cpp
-                            src/old/lexer.cpp
-                            src/old/jsonparser.cpp
-                            src/old/json.cpp
-                            src/old/error.cpp
-                            src/old/inner_imp.cpp
-                            src/old/analyse.cpp)
+file(GLOB src  src/old/*.cpp)
+add_library(${PROJECT_NAME} ${src})
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE BUFFER_ARRAY_SIZE=256)
 if(MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE MSVC_SPECIAL)
