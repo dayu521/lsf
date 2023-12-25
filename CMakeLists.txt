@@ -24,12 +24,37 @@ endif()
 #CMAKE_CURRENT_SOURCE_DIR   当前CMakeLists.txt文件对应的目录
 #include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB src  src/old/*.cpp)
-add_library(${PROJECT_NAME} ${src})
+# file(GLOB src  src/old/*.cpp)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE BUFFER_ARRAY_SIZE=256)
-if(MSVC)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE MSVC_SPECIAL)
+# set(target_name ${PROJECT_NAME}-old)
+# add_library(${target_name} ${src})
+
+# target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/old)
+
+# target_compile_definitions(${target_name} PRIVATE BUFFER_ARRAY_SIZE=256)
+# if(MSVC)
+#     target_compile_definitions(${target_name} PRIVATE MSVC_SPECIAL)
+# endif()
+
+# https://www.kitware.com/import-cmake-the-experiment-is-over/
+#clang17以下需要,不包含17
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    message("clang detected")
+    set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/old)
 
+file(GLOB module_src  "src/public/*.ixx" "src/module_impl/*.ixx"  "src/module_impl/*.cppm" )
+file(GLOB module_imp  "src/module_impl/*.cpp")
+
+set(target_name2 ${PROJECT_NAME})
+add_library(${target_name2} ${module_src} ${module_imp})
+
+target_sources(${target_name2} PUBLIC  
+FILE_SET CXX_MODULES 
+FILES  ${module_src})
+
+target_compile_definitions(${target_name2} PRIVATE BUFFER_ARRAY_SIZE=256)
+
+if(MSVC)
+    target_compile_definitions(${target_name2} PRIVATE MSVC_SPECIAL)
+endif()

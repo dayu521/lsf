@@ -13,15 +13,24 @@
 
 cmake:
 
-当前[cmake3.28](https://cmake.org/cmake/help/v3.28/manual/cmake-cxxmodules.7.html) 提供了module支持,它需要gcc14,但我并未编译通过.
+gcc13
 
-且使用clang也不能编译成功
+> 当前[cmake3.28](https://cmake.org/cmake/help/v3.28/manual/cmake-cxxmodules.7.html) 提供了module支持,它需要gcc14,但我并未编译通过.
 
+clang16
+
+```bash
+    cd <project-path>
+    mkdir build
+    cd build 
+    CXX=clang++ CC=clang cmake -GNinja ..
+    cmake --build . -v
+```
 ---
 
 xmake:
 
-使用clang16进行编译
+clang16
 
 ```bash
     cd <project-path>
@@ -37,8 +46,6 @@ xmake:
 在你的工程目录下clone当前项目
 
 然后在你的xmake.lua工程文件中引用即可
-
-> 再次,编译release版本出错,~ ~
 
 ```lua
 includes("lsf_module")
