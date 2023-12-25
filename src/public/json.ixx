@@ -1,8 +1,5 @@
 module;
-#include <functional>
 #include <memory>
-#include <stack>
-#include <tuple>
 #include <string>
 #include <optional>
 
@@ -14,84 +11,67 @@ export import :struct_help;
 export import :json_src;
 
 import :analyze;
-import :lexer;
-import :jsonparser;
-import :inner_imp;
+import :mbuff;
 import :tp;
 
 // TODO 修改接口,此接口很迷惑
 
 // 流,解析器,解析树,json字符串构建器,struct_to_jsonstr,解析树到struct,解析树到jsonstr
-export namespace lsf
+
+namespace lsf
 {
+    struct impl;
 
-    enum class ErrorType
+    export class Json
     {
-        LexError,
-        ParserError,
-        WeakTypeCheckError,
-        UnknowError
-    };
+    public:
+        template <InputSource T>
+        [[nodiscard]] std::optional<std::shared_ptr<TreeBuilder>> run(std::unique_ptr<T> input);
 
-    // class Json2
-    // {
-    // public:
-    //     ~Json2() = default;
+        template <InputSource T>
+        void set_input(std::unique_ptr<T> input);
 
-    // public:
-    //     virtual bool run();
-    //     virtual std::tuple<ErrorType,std::string> get_error() const;
-    //     virtual std::tuple<ErrorType,std::string> get_error() const;
-    // }
-
-    class Json
-    {
     public:
         Json();
         Json(const Json &) = delete;
         Json(Json &&) = default;
         // https://en.cppreference.com/w/cpp/memory/unique_ptr
         ~Json();
-        /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
-        [[nodiscard]] std::optional<std::shared_ptr<TreeBuilder>> run();
-        /// 回调函数f,仅仅是提醒错误需要处理,没有其他想法
+
+        std::optional<std::shared_ptr<TreeBuilder>> run();
+
         [[nodiscard]] bool weak_type_check(std::shared_ptr<TreeBuilder> builder);
 
         std::string get_errors() const;
 
-        template <InputSource T>
-        void set_input(std::unique_ptr<T> input);
-
-    public:
-        friend void json_to_string(Json &json, SerializeBuilder &sb);
-
-        template <typename S>
-        friend void json_to_struct(const Json &json, S &s);
-
     private:
-        std::shared_ptr<FilterBuff> buff_;
-        std::shared_ptr<Lexer> lexer_;
-        std::shared_ptr<FunnyTokenGen> wrap_lexer_;
-        std::unique_ptr<JsonParser> parser_;
-        std::string error_msg_;
+        std::unique_ptr<impl> impl_;
     };
+
+    void set_buff_base(std::unique_ptr<impl> &j, std::unique_ptr<BuffBase> b);
 
     template <InputSource T>
     void Json::set_input(std::unique_ptr<T> input)
     {
-        // 输入抽象
-        buff_->set_buff_base(std::make_unique<MBuff<T>>( std::move(input)));
+        set_buff_base(this->impl_, std::make_unique<MBuff<T>>(std::move(input)));
     }
 
-    void json_to_string(std::shared_ptr<TreeBuilder> builder, SerializeBuilder &sb);
+    template <InputSource T>
+    std::optional<std::shared_ptr<TreeBuilder>> Json::run(std::unique_ptr<T> input)
+    {
+        set_input(std::move(input));
+        return run();
+    }
 
-    template <typename S>
+    export void json_to_string(std::shared_ptr<TreeBuilder> builder, SerializeBuilder &sb);
+
+    export template <typename S>
     void struct_to_jsonstr(const S &obj, SerializeBuilder &builder)
     {
         serialize(obj, builder);
     }
 
-    template <typename S>
+    export template <typename S>
     void json_to_struct(std::shared_ptr<TreeBuilder> builder, S &s)
     {
         deserialize(s, std::get<0>(builder->get_ast()));

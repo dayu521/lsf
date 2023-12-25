@@ -12,7 +12,6 @@ export module lsf:analyze;
 
 import :constant;
 
-// import :inner_imp;
 import :parser_tree;
 import :tree_builder;
 
