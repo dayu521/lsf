@@ -7,6 +7,7 @@ module;
 // #include <string_view>
 #include <stdexcept>
 #include <clocale>
+#include <iostream>
 
 module lsf:json_src.imp;
 import :json_src;
@@ -92,6 +93,8 @@ namespace lsf
 {
     std::string to_cstring(const std::wstring &s, std::string::value_type buff[], std::size_t len)
     {
+        auto lsd=std::locale("").name().c_str();
+        std::cout<<lsd<<std::endl;
         auto &cc = buff;
         std::string r{};
         auto cstr = s.c_str();

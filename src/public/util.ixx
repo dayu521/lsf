@@ -54,7 +54,7 @@ namespace lsf
     template <typename T>
     void deserialize(T &obj, const Visitable *t)
     {
-        auto temp = t->left_child_;
+        auto temp = t->left_child_->get_this();
         if (temp == t)
         {
             throw DeserializeError("json 过早结束");
@@ -95,27 +95,27 @@ namespace lsf
             {
                 vs[n] = temp;
                 n++;
-                temp = temp->right_bro_;
+                temp = temp->right_bro_->get_this();
             } while (temp != t->left_child_);
             n = 0;
-            std::apply([&](auto &&...args)
-                       {
-            auto lam=[&](auto && arg,auto n)->bool{
-                for(std::size_t i=n;i<member_size;i++){
-                    if(arg.name==vs[i]->key_){
-                        if(n!=i)
-                            std::swap(vs[n],vs[i]);
-                        return true;
+            std::apply([&](auto &&...args){
+                auto lam=[&](auto && arg,auto n)->bool{
+                    for(std::size_t i=n;i<member_size;i++){
+                        if(arg.name==to_cstring(vs[i]->get_ref_str_(vs[i]->key_))){
+                            if(n!=i)
+                                std::swap(vs[n],vs[i]);
+                            return true;
+                        }
                     }
-                }
-                throw DeserializeError(std::string("找不到key:")+arg.name);
-            };
-            //(lam(args,n++)&&...)好像是等价的!
-            //msvc不支持!
-//            return (...&&lam(args,n++));
-            //因为&&是短路求值,所以折叠后的表达式的括号不影响求值顺序?
-            return (lam(args,n++)&&...); },
-                       member_info);
+                    throw DeserializeError(std::string("找不到key:")+arg.name);
+                };
+                //(lam(args,n++)&&...)好像是等价的!
+                //msvc不支持!
+            //    return (...&&lam(args,n++));
+                //因为&&是短路求值,所以折叠后的表达式的括号不影响求值顺序?
+                return (lam(args,n++)&&...); 
+            },
+            member_info);
             n = 0;
             std::apply([&](auto &&...args)
                        { (deserialize(obj.*(args.member), vs[n++]), ...); },
@@ -128,7 +128,7 @@ namespace lsf
     template <typename T>
     void deserialize(std::vector<T> &v, const Visitable *t)
     {
-        auto temp = t->left_child_;
+        auto temp = t->left_child_->get_this();
         if (temp == t)
         {
             throw DeserializeError("序列化std::vector: json过早结束");
@@ -147,7 +147,7 @@ namespace lsf
         {
             deserialize(m, temp);
             v[i] = m;
-            temp = temp->right_bro_;
+            temp = temp->right_bro_->get_this();
         }
     }
 
