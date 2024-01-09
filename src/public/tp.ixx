@@ -1,6 +1,6 @@
 module;
-#include<cstddef>
-#include<concepts>
+#include <cstddef>
+#include <concepts>
 
 export module lsf:tp;
 
@@ -10,9 +10,12 @@ namespace lsf
     {
 
         template <typename T>
-        concept before_read = requires(T input) {
+        concept around_read = requires(T input) {
             {
                 input.before_read()
+            } -> std::same_as<void>;
+            {
+                input.after_read()
             } -> std::same_as<void>;
         };
 
@@ -32,7 +35,7 @@ namespace lsf
     } // namespace is_concept
 
     template <typename T>
-    concept InputSource = is_concept::before_read<T>&&
-        is_concept::read<T>;
+    concept InputSource = is_concept::around_read<T> &&
+                          is_concept::read<T>;
 
 } // namespace lsf

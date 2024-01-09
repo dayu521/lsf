@@ -22,6 +22,7 @@ export namespace lsf
     public:
         void before_read();
         long read(wchar_t *buff, std::size_t buff_size);
+        void after_read();
 
     public:
         StrSource(std::string str);
@@ -37,6 +38,7 @@ export namespace lsf
     public:
         void before_read();
         long read(wchar_t *buff, std::size_t buff_size);
+        void after_read();
 
     public:
         FileSource(const std::string &file_name);

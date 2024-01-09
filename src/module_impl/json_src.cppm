@@ -70,6 +70,10 @@ namespace lsf
         return size;
     }
 
+    void StrSource::after_read()
+    {
+    }
+
     FileSource::FileSource(const std::string &file_name) : f_(file_name)
     {
         f_.imbue(std::locale(""));
@@ -86,6 +90,9 @@ namespace lsf
         if (f_.bad())
             throw std::runtime_error("read file failed!");
         return f_.gcount();
+    }
+    void FileSource::after_read()
+    {
     }
 } // namespace lsf
 

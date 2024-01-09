@@ -89,6 +89,7 @@ namespace lsf
 
         gen_->next_();
         auto ok=json();
+        gen_->shutdown();
         builder_.reset();
         return ok;
     }

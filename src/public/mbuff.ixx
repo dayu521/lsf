@@ -257,8 +257,10 @@ namespace lsf
         if (size < 0)
             throw std::runtime_error("read file failed!");
         auto c = size;
-        if (c < length)
+        if (c < length){
             pb[c] = Eof_w;
+            input_stream_->after_read();
+        }
     }
 
 }
