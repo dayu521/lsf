@@ -1,19 +1,26 @@
 ### json 解析器
 
-解析json文件,反序列化到c++结构;以及从c++结构序列化到json.用到了c++20标准([module](https://en.cppreference.com/w/cpp/language/modules)).
+c++结构体与json字符串互相转换.用到了c++20标准([module](https://en.cppreference.com/w/cpp/language/modules)).
 
-感谢[json_struct](https://github.com/jorgen/json_struct)与[cista](https://github.com/felixguendling/cista)提供的序列化实践.
-感谢[dcotest](https://github.com/onqtam/doctest).
+## special thanks
 
-### 编译(c++20以上)
+- [json_struct](https://github.com/jorgen/json_struct)
+
+- [cista](https://github.com/felixguendling/cista).
+
+- [dcotest](https://github.com/onqtam/doctest)
+
+### 编译
+
+至少c++20标准
 
 ---
 
 cmake:
 
-gcc13
+gcc13暂不支持
 
-> 当前[cmake3.28](https://cmake.org/cmake/help/v3.28/manual/cmake-cxxmodules.7.html) 提供了module支持,它需要gcc14,但我并未编译通过.
+> [cmake3.28](https://cmake.org/cmake/help/v3.28/manual/cmake-cxxmodules.7.html) 提供了module支持,它需要gcc14,但我并未编译通过.
 
 clang16
 
@@ -28,6 +35,8 @@ clang16
 
 xmake:
 
+同样gcc13无法编译成功
+
 clang16
 
 ```bash
@@ -37,7 +46,7 @@ clang16
     xmake -rvDw
 ```
 ### 使用(c++20)
-#### 1.xmake
+#### xmake
 
 如果你的项目是通过xmake进行构建的
 
@@ -47,10 +56,13 @@ clang16
 
 ```lua
 includes("lsf")
-target("your project name")
+target("<some target>")
     add_deps("lsf")
-    add_includedirs("lsf/src/public")
 ```
+
+#### cmake
+
+cmake3.28,目前没有方式
 
 #### 例子代码 ####
 
@@ -170,17 +182,24 @@ template<typename T>
 void lsf::write_value(const T & v,SerializeBuilder & builder);
 ```
 
-#### 问题 ####
+#### 说明 ####
 
-- 不处理字符编码问题，因为实在搞不定(因为采用了宽字符,并且默认与当前系统字符编码一致,但愿一般不会出问题- -)
-- 不支持继承
+- 从普通字符串转化为宽字符串受locale影响(默认与当前系统字符编码一致)
+
 - 保留空白.标准json不接受注释,但也是保留c和c++风格的注释(留下了支持的接口)
-- 详细文档都会开放,其实也没什么,大家都能找到
 
-    - 标准来自rfc8259和https://www.json.org/json-zh.html 网站
+- 标准来自rfc8259和https://www.json.org/json-zh.html 网站
 
-    - 处理各个词法单元的自动机，词法分析器是手写的
-    
-    - ll(1)语法分析器的各个产生式
+- 处理各个词法单元的自动机，词法分析器是手写的
 
-ps: 到目前为止,感觉自己越写越觉得垃圾
+- ll(1)语法分析器的各个产生式
+
+#### TODO
+
+- [ ] 简化的定义struct的宏
+
+- [ ] 记录词法分析过程中token在原始输入流的位置
+
+- [ ] 合并TreeBuilder和SerializeBuilder接口
+
+- [ ] json中的null在c++的struct中不能很好地对应.c++每个实体都有值.null映射指针还算合理
