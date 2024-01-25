@@ -5,10 +5,9 @@ set_languages("c++20")
 
 target("lsf")
     set_kind("static")
-    add_files("src/public/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm")
+    add_files("src/public/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm",{ install = true })
     add_includedirs("src/public",{public = true})
     set_policy("build.c++.modules", true)
-    add_defines("BUFFER_ARRAY_SIZE=256")
     add_ldflags("-static")
 
     if is_os("windows") then

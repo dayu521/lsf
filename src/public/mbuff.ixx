@@ -7,6 +7,10 @@ module;
 #include <utility>
 #include <stdexcept>
 
+#ifndef BUFFER_ARRAY_SIZE
+#define BUFFER_ARRAY_SIZE 1024
+#endif
+
 export module lsf:mbuff;
 
 import :tp;
