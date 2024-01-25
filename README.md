@@ -52,7 +52,7 @@ clang16
 
 在你的工程目录下clone当前项目
 
-然后在你的xmake.lua工程文件中引用即可
+然后在你的xmake.lua工程文件中引用.当前clang需要使用debug编译
 
 ```lua
 includes("lsf")

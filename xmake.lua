@@ -1,11 +1,13 @@
 add_rules("mode.debug", "mode.release")
 
+
 set_languages("c++20")
 
 
 target("lsf")
     set_kind("static")
-    add_files("src/public/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm",{ install = true })
+    add_files("src/public2/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm",{ install = true })
+    add_files("src/public/*.ixx",{ install = true })
     add_includedirs("src/public",{public = true})
     set_policy("build.c++.modules", true)
     add_ldflags("-static")
