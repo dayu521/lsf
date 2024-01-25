@@ -52,6 +52,32 @@ namespace lsf
     void deserialize(T &obj, const Visitable *t);
 
     template <typename T>
+    void deserialize(std::vector<T> &v, const Visitable *t)
+    {
+        auto temp = t->left_child_->get_this();
+        if (temp == t)
+        {
+            throw DeserializeError("序列化std::vector: json过早结束");
+        }
+        if (t->ele_type_ == NodeC::Null)
+        {
+            v = {};
+            return;
+        }
+        if (t->ele_type_ != NodeC::Arr)
+            throw DeserializeError("期待json数组");
+        auto at = static_cast<const Jnode<NodeC::Arr> *>(t);
+        T m{};
+        v.resize(at->n_);
+        for (std::size_t i = 0; i < at->n_; i++)
+        {
+            deserialize(m, temp);
+            v[i] = m;
+            temp = temp->right_bro_->get_this();
+        }
+    }
+
+    template <typename T>
     void deserialize(T &obj, const Visitable *t)
     {
         auto temp = t->left_child_->get_this();
@@ -98,7 +124,8 @@ namespace lsf
                 temp = temp->right_bro_->get_this();
             } while (temp != t->left_child_);
             n = 0;
-            std::apply([&](auto &&...args){
+            std::apply([&](auto &&...args)
+                       {
                 auto lam=[&](auto && arg,auto n)->bool{
                     for(std::size_t i=n;i<member_size;i++){
                         if(arg.name==to_cstring(vs[i]->get_ref_str_(vs[i]->key_))){
@@ -113,9 +140,8 @@ namespace lsf
                 //msvc不支持!
             //    return (...&&lam(args,n++));
                 //因为&&是短路求值,所以折叠后的表达式的括号不影响求值顺序?
-                return (lam(args,n++)&&...); 
-            },
-            member_info);
+                return (lam(args,n++)&&...); },
+                       member_info);
             n = 0;
             std::apply([&](auto &&...args)
                        { (deserialize(obj.*(args.member), vs[n++]), ...); },
@@ -123,32 +149,6 @@ namespace lsf
         }
         else
             Deserialize(obj, t);
-    }
-
-    template <typename T>
-    void deserialize(std::vector<T> &v, const Visitable *t)
-    {
-        auto temp = t->left_child_->get_this();
-        if (temp == t)
-        {
-            throw DeserializeError("序列化std::vector: json过早结束");
-        }
-        if (t->ele_type_ == NodeC::Null)
-        {
-            v = {};
-            return;
-        }
-        if (t->ele_type_ != NodeC::Arr)
-            throw DeserializeError("期待json数组");
-        auto at = static_cast<const Jnode<NodeC::Arr> *>(t);
-        T m{};
-        v.resize(at->n_);
-        for (std::size_t i = 0; i < at->n_; i++)
-        {
-            deserialize(m, temp);
-            v[i] = m;
-            temp = temp->right_bro_->get_this();
-        }
     }
 
     template <>
