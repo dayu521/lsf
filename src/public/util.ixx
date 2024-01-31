@@ -183,7 +183,6 @@ namespace lsf
             {
                 throw DeserializeError("期待json对象");
             }
-            auto ot = static_cast<const Jnode<NodeC::Obj> *>(t);
 
             std::vector<Visitable *> vss;
             do

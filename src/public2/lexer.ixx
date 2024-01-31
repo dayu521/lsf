@@ -488,7 +488,6 @@ namespace lsf
     {
         assert(rc == L'\\');
         auto c = rc;
-        wchar_t code_point = 0;
         c = input_->next_char();
         switch (c)
         {

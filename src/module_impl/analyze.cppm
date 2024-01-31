@@ -239,7 +239,6 @@ namespace lsf
         }
     }
 
-    ///*************TypeChecker*************
     bool WeakTypeChecker::visit(Jnode<NodeC::Obj> &obj)
     {
         current_type = NodeC::Obj;

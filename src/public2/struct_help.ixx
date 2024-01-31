@@ -4,8 +4,8 @@ module;
 
 export module lsf:struct_help;
 
-// export using lsf::wrapper::MI,lsf::wrapper::makeMemberInfo;
-export using namespace lsf::wrapper;
+export using lsf::wrapper::MI,lsf::wrapper::makeMemberInfo;
+// export using namespace lsf::wrapper;
 
 //未使用
 namespace lsf::detail
