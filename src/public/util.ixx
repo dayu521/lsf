@@ -8,6 +8,7 @@ export module lsf:util;
 
 import :analyze;
 import :json_src;
+import :struct_help;
 
 namespace lsf
 {
@@ -184,7 +185,6 @@ namespace lsf
             }
             auto ot = static_cast<const Jnode<NodeC::Obj> *>(t);
 
-            Visitable *vs[member_size] = {};
             std::vector<Visitable *> vss;
             do
             {

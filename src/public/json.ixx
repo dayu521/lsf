@@ -6,8 +6,6 @@ module;
 export module lsf;
 
 export import :util;
-export import :struct_help;
-
 export import :json_src;
 
 import :analyze;

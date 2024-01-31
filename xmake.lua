@@ -4,6 +4,7 @@ set_xmakever("2.8.6")
 add_rules("mode.debug", "mode.release")
 
 set_languages("c++20")
+set_warnings("all")
 
 add_requires("doctest >= 2.4.11")
 
