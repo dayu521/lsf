@@ -68,10 +68,12 @@ cmake3.28,目前没有方式
 
 ```cpp
 //包含合适的头文件
-#include "json.h"
+#include "json.h"//当前编译器模块支持不成熟,需要放到第一行
+
 #include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
 
 //首先创建自己的结构体
 struct Pet
@@ -102,22 +104,20 @@ struct People2
 };
 
 int t()
-{
-#if __cpp_modules
-    
+{    
     lsf::Json j;
     lsf::SerializeBuilder bu;
 
-    // 从文件获取json字符串
-    auto res = j.run(std::make_unique<lsf::FileSource>(argv[1]));
-    if (!res)
-    {
-        std::cout << j.get_errors() << std::endl;
-        return -1;
-    }
-    //  把解析好的json表示再输出为格式化的json字符串
-    lsf::json_to_string(*res, bu);
-    std::cout << bu.get_jsonstring() << std::endl;
+    // // 从文件获取json字符串
+    // auto res = j.run(std::make_unique<lsf::FileSource>(argv[1]));
+    // if (!res)
+    // {
+    //     std::cout << j.get_errors() << std::endl;
+    //     return -1;
+    // }
+    // //  把解析好的json表示再输出为格式化的json字符串
+    // lsf::json_to_string(*res, bu);
+    // std::cout << bu.get_jsonstring() << std::endl;
 
     //  直接获取json字符串
     auto res2 = j.run(std::make_unique<lsf::StrSource>(R"(
@@ -141,15 +141,14 @@ int t()
     //  这里,会发现 json中的null不能被很好地表示,
     People2 peo;
     lsf::json_to_struct(*res2,peo);
+    // 不需要所有成员都有对应的json属性
+    // lsf::json_to_struct_ignore_absence(*res2,peo);
 
     //  把struct转换成json字符串
     People lf = {18, true, {{"dog", 2}, {"duck", 1}, {"cat", 3}}};
     bu.clear();
     lsf::struct_to_jsonstr(peo, bu);
     std::cout << bu.get_jsonstring() << std::endl;
-#else
-   return 0;
-#endif
 }
 
 int main()

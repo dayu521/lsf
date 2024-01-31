@@ -1,9 +1,11 @@
-add_rules("mode.debug", "mode.release")
+set_project("hcpp")
+set_xmakever("2.8.6")
 
+add_rules("mode.debug", "mode.release")
 
 set_languages("c++20")
 
-add_requires("doctest")
+add_requires("doctest >= 2.4.11")
 
 if is_os("linux") then
     set_allowedmodes("debug")
@@ -13,7 +15,7 @@ end
 
 target("lsf")
     set_kind("static")
-    add_files("src/public2/*.ixx","src/module_impl/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm",{ install = true })
+    add_files("src/public2/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm",{ install = true })
     add_files("src/public/*.ixx",{ install = true })
     add_includedirs("src/public",{public = true})
     set_policy("build.c++.modules", true)
