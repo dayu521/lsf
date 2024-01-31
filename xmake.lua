@@ -18,7 +18,7 @@ target("lsf")
     set_kind("static")
     add_files("src/public2/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm",{ install = true })
     add_files("src/public/*.ixx",{ install = true })
-    add_includedirs("src/public",{public = true})
+    add_includedirs("src",{public = true})
     set_policy("build.c++.modules", true)
     add_ldflags("-static")
 
