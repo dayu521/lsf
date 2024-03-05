@@ -1,0 +1,52 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: windows
+
+on: workflow_dispatch
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: 2.8.6
+          actions-cache-folder: '.xmake-cache'
+          actions-cache-key: '${{ runner.os }}.xmake-cache'
+
+      # Force xmake to a specific folder (for cache)
+      - name: Set xmake package cache path
+        run: echo "XMAKE_GLOBALDIR=$(pwd)/xmake-cache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Update xmake repository
+        run: xmake repo --update
+
+      - name: Cache xmake packages
+        id: cache-xmake
+        uses: actions/cache@v4.0.0
+        with:
+            # A list of files, directories, and wildcard patterns to cache and restore
+            path: xmake-cache
+            # An explicit key for restoring and saving the cache
+            key: hcpp_xmake_package-${{ runner.os }}
+
+      - name: Config
+        if: steps.cache-xmake.outputs.cache-hit != 'true'
+        run: |
+            xmake f -vD -y 
+
+      - name: Build
+        run: |
+            xmake -vrDw -y
