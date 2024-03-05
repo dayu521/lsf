@@ -6,13 +6,21 @@ add_rules("mode.debug", "mode.release")
 set_languages("c++20")
 set_warnings("all")
 
-add_requires("doctest >= 2.4.11")
+option("enable_test")
+option_end()
 
-if is_os("linux") then
+if has_config("enable_test") then
+    add_requires("doctest >= 2.4.11")
+end
+
+if is_os("windows") then
+    set_encodings("utf-8")
+    add_defines("MSVC_SPECIAL")
+elseif is_os("linux") then 
     set_allowedmodes("debug")
     set_defaultmode("debug")
     set_toolchains("clang")
-end 
+end
 
 target("lsf")
     set_kind("static")
@@ -21,11 +29,6 @@ target("lsf")
     add_includedirs("src",{public = true})
     set_policy("build.c++.modules", true)
     add_ldflags("-static")
-
-    if is_os("windows") then
-        add_defines("MSVC_SPECIAL")
-        add_cxxflags("/source-charset:utf-8")
-    end
 
 target("tt")
     set_default(false )
