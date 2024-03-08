@@ -24,7 +24,8 @@ end
 
 target("lsf")
     set_kind("static")
-    add_files("src/public2/*.ixx","src/module_impl/*.cpp","src/module_impl/*.cppm",{ public = true })
+    add_files("src/module_impl/*.cpp")
+    add_files("src/public2/*.ixx",{ public = true })
     add_files("src/public/*.ixx",{ public = true })
     add_includedirs("src",{public = true})
     set_policy("build.c++.modules", true)

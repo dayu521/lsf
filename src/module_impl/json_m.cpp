@@ -8,7 +8,6 @@ module;
 #include <memory>
 #include <stack>
 
-// export module lsf:x;
 module lsf;
 import :analyze;
 import :inner_imp;

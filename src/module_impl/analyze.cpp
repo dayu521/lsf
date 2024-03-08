@@ -11,7 +11,7 @@ module;
 module lsf:analyze.imp;
 
 import :analyze;
-/*
+
 namespace lsf
 {
     // TreeBuilder::~TreeBuilder()
@@ -362,4 +362,3 @@ namespace lsf
     }
 
 } // namespace lsf
-*/

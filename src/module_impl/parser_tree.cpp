@@ -1,6 +1,7 @@
 module;
 #include <string>
-// #include <concepts>
+#include <cassert>
+#include <stdexcept>
 
 module lsf:parser_tree.imp;
 
@@ -9,7 +10,6 @@ import :tree_allocator;
 
 namespace lsf
 {
-
     void *new_bridge(std::size_t count)
     {
         if (count > Inner::MyAllocator::MaxObjSize)
@@ -29,6 +29,5 @@ namespace lsf
             Inner::get_singleton<Inner::MyAllocator>().deallocate(ptr, sz);
         }
     }
-
 
 } // namespace lsf
