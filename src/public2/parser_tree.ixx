@@ -4,6 +4,8 @@ module;
 
 export module lsf:parser_tree;
 
+import :tree_allocator;
+
 namespace lsf
 {
     enum class NodeC : char
@@ -36,19 +38,16 @@ namespace lsf
         }
     };
 
-    void *new_bridge(std::size_t count);
-    void delete_bridge(void *ptr, std::size_t sz);
-
     template <typename T>
     void TreeNode<T>::operator delete(void *ptr, std::size_t sz)
     {
-        delete_bridge(ptr,sz);
+        Inner::delete_bridge(ptr,sz);
     }
 
     template <typename T>
     void *TreeNode<T>::operator new(std::size_t count)
     {
-        return new_bridge(count);
+        return Inner::new_bridge(count);
     }
 
 } // namespace lsf

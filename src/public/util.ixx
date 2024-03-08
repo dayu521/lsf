@@ -173,7 +173,6 @@ namespace lsf
         else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>)
         {
             auto member_info = TT::template JsonStructBase<TT>::js_static_meta_data_info();
-            constexpr auto member_size = std::tuple_size<decltype(member_info)>::value;
             if (t->ele_type_ == NodeC::Null)
             {
                 obj = {};

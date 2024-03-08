@@ -17,8 +17,8 @@ if is_os("windows") then
     set_encodings("utf-8")
     add_defines("MSVC_SPECIAL")
 elseif is_os("linux") then 
-    set_allowedmodes("debug")
-    set_defaultmode("debug")
+    -- set_allowedmodes("debug")
+    -- set_defaultmode("debug")
     set_toolchains("clang")
 end
 

@@ -14,6 +14,9 @@ export module lsf:tree_allocator;
 namespace lsf::Inner
 {
 
+    void *new_bridge(std::size_t count);
+    void delete_bridge(void *ptr, std::size_t sz);
+
     /// Loki分配器
 
     class Chunk final
