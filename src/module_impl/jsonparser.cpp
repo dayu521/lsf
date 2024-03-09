@@ -4,6 +4,7 @@ module;
 #include <stack>
 #include <vector>
 #include <memory>
+#include <string>
 
 module lsf:jsonparser.imp;
 
