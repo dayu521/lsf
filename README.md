@@ -22,7 +22,7 @@ gcc13暂不支持
 
 > [cmake3.28](https://cmake.org/cmake/help/v3.28/manual/cmake-cxxmodules.7.html) 提供了module支持,它需要gcc14,但我并未编译通过.
 
-clang16
+clang17
 
 ```bash
     cd <project-path>
@@ -37,12 +37,11 @@ xmake:
 
 同样gcc13无法编译成功
 
-clang16
+clang17
 
 ```bash
     cd <project-path>
     xmake c -va 
-    xmake f -m debug --toolchain=clang
     xmake -rvDw
 ```
 ### 使用(c++20)
@@ -50,25 +49,38 @@ clang16
 
 如果你的项目是通过xmake进行构建的
 
-在你的工程目录下clone当前项目
-
-然后在你的xmake.lua工程文件中引用.当前clang需要使用debug编译
+在你的xmake.lua工程文件中添加以下内容(注意,xmake需要2.8.8以上)
 
 ```lua
-includes("lsf")
-target("<some target>")
-    add_deps("lsf")
+package("lsf")
+    set_description("json.")
+    set_urls(https://github.com/dayu521/lsf.git)
+    -- set_sourcedir(path.join(os.scriptdir(), "lib/lsf"))
+    
+    on_install(function (package)
+        os.cp("src/lsf", package:installdir("include"))
+        -- os.cp("libjpeg.lib", package:installdir("lib"))
+        import("package.tools.xmake").install(package,{})
+    end)
+package_end()
+add_requires("lsf")
+
+target(...)
+    #其他配置
+    #....
+    #添加包依赖
+    add_packages("lsf")
 ```
 
 #### cmake
 
-cmake3.28,目前没有方式
+TODO
 
 #### 例子代码 ####
 
 ```cpp
 //包含合适的头文件
-#include "json.h"//当前编译器模块支持不成熟,需要放到第一行
+#include <lsf/xx.h>//当前编译器模块支持不成熟,需要放到第一行
 
 #include <string>
 #include <vector>
