@@ -12,44 +12,29 @@ c++结构体与json字符串互相转换.用到了c++20标准([module](https://e
 
 ### 编译
 
-至少c++20标准
+c++20
+
+- linux,clang17
+
+- windows,msvc latest
+
+  > xmake 2.8.6可以编译成功
 
 ---
 
-cmake:
-
-gcc13暂不支持
-
-> [cmake3.28](https://cmake.org/cmake/help/v3.28/manual/cmake-cxxmodules.7.html) 提供了module支持,它需要gcc14,但我并未编译通过.
-
-clang17
-
-```bash
-    cd <project-path>
-    mkdir build
-    cd build 
-    CXX=clang++ CC=clang cmake -GNinja ..
-    cmake --build . -v
-```
----
-
-xmake:
-
-同样gcc13无法编译成功
-
-clang17
+使用xmake最新版:
 
 ```bash
     cd <project-path>
     xmake c -va 
-    xmake -rvDw
+    xmake -vDwr
 ```
-### 使用(c++20)
+### 使用
 #### xmake
 
 如果你的项目是通过xmake进行构建的
 
-在你的xmake.lua工程文件中添加以下内容(注意,xmake需要2.8.8以上)
+在你的xmake.lua工程文件中添加以下内容
 
 ```lua
 package("lsf")
