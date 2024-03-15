@@ -85,6 +85,7 @@ namespace lsf
     {
         using Rtype = R;
         virtual R visit(T &a) = 0;
+        virtual ~BaseVisitor() = default;
     };
 
     template <typename R, typename T, typename... Others>
@@ -92,6 +93,7 @@ namespace lsf
     {
         using BaseVisitor<R, Others...>::visit;
         virtual R visit(T &a) = 0;
+        virtual ~BaseVisitor() = default;
     };
 
     template <typename T>

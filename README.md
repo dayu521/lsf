@@ -18,8 +18,6 @@ c++20
 
 - windows,msvc latest
 
-  > xmake 2.8.6可以编译成功
-
 ---
 
 使用xmake最新版:

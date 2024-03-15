@@ -89,7 +89,8 @@ namespace lsf
         virtual bool visit(Jnode<NodeC::Null> &null) override;
 
     public:
-        virtual ~WeakTypeChecker() = default;
+        /// @brief 注意,千万不要在此处定义
+        virtual ~WeakTypeChecker();
         [[nodiscard]] bool check_type(Tree root);
         bool do_check(std::size_t first, std::size_t another);
         std::pair<std::string, std::wstring> get_error();
@@ -203,10 +204,11 @@ namespace lsf
         virtual void finish_iteration() override;
 
     public:
-        /// Fixme 这里无法自定义析构函数 2023-12-17 当前使用clang 16.0.6
-        // ~TreeBuilder() { dealloc_node(); }
-        ~TreeBuilder() = default;
-        // ~TreeBuilder(){}
+        //xxx 重要说明
+        /// 根据https://releases.llvm.org/17.0.1/tools/clang/docs/ReleaseNotes.html和https://github.com/llvm/llvm-project/issues/61940
+        /// 这个issue描述了,虚函数在不同的模块单元只生成一份(这和头文件包含是不同的,头文件和包含它的文件属于同一个翻译单元)
+        /// 因为我们在模块分区实现单元定义所有虚函数,当前模块则不应该定义函数
+        virtual ~TreeBuilder();
     public:
         // TODO 当此函数被调用后,对象就由接收方负责
         Tree get_ast();

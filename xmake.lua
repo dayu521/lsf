@@ -1,5 +1,5 @@
 set_project("hcpp")
-set_xmakever("2.8.6")
+set_xmakever("2.8.8")
 
 add_rules("mode.debug", "mode.release")
 
@@ -24,7 +24,7 @@ end
 
 target("lsf")
     set_kind("static")
-    add_files("src/module_impl/*.cpp")
+    add_files("src/module_impl/*.cpp","src/module_impl/*.cppm")
     add_files("src/public2/*.ixx",{ public = true })
     add_files("src/public/*.ixx",{ public = true })
     add_includedirs("src",{public = true})

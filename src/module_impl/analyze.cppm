@@ -14,9 +14,9 @@ import :analyze;
 
 namespace lsf
 {
-    // TreeBuilder::~TreeBuilder()
+    TreeBuilder::~TreeBuilder() = default;
     // {
-    //     dealloc_node();
+    //     // dealloc_node();
     // }
 
     Tree TreeBuilder::get_ast()
@@ -360,5 +360,7 @@ namespace lsf
     {
         return {error_, src_};
     }
+
+    WeakTypeChecker::~WeakTypeChecker() = default;
 
 } // namespace lsf
