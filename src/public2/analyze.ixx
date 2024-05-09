@@ -129,7 +129,6 @@ namespace lsf
         // 用于访问
         virtual Visitor::Rtype accept(Visitor &v) = 0;
         virtual WeakTypeChecker::Rtype accept(WeakTypeChecker &v) = 0;
-        virtual ~VisitableTree() = default;
 
         /// 作为对象成员的key
         // 因为基本上所有

@@ -29,6 +29,8 @@ namespace lsf
 
         NodeC ele_type_{NodeC::Error}; /// json类型标识
 
+        virtual ~TreeNode()=default;
+
         void operator delete(void *ptr, std::size_t sz);
         void *operator new(std::size_t count);
 
