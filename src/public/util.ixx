@@ -38,6 +38,34 @@ namespace lsf
         std::stack<int> indent{};
     };
 
+    enum Direct
+    {
+        DFS,
+        BFS
+    };
+
+    // 在树中,沿着不同方向移动.然后返回新的节点
+    template <Direct D>
+    Visitable *move_DFS(Visitable *root);
+
+    template <>
+    Visitable *move_DFS<DFS>(Visitable *root);
+
+    template <>
+    Visitable *move_DFS<BFS>(Visitable *root);
+
+    // TODO 新的名字
+    template <typename T>
+    void parse_cpp_type(T &s /*待定接口*/);
+
+    // TODO 新的名字
+    export template <typename T>
+    void write_cpp_type(const T &v, SerializeBuilder &builder);
+
+        // TODO 新的名字
+    export template <typename T>
+    void read_cpp_type(T &s, const Visitable *t);
+
     export template <typename T>
     void write_value(const T &v, SerializeBuilder &builder);
 
@@ -153,7 +181,7 @@ namespace lsf
     }
 
     template <typename T>
-    void deserialize(T &obj, const Visitable *t,bool ignore_absence_tag)
+    void deserialize(T &obj, const Visitable *t, bool ignore_absence_tag)
     {
         auto temp = t->left_child_->get_this();
         if (temp == t)
@@ -189,10 +217,13 @@ namespace lsf
                 vss.push_back(temp);
                 temp = temp->right_bro_->get_this();
             } while (temp != t->left_child_);
-            auto try_deserialize=[&vss](auto && arg,auto && key){
-                for(auto i :vss){
-                    if(key==to_cstring(i->get_ref_str_(i->key_))){
-                        deserialize(arg,i);
+            auto try_deserialize = [&vss](auto &&arg, auto &&key)
+            {
+                for (auto i : vss)
+                {
+                    if (key == to_cstring(i->get_ref_str_(i->key_)))
+                    {
+                        deserialize(arg, i);
                         return;
                     }
                 }
