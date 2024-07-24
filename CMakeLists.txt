@@ -44,15 +44,15 @@ endif()
 # endif()
 
 file(GLOB module_src  "src/public/*.ixx" "src/public2/*.ixx" )
-file(GLOB module_imp  "src/module_impl/analyze.cpp" "src/module_impl/json_src.cpp" "src/module_impl/jsonparser.cpp" "src/module_impl/tree_allocator.cpp")
+file(GLOB module_imp  "src/module_impl/*.cppm")
 
 set(target_name2 ${PROJECT_NAME})
-add_library(${target_name2} ${module_src} ${module_imp} "src/module_impl/json_i.cpp" "src/module_impl/json_m.cpp")
+add_library(${target_name2} "src/module_impl/json_i.cpp" "src/module_impl/json_m.cpp")
 
 target_include_directories(${target_name2} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-target_sources(${target_name2} PUBLIC  
-FILE_SET CXX_MODULES 
+target_sources(${target_name2} PUBLIC
+FILE_SET CXX_MODULES
 FILES  ${module_src} ${module_imp})
 
 target_compile_definitions(${target_name2} PRIVATE BUFFER_ARRAY_SIZE=256)
