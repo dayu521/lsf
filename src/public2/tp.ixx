@@ -37,5 +37,8 @@ namespace lsf
     template <typename T>
     concept InputSource = is_concept::around_read<T> &&
                           is_concept::read<T>;
+                          
+    template <typename T>
+    concept StructConcept = std::is_class_v<T>;
 
 } // namespace lsf

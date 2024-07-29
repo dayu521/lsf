@@ -3,15 +3,66 @@ module;
 #include <memory>
 #include <functional>
 #include <stack>
+#include <vector>
+#include <type_traits>
 
 export module lsf:util;
 
 import :analyze;
 import :json_src;
 import :struct_help;
+import :tp;
 
 namespace lsf
 {
+    enum CppNestType
+    {
+        None,
+        Struct,
+        STD_VECTOR
+    };
+
+    class FetchCppType : public BaseGuard<void, bool, long, double, std::vector, std::string>,
+                         public BaseNest<void, CppNestType::Struct, CppNestType::STD_VECTOR>
+    {
+    public:
+        virtual void find(bool &b) override;
+        virtual void find(long &l) override;
+        virtual void find(double &d) override;
+        virtual void find(std::vector<std::string> &v) override;
+        virtual void find(std::string &s) override;
+
+    public:
+        virtual void nest_begin(TypeTag<CppNestType::Struct>) override;
+        virtual void nest_end(TypeTag<CppNestType::Struct>) override;
+
+        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual void std_vector_size() = 0;
+    };
+
+    class WriteJsonStr : public FetchCppType
+    {
+    public:
+        virtual void find(bool &b) override;
+        virtual void find(long &l) override;
+        virtual void find(double &d) override;
+        virtual void find(std::vector<std::string> &v) override;
+        virtual void find(std::string &s) override;
+
+    public:
+        virtual void nest_begin(TypeTag<CppNestType::Struct>) override;
+        virtual void nest_end(TypeTag<CppNestType::Struct>) override;
+
+        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
+
+    private:
+        std::string out_;
+        std::vector<int> indent_;
+        Visitable *root_;
+    };
+
     export class SerializeBuilder
     {
     public:
@@ -56,13 +107,63 @@ namespace lsf
 
     // TODO 新的名字
     template <typename T>
-    void parse_cpp_type(T &s /*待定接口*/);
+    void parse_cpp_type(T &s, FetchCppType &fct);
+
+    template <StructConcept T>
+    void parse_cpp_type(T &s, FetchCppType &fct)
+    {
+        fct.nest_begin(TypeTag<CppNestType::Struct>{});
+
+        auto member_info = TT::template JsonStructBase<TT>::js_static_meta_data_info();
+
+        std::apply([&](auto &&...args)
+                   { (parse_cpp_type(obj.*(args.member), fct), ...); },
+                   member_info);
+
+        fct.nest_begin(TypeTag<CppNestType::Struct>{});
+    }
+
+    template <typename T>
+    void parse_cpp_type(std::vector<T> &s, FetchCppType &fct)
+    {
+        fct.nest_begin(TypeTag<CppNestType::STD_VECTOR>{});
+        s.resize(fct.std_vector_size());
+        for (auto &v : s)
+        {
+            parse_cpp_type(v, fct);
+        }
+        fct.nest_end(TypeTag<CppNestType::STD_VECTOR>{});
+    }
+
+    template <>
+    void parse_cpp_type(std::string &s, FetchCppType &fct)
+    {
+        fct.find<std::string>(s);
+    }
+
+    template <>
+    void parse_cpp_type(long &s, FetchCppType &fct)
+    {
+        fct.find<long>(s);
+    }
+
+    template <>
+    void parse_cpp_type(double &s, FetchCppType &fct)
+    {
+        fct.find<double>(s);
+    }
+
+    template <>
+    void parse_cpp_type(bool &s, FetchCppType &fct)
+    {
+        fct.find<bool>(s);
+    }
 
     // TODO 新的名字
     export template <typename T>
     void write_cpp_type(const T &v, SerializeBuilder &builder);
 
-        // TODO 新的名字
+    // TODO 新的名字
     export template <typename T>
     void read_cpp_type(T &s, const Visitable *t);
 

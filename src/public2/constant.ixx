@@ -133,4 +133,45 @@ namespace lsf
             build(TypeTag<U>());
         }
     };
+
+    template <typename... T>
+    struct BaseGuard;
+
+    template <typename R, typename T>
+    struct BaseGuard<R, T>
+    {
+        using Rtype = R;
+        virtual R find(T &a) = 0;
+        virtual ~BaseGuard() = default;
+    };
+
+    template <typename R, typename T, typename... Others>
+    struct BaseGuard<R, T, Others...> : BaseGuard<R, Others...>
+    {
+        using BaseGuard<R, Others...>::find;
+        virtual R find(T &a) = 0;
+        virtual ~BaseGuard() = default;
+    };
+
+    template <typename... T>
+    struct BaseNest;
+
+    template <typename R, typename T>
+    struct BaseNest<R, T>
+    {
+        using Rtype = R;
+        virtual R nest_begin(TypeTag<T>) = 0;
+        virtual R nest_end(TypeTag<T>) = 0;
+        virtual ~BaseNest() = default;
+    };
+
+    template <typename R, typename T, typename... Others>
+    struct BaseNest<R, T, Others...> : BaseNest<R, Others...>
+    {
+        using BaseNest<R, Others...>::nest_begin;
+        using BaseNest<R, Others...>::nest_end;
+        virtual R nest_begin(TypeTag<T>) = 0;
+        virtual R nest_end(TypeTag<T>) = 0;
+        virtual ~BaseNest() = default;
+    };
 } // namespace lsf
