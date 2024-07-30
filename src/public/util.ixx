@@ -15,22 +15,34 @@ import :tp;
 
 namespace lsf
 {
-    enum CppNestType
+    // enum CppNestType
+    // {
+    //     None,
+    //     Struct,
+    //     STD_VECTOR
+    // };
+
+    namespace CppNestType
     {
-        None,
-        Struct,
-        STD_VECTOR
+        struct Struct
+        {
+        };
+
+        struct STD_VECTOR
+        {
+        };
     };
 
-    class FetchCppType : public BaseGuard<void, bool, long, double, std::vector, std::string>,
+    class FetchCppType : public BaseGuard<void, bool, long, double, std::string>,
                          public BaseNest<void, CppNestType::Struct, CppNestType::STD_VECTOR>
     {
     public:
         virtual void find(bool &b) override;
         virtual void find(long &l) override;
         virtual void find(double &d) override;
-        virtual void find(std::vector<std::string> &v) override;
         virtual void find(std::string &s) override;
+
+        virtual void find_key(std::string s);
 
     public:
         virtual void nest_begin(TypeTag<CppNestType::Struct>) override;
@@ -47,7 +59,6 @@ namespace lsf
         virtual void find(bool &b) override;
         virtual void find(long &l) override;
         virtual void find(double &d) override;
-        virtual void find(std::vector<std::string> &v) override;
         virtual void find(std::string &s) override;
 
     public:
@@ -114,10 +125,10 @@ namespace lsf
     {
         fct.nest_begin(TypeTag<CppNestType::Struct>{});
 
-        auto member_info = TT::template JsonStructBase<TT>::js_static_meta_data_info();
+        auto member_info = T::template JsonStructBase<T>::js_static_meta_data_info();
 
         std::apply([&](auto &&...args)
-                   { (parse_cpp_type(obj.*(args.member), fct), ...); },
+                   { ((parse_cpp_type(s.*(args.member), fct), fct.find_key(args.name)), ...); },
                    member_info);
 
         fct.nest_begin(TypeTag<CppNestType::Struct>{});
@@ -138,25 +149,25 @@ namespace lsf
     template <>
     void parse_cpp_type(std::string &s, FetchCppType &fct)
     {
-        fct.find<std::string>(s);
+        fct.find(s);
     }
 
     template <>
     void parse_cpp_type(long &s, FetchCppType &fct)
     {
-        fct.find<long>(s);
+        fct.find(s);
     }
 
     template <>
     void parse_cpp_type(double &s, FetchCppType &fct)
     {
-        fct.find<double>(s);
+        fct.find(s);
     }
 
     template <>
     void parse_cpp_type(bool &s, FetchCppType &fct)
     {
-        fct.find<bool>(s);
+        fct.find(s);
     }
 
     // TODO 新的名字
