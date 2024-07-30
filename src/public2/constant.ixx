@@ -1,6 +1,7 @@
 module;
 #include <stdexcept>
 #include <cassert>
+#include <cstddef>
 
 export module lsf:constant;
 
@@ -160,7 +161,7 @@ namespace lsf
     struct BaseNest<R, T>
     {
         using Rtype = R;
-        virtual R nest_begin(TypeTag<T>) = 0;
+        virtual R nest_begin(TypeTag<T>, std::size_t n) = 0;
         virtual R nest_end(TypeTag<T>) = 0;
         virtual ~BaseNest() = default;
     };
@@ -170,7 +171,7 @@ namespace lsf
     {
         using BaseNest<R, Others...>::nest_begin;
         using BaseNest<R, Others...>::nest_end;
-        virtual R nest_begin(TypeTag<T>) = 0;
+        virtual R nest_begin(TypeTag<T>, std::size_t n) = 0;
         virtual R nest_end(TypeTag<T>) = 0;
         virtual ~BaseNest() = default;
     };

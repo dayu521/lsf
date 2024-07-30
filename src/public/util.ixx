@@ -42,13 +42,14 @@ namespace lsf
         virtual void find(double &d) override;
         virtual void find(std::string &s) override;
 
-        virtual void find_key(std::string s);
+        virtual void find_mem(std::string s);
+        virtual void find_arr_mem();
 
     public:
-        virtual void nest_begin(TypeTag<CppNestType::Struct>) override;
+        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override;
         virtual void nest_end(TypeTag<CppNestType::Struct>) override;
 
-        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
         virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
         virtual void std_vector_size() = 0;
     };
@@ -61,18 +62,116 @@ namespace lsf
         virtual void find(double &d) override;
         virtual void find(std::string &s) override;
 
+        virtual void find_mem(std::string s) override;
+        virtual void find_arr_mem() override;
+
     public:
-        virtual void nest_begin(TypeTag<CppNestType::Struct>) override;
+        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override;
         virtual void nest_end(TypeTag<CppNestType::Struct>) override;
 
-        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
         virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual std::size_t std_vector_size();
 
     private:
         std::string out_;
-        std::vector<int> indent_;
+        std::stack<int> indent_;
         Visitable *root_;
+        std::size_t n_;
     };
+
+    void WriteJsonStr::find(bool &b)
+    {
+        auto bstr = b == true ? "true" : "false";
+        out_ += bstr;
+    }
+
+    void WriteJsonStr::find(long &l)
+    {
+        out_ += std::to_string(l);
+    }
+
+    void WriteJsonStr::find(double &d)
+    {
+        out_ += std::to_string(d);
+    }
+
+    void WriteJsonStr::find(std::string &s)
+    {
+        out_ += '"' + s + '"';
+    }
+
+    void WriteJsonStr::find_mem(std::string s)
+    {
+        out_ += '"' + s + '"';
+        out_ += ": ";
+    }
+
+    void WriteJsonStr::find_arr_mem()
+    {
+    }
+
+    void WriteJsonStr::nest_begin(TypeTag<CppNestType::Struct>, std::size_t n)
+    {
+        n_ = n;
+        out_ += '{';
+        out_ += '\n';
+        indent_.push(indent_.top() + 1);
+        auto i = indent_.top();
+        while (i > 0)
+        {
+            out_ += "    ";
+            i--;
+        }
+    }
+
+    void WriteJsonStr::nest_end(TypeTag<CppNestType::Struct>)
+    {
+        if(n>0){
+            out_.resize(out_.size() - indent_.top() * 4 - 2);
+        }
+        out_ += '\n';
+        auto i = indent_.top();
+        indent_.pop();
+        while (i - 1 > 0)
+        {
+            out_ += "    ";
+            i--;
+        }
+        out_ += '}';
+    }
+
+    void WriteJsonStr::nest_begin(TypeTag<CppNestType::Array>, std::size_t n)
+    {
+        n_ = n;
+        out_ += '[';
+        out_ += '\n';
+        indent_.push(indent_.top() + 1);
+        auto i = indent_.top();
+        while (i > 0)
+        {
+            out_ += "    ";
+            i--;
+        }
+    }
+
+    void WriteJsonStr::nest_end(TypeTag<CppNestType::Array>)
+    {
+        out_ += '\n';
+        auto i = indent_.top();
+        indent_.pop();
+        while (i - 1 > 0)
+        {
+            out_ += "    ";
+            i--;
+        }
+        out_ += ']';
+    }
+
+    std::size_t WriteJsonStr::std_vector_size()
+    {
+        return n_;
+    }
 
     export class SerializeBuilder
     {
@@ -123,24 +222,25 @@ namespace lsf
     template <StructConcept T>
     void parse_cpp_type(T &s, FetchCppType &fct)
     {
-        fct.nest_begin(TypeTag<CppNestType::Struct>{});
-
         auto member_info = T::template JsonStructBase<T>::js_static_meta_data_info();
 
+        fct.nest_begin(TypeTag<CppNestType::Struct>{}, std::tuple_size<decltype(member_info)>::value);
+
         std::apply([&](auto &&...args)
-                   { ((parse_cpp_type(s.*(args.member), fct), fct.find_key(args.name)), ...); },
+                   { ((parse_cpp_type(s.*(args.member), fct), fct.find_mem(args.name)), ...); },
                    member_info);
 
-        fct.nest_begin(TypeTag<CppNestType::Struct>{});
+        fct.nest_end(TypeTag<CppNestType::Struct>{});
     }
 
     template <typename T>
     void parse_cpp_type(std::vector<T> &s, FetchCppType &fct)
     {
-        fct.nest_begin(TypeTag<CppNestType::STD_VECTOR>{});
+        fct.nest_begin(TypeTag<CppNestType::STD_VECTOR>{}, s.size());
         s.resize(fct.std_vector_size());
         for (auto &v : s)
         {
+            fct.find_arr_mem();
             parse_cpp_type(v, fct);
         }
         fct.nest_end(TypeTag<CppNestType::STD_VECTOR>{});

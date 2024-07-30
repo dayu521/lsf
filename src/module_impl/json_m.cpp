@@ -100,7 +100,7 @@ namespace lsf
     }
     void SerializeBuilder::back(std::size_t i)
     {
-        // todo:check overflow
+        //TODO check overflow
         out_.resize(out_.size() - indent.top() * 4 - i);
     }
 } // namespace lsf
