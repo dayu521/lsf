@@ -1,7 +1,9 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
-#include"lsf/xx.h"
+#include <memory>
+
+#include "lsf/xx.h"
 
 import lsf;
 
@@ -37,7 +39,49 @@ TEST_CASE("Test 1")
     People lf = {18, true, {{"dog", 2}, {"duck", 1}, {"cat", 3}}};
     lsf::WriteJsonStr wj;
 
-    lsf::parse_cpp_type(lf,wj);
+    lsf::parse_cpp_type(lf, wj);
+
+    std::cout << wj.get_jsonstring() << std::endl;
+}
+
+TEST_CASE("Test 2")
+{
+    lsf::Json j;
+    auto res2 = j.run(std::make_unique<lsf::StrSource>(R"(
+    {
+        "age": 18,
+        "is_fat": true,
+        "friends": [
+            {
+                "name": "dog",
+                "age": 2
+            },
+            {
+                "name": "duck",
+                "age": 1
+            },
+            {
+                "name": "cat",
+                "age": 3
+            }
+        ]
+    }
+    )"));
+    if (!res2)
+    {
+        std::cout << j.get_errors() << std::endl;
+        CHECK(false);
+        return;
+    }
+    auto root = std::get<0>((*res2)->get_ast());
+    lsf::ReadJsonStr rj(root);
+
+    People lf;
+    lsf::parse_cpp_type(lf, rj);
+
+    lsf::WriteJsonStr wj;
+
+    lsf::parse_cpp_type(lf, wj);
 
     std::cout << wj.get_jsonstring() << std::endl;
 }

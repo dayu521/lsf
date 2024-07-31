@@ -5,6 +5,7 @@ module;
 #include <stack>
 #include <vector>
 #include <type_traits>
+#include <limits>
 
 export module lsf:util;
 
@@ -21,6 +22,11 @@ namespace lsf
     //     Struct,
     //     STD_VECTOR
     // };
+
+    class DeserializeError : public BaseError
+    {
+        using BaseError::BaseError;
+    };
 
     namespace CppNestType
     {
@@ -40,12 +46,89 @@ namespace lsf
         virtual ~FetchCppType();
 
     public:
-        virtual void find_obj_mem(std::string s) = 0;
-        virtual void find_arr_mem() = 0;
+        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override {}
+        virtual void nest_end(TypeTag<CppNestType::Struct>) override {}
+
+        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override {}
+        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override {}
+
+    public:
+        virtual void find_obj_mem(std::string s) {}
+        virtual void find_arr_mem() {}
         virtual std::size_t std_vector_size() = 0;
     };
 
     FetchCppType::~FetchCppType() {}
+
+    export class ReadJsonStr : public FetchCppType
+    {
+    public:
+        ReadJsonStr(Visitable *root) : root_(root) {}
+        virtual ~ReadJsonStr();
+
+    public:
+        virtual void find(bool &b) override;
+        virtual void find(long &l) override;
+        virtual void find(double &d) override;
+        virtual void find(std::string &s) override;
+        virtual std::size_t std_vector_size() override;
+
+    private:
+        Visitable *root_;
+    };
+
+    ReadJsonStr::~ReadJsonStr() = default;
+
+    std::size_t ReadJsonStr::std_vector_size()
+    {
+        if (root_->ele_type_ == NodeC::Arr)
+        {
+            auto arr = static_cast<const Jnode<NodeC::Arr> *>(root_);
+            return arr->n_;
+        }
+        // TODO error
+        return 0;
+    }
+    void ReadJsonStr::find(bool &b)
+    {
+        // if (root_->ele_type_ == NodeC::Keyword)
+        // {
+        //     b = static_cast<const Jnode<NodeC::Keyword> *>(root_)->b_;
+        // }
+        // else
+        //     throw DeserializeError("序列化bool: 期待json bool");
+    }
+    void ReadJsonStr::find(long &l)
+    {
+        // if (root_->ele_type_ == NodeC::Number)
+        // {
+        //     auto num = static_cast<const Jnode<NodeC::Number> *>(root_);
+        //     l = std::stol(num->get_ref_str_(num->data_));
+        // }
+        // else
+        //     throw DeserializeError("序列化int: 期待json Number");
+    }
+    void ReadJsonStr::find(double &d)
+    {
+        // if (root_->ele_type_ == NodeC::Number)
+        // {
+        //     auto dob = static_cast<const Jnode<NodeC::Number> *>(root_);
+        //     d = std::stod(dob->get_ref_str_(dob->data_));
+        // }
+        // else
+        //     throw DeserializeError("序列化double: 期待json Number");
+    }
+    void ReadJsonStr::find(std::string &s)
+    {
+        // if (root_->ele_type_ == NodeC::String)
+        // {
+        //     // 如果有错,语法分析会提前失败.下同
+        //     auto str = static_cast<const Jnode<NodeC::String> *>(root_);
+        //     s = to_cstring(str->get_ref_str_(str->data_));
+        // }
+        // else
+        //     throw DeserializeError("序列化std::string: 期待json String");
+    }
 
     export class WriteJsonStr : public FetchCppType
     {
@@ -75,7 +158,6 @@ namespace lsf
     private:
         std::string out_;
         std::stack<int> indent_;
-        Visitable *root_;
         std::size_t mem_n_ = 0;
         std::size_t mem_index_ = 0;
     };
@@ -234,7 +316,7 @@ namespace lsf
         fct.nest_begin(TypeTag<CppNestType::Struct>{}, std::tuple_size<decltype(member_info)>::value);
 
         std::apply([&](auto &&...args)
-                   { ((fct.find_obj_mem(args.name),parse_cpp_type(s.*(args.member), fct)), ...); },
+                   { ((fct.find_obj_mem(args.name), parse_cpp_type(s.*(args.member), fct)), ...); },
                    member_info);
 
         fct.nest_end(TypeTag<CppNestType::Struct>{});
@@ -270,6 +352,10 @@ namespace lsf
     {
         long s_long = s;
         fct.find(s_long);
+        if (s_long > std::numeric_limits<int>::max())
+        {
+            // TODO: throw exception
+        }
         s = s_long;
     }
 
@@ -298,11 +384,6 @@ namespace lsf
 
     export template <typename T>
     void Deserialize(T &s, const Visitable *t);
-
-    class DeserializeError : public BaseError
-    {
-        using BaseError::BaseError;
-    };
 
     template <typename T>
     void deserialize(T &obj, const Visitable *t);
