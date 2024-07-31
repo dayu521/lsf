@@ -33,28 +33,21 @@ namespace lsf
         };
     };
 
-    class FetchCppType : public BaseGuard<void, bool, long, double, std::string>,
-                         public BaseNest<void, CppNestType::Struct, CppNestType::STD_VECTOR>
+    export class FetchCppType : public BaseGuard<void, bool, long, double, std::string>,
+                                public BaseNest<void, CppNestType::Struct, CppNestType::STD_VECTOR>
     {
     public:
-        virtual void find(bool &b) override;
-        virtual void find(long &l) override;
-        virtual void find(double &d) override;
-        virtual void find(std::string &s) override;
-
-        virtual void find_mem(std::string s);
-        virtual void find_arr_mem();
+        virtual ~FetchCppType();
 
     public:
-        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override;
-        virtual void nest_end(TypeTag<CppNestType::Struct>) override;
-
-        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
-        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
-        virtual void std_vector_size() = 0;
+        virtual void find_obj_mem(std::string s) = 0;
+        virtual void find_arr_mem() = 0;
+        virtual std::size_t std_vector_size() = 0;
     };
 
-    class WriteJsonStr : public FetchCppType
+    FetchCppType::~FetchCppType() {}
+
+    export class WriteJsonStr : public FetchCppType
     {
     public:
         virtual void find(bool &b) override;
@@ -62,7 +55,7 @@ namespace lsf
         virtual void find(double &d) override;
         virtual void find(std::string &s) override;
 
-        virtual void find_mem(std::string s) override;
+        virtual void find_obj_mem(std::string s) override;
         virtual void find_arr_mem() override;
 
     public:
@@ -71,14 +64,23 @@ namespace lsf
 
         virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
         virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
-        virtual std::size_t std_vector_size();
+        virtual std::size_t std_vector_size() override;
+
+    public:
+        std::string_view get_jsonstring() const { return out_; }
+
+        WriteJsonStr() { indent_.push(0); }
+        virtual ~WriteJsonStr();
 
     private:
         std::string out_;
         std::stack<int> indent_;
         Visitable *root_;
-        std::size_t n_;
+        std::size_t mem_n_ = 0;
+        std::size_t mem_index_ = 0;
     };
+
+    WriteJsonStr::~WriteJsonStr() = default;
 
     void WriteJsonStr::find(bool &b)
     {
@@ -101,21 +103,41 @@ namespace lsf
         out_ += '"' + s + '"';
     }
 
-    void WriteJsonStr::find_mem(std::string s)
+    void WriteJsonStr::find_obj_mem(std::string s)
     {
+        find_arr_mem();
+
+        // 写json key
         out_ += '"' + s + '"';
         out_ += ": ";
     }
 
     void WriteJsonStr::find_arr_mem()
     {
+        if (mem_index_ > 0)
+            out_ += ',';
+        out_ += '\n';
+        mem_index_++;
+
+        // 对齐缩进
+        auto i = indent_.top();
+        while (i > 0)
+        {
+            out_ += "    ";
+            i--;
+        }
     }
 
     void WriteJsonStr::nest_begin(TypeTag<CppNestType::Struct>, std::size_t n)
     {
-        n_ = n;
+        // 初始化环境
+        mem_index_ = 0;
+        mem_n_ = n;
+
         out_ += '{';
-        out_ += '\n';
+        // out_ += '\n';
+
+        // 开始新缩进
         indent_.push(indent_.top() + 1);
         auto i = indent_.top();
         while (i > 0)
@@ -127,9 +149,6 @@ namespace lsf
 
     void WriteJsonStr::nest_end(TypeTag<CppNestType::Struct>)
     {
-        if(n>0){
-            out_.resize(out_.size() - indent_.top() * 4 - 2);
-        }
         out_ += '\n';
         auto i = indent_.top();
         indent_.pop();
@@ -141,36 +160,24 @@ namespace lsf
         out_ += '}';
     }
 
-    void WriteJsonStr::nest_begin(TypeTag<CppNestType::Array>, std::size_t n)
+    void WriteJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
     {
-        n_ = n;
-        out_ += '[';
-        out_ += '\n';
-        indent_.push(indent_.top() + 1);
-        auto i = indent_.top();
-        while (i > 0)
-        {
-            out_ += "    ";
-            i--;
-        }
+        auto old_index = out_.size();
+
+        nest_begin(TypeTag<CppNestType::Struct>(), n);
+
+        out_[old_index] = '[';
     }
 
-    void WriteJsonStr::nest_end(TypeTag<CppNestType::Array>)
+    void WriteJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
     {
-        out_ += '\n';
-        auto i = indent_.top();
-        indent_.pop();
-        while (i - 1 > 0)
-        {
-            out_ += "    ";
-            i--;
-        }
-        out_ += ']';
+        nest_end(TypeTag<CppNestType::Struct>());
+        out_.back() = ']';
     }
 
     std::size_t WriteJsonStr::std_vector_size()
     {
-        return n_;
+        return mem_n_;
     }
 
     export class SerializeBuilder
@@ -216,10 +223,10 @@ namespace lsf
     Visitable *move_DFS<BFS>(Visitable *root);
 
     // TODO 新的名字
-    template <typename T>
+    export template <typename T>
     void parse_cpp_type(T &s, FetchCppType &fct);
 
-    template <StructConcept T>
+    export template <StructConcept T>
     void parse_cpp_type(T &s, FetchCppType &fct)
     {
         auto member_info = T::template JsonStructBase<T>::js_static_meta_data_info();
@@ -227,13 +234,13 @@ namespace lsf
         fct.nest_begin(TypeTag<CppNestType::Struct>{}, std::tuple_size<decltype(member_info)>::value);
 
         std::apply([&](auto &&...args)
-                   { ((parse_cpp_type(s.*(args.member), fct), fct.find_mem(args.name)), ...); },
+                   { ((fct.find_obj_mem(args.name),parse_cpp_type(s.*(args.member), fct)), ...); },
                    member_info);
 
         fct.nest_end(TypeTag<CppNestType::Struct>{});
     }
 
-    template <typename T>
+    export template <typename T>
     void parse_cpp_type(std::vector<T> &s, FetchCppType &fct)
     {
         fct.nest_begin(TypeTag<CppNestType::STD_VECTOR>{}, s.size());
@@ -246,25 +253,33 @@ namespace lsf
         fct.nest_end(TypeTag<CppNestType::STD_VECTOR>{});
     }
 
-    template <>
+    export template <>
     void parse_cpp_type(std::string &s, FetchCppType &fct)
     {
         fct.find(s);
     }
 
-    template <>
+    export template <>
     void parse_cpp_type(long &s, FetchCppType &fct)
     {
         fct.find(s);
     }
 
-    template <>
+    export template <>
+    void parse_cpp_type(int &s, FetchCppType &fct)
+    {
+        long s_long = s;
+        fct.find(s_long);
+        s = s_long;
+    }
+
+    export template <>
     void parse_cpp_type(double &s, FetchCppType &fct)
     {
         fct.find(s);
     }
 
-    template <>
+    export template <>
     void parse_cpp_type(bool &s, FetchCppType &fct)
     {
         fct.find(s);

@@ -60,3 +60,12 @@ target_compile_definitions(${target_name2} PRIVATE BUFFER_ARRAY_SIZE=256)
 if(MSVC)
     target_compile_definitions(${target_name2} PRIVATE MSVC_SPECIAL)
 endif()
+
+find_package(doctest REQUIRED)
+
+file(GLOB tests_src  "test/tt2.cpp" )  #测试单元
+
+add_executable(doc_test ${tests_src})
+
+target_link_libraries(doc_test PRIVATE doctest::doctest)
+target_link_libraries(doc_test PRIVATE ${target_name2})
