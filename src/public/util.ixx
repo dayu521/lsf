@@ -7,6 +7,8 @@ module;
 #include <type_traits>
 #include <limits>
 
+#include <unordered_map>
+
 export module lsf:util;
 
 import :analyze;
@@ -55,10 +57,10 @@ namespace lsf
     public:
         virtual void find_obj_mem(std::string s) {}
         virtual void find_arr_mem() {}
-        virtual std::size_t std_vector_size() = 0;
+        virtual std::size_t arr_size() = 0;
     };
 
-    FetchCppType::~FetchCppType() {}
+    FetchCppType::~FetchCppType() = default;
 
     export class ReadJsonStr : public FetchCppType
     {
@@ -71,15 +73,24 @@ namespace lsf
         virtual void find(long &l) override;
         virtual void find(double &d) override;
         virtual void find(std::string &s) override;
-        virtual std::size_t std_vector_size() override;
+        virtual std::size_t arr_size() override;
+
+    public:
+        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override;
+        virtual void nest_end(TypeTag<CppNestType::Struct>) override;
+
+        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
+        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
 
     private:
         Visitable *root_;
+
+        std::unordered_map<std::string, Visitable *> search_map_;
     };
 
     ReadJsonStr::~ReadJsonStr() = default;
 
-    std::size_t ReadJsonStr::std_vector_size()
+    std::size_t ReadJsonStr::arr_size()
     {
         if (root_->ele_type_ == NodeC::Arr)
         {
@@ -130,6 +141,30 @@ namespace lsf
         //     throw DeserializeError("序列化std::string: 期待json String");
     }
 
+    void ReadJsonStr::nest_begin(TypeTag<CppNestType::Struct>, std::size_t n)
+    {
+        auto begin = root_->left_child_->get_this();
+        auto i = begin;
+        while (i != begin)
+        {
+            auto key = to_cstring(i->get_ref_str_(i->key_));
+            search_map_.insert({key, i});
+            i = i->right_bro_->get_this();
+        }
+    }
+
+    void ReadJsonStr::nest_end(TypeTag<CppNestType::Struct>)
+    {
+    }
+
+    void ReadJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
+    {
+    }
+
+    void ReadJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
+    {
+    }
+
     export class WriteJsonStr : public FetchCppType
     {
     public:
@@ -147,7 +182,7 @@ namespace lsf
 
         virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
         virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
-        virtual std::size_t std_vector_size() override;
+        virtual std::size_t arr_size() override;
 
     public:
         std::string_view get_jsonstring() const { return out_; }
@@ -257,7 +292,7 @@ namespace lsf
         out_.back() = ']';
     }
 
-    std::size_t WriteJsonStr::std_vector_size()
+    std::size_t WriteJsonStr::arr_size()
     {
         return mem_n_;
     }
@@ -326,7 +361,7 @@ namespace lsf
     void parse_cpp_type(std::vector<T> &s, FetchCppType &fct)
     {
         fct.nest_begin(TypeTag<CppNestType::STD_VECTOR>{}, s.size());
-        s.resize(fct.std_vector_size());
+        s.resize(fct.arr_size());
         for (auto &v : s)
         {
             fct.find_arr_mem();
