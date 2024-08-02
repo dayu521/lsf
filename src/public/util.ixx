@@ -55,8 +55,8 @@ namespace lsf
         virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override {}
 
     public:
-        virtual void find_obj_mem(std::string s) {}
-        virtual void find_arr_mem() {}
+        virtual void find_obj_mem(std::string s) = 0;
+        virtual void find_arr_mem() = 0;
         virtual std::size_t arr_size() = 0;
     };
 
@@ -65,7 +65,11 @@ namespace lsf
     export class ReadJsonStr : public FetchCppType
     {
     public:
-        ReadJsonStr(Visitable *root) : root_(root) {}
+        ReadJsonStr(Visitable *root)
+        {
+            mem_nest_context_.push({});
+            mem_nest_context_.top().insert({"", root});
+        }
         virtual ~ReadJsonStr();
 
     public:
@@ -82,11 +86,18 @@ namespace lsf
         virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
         virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
 
+    public:
+        virtual void find_obj_mem(std::string s) override;
+        virtual void find_arr_mem() override;
+
     private:
         Visitable *root_;
 
         std::stack<std::unordered_map<std::string, Visitable *>> mem_nest_context_;
+        bool has_key_ = false;
+
         std::stack<Visitable *> arr_nest_context_;
+        std::size_t arr_size_;
     };
 
     ReadJsonStr::~ReadJsonStr() = default;
@@ -99,6 +110,7 @@ namespace lsf
             return arr->n_;
         }
         // TODO error
+        // BUG 异常处理
         return 0;
     }
     void ReadJsonStr::find(bool &b)
@@ -162,9 +174,29 @@ namespace lsf
 
     void ReadJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
     {
+        if (root_->ele_type_ != NodeC::Arr)
+        {
+            throw DeserializeError("序列化std::vector: 期待json Array");
+        }
+        arr_size_ = static_cast<const Jnode<NodeC::Arr> *>(root_)->n_;
+        arr_nest_context_.push(root_);
     }
 
     void ReadJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
+    {
+        arr_nest_context_.pop();
+    }
+
+    void ReadJsonStr::find_obj_mem(std::string s)
+    {
+        if (mem_nest_context_.top().find(s) == mem_nest_context_.top().end())
+        {
+            return;
+        }
+        root_ = mem_nest_context_.top()[s];
+    }
+
+    void ReadJsonStr::find_arr_mem()
     {
     }
 
