@@ -85,7 +85,8 @@ namespace lsf
     private:
         Visitable *root_;
 
-        std::unordered_map<std::string, Visitable *> search_map_;
+        std::stack<std::unordered_map<std::string, Visitable *>> mem_nest_context_;
+        std::stack<Visitable *> arr_nest_context_;
     };
 
     ReadJsonStr::~ReadJsonStr() = default;
@@ -143,18 +144,20 @@ namespace lsf
 
     void ReadJsonStr::nest_begin(TypeTag<CppNestType::Struct>, std::size_t n)
     {
+        mem_nest_context_.push({});
         auto begin = root_->left_child_->get_this();
         auto i = begin;
         while (i != begin)
         {
             auto key = to_cstring(i->get_ref_str_(i->key_));
-            search_map_.insert({key, i});
+            mem_nest_context_.top().insert({key, i});
             i = i->right_bro_->get_this();
         }
     }
 
     void ReadJsonStr::nest_end(TypeTag<CppNestType::Struct>)
     {
+        mem_nest_context_.pop();
     }
 
     void ReadJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
