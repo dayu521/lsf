@@ -65,10 +65,9 @@ namespace lsf
     export class ReadJsonStr : public FetchCppType
     {
     public:
-        ReadJsonStr(Visitable *root)
+        ReadJsonStr(Visitable *root): root_(root)
         {
-            mem_nest_context_.push({});
-            mem_nest_context_.top().insert({"", root});
+            mem_nest_context_.push(root);
         }
         virtual ~ReadJsonStr();
 
@@ -93,10 +92,10 @@ namespace lsf
     private:
         Visitable *root_;
 
-        std::stack<std::unordered_map<std::string, Visitable *>> mem_nest_context_;
+        std::stack<Visitable *> mem_nest_context_;
+        std::unordered_map<std::string, Visitable *> key_index_;
         bool has_key_ = false;
 
-        std::stack<Visitable *> arr_nest_context_;
         std::size_t arr_size_;
     };
 
@@ -104,65 +103,60 @@ namespace lsf
 
     std::size_t ReadJsonStr::arr_size()
     {
-        if (root_->ele_type_ == NodeC::Arr)
-        {
-            auto arr = static_cast<const Jnode<NodeC::Arr> *>(root_);
-            return arr->n_;
-        }
-        // TODO error
-        // BUG 异常处理
-        return 0;
+        return arr_size_;
     }
     void ReadJsonStr::find(bool &b)
     {
-        // if (root_->ele_type_ == NodeC::Keyword)
-        // {
-        //     b = static_cast<const Jnode<NodeC::Keyword> *>(root_)->b_;
-        // }
-        // else
-        //     throw DeserializeError("序列化bool: 期待json bool");
+        if (root_->ele_type_ == NodeC::Keyword)
+        {
+            b = static_cast<const Jnode<NodeC::Keyword> *>(root_)->b_;
+        }
+        else
+            throw DeserializeError("序列化bool: 期待json bool");
     }
     void ReadJsonStr::find(long &l)
     {
-        // if (root_->ele_type_ == NodeC::Number)
-        // {
-        //     auto num = static_cast<const Jnode<NodeC::Number> *>(root_);
-        //     l = std::stol(num->get_ref_str_(num->data_));
-        // }
-        // else
-        //     throw DeserializeError("序列化int: 期待json Number");
+        if (root_->ele_type_ == NodeC::Number)
+        {
+            auto num = static_cast<const Jnode<NodeC::Number> *>(root_);
+            l = std::stol(num->get_ref_str_(num->data_));
+        }
+        else
+            throw DeserializeError("序列化int: 期待json Number");
     }
     void ReadJsonStr::find(double &d)
     {
-        // if (root_->ele_type_ == NodeC::Number)
-        // {
-        //     auto dob = static_cast<const Jnode<NodeC::Number> *>(root_);
-        //     d = std::stod(dob->get_ref_str_(dob->data_));
-        // }
-        // else
-        //     throw DeserializeError("序列化double: 期待json Number");
+        if (root_->ele_type_ == NodeC::Number)
+        {
+            auto dob = static_cast<const Jnode<NodeC::Number> *>(root_);
+            d = std::stod(dob->get_ref_str_(dob->data_));
+        }
+        else
+            throw DeserializeError("序列化double: 期待json Number");
     }
     void ReadJsonStr::find(std::string &s)
     {
-        // if (root_->ele_type_ == NodeC::String)
-        // {
-        //     // 如果有错,语法分析会提前失败.下同
-        //     auto str = static_cast<const Jnode<NodeC::String> *>(root_);
-        //     s = to_cstring(str->get_ref_str_(str->data_));
-        // }
-        // else
-        //     throw DeserializeError("序列化std::string: 期待json String");
+        if (root_->ele_type_ == NodeC::String)
+        {
+            // 如果有错,语法分析会提前失败.下同
+            auto str = static_cast<const Jnode<NodeC::String> *>(root_);
+            s = to_cstring(str->get_ref_str_(str->data_));
+        }
+        else
+            throw DeserializeError("序列化std::string: 期待json String");
     }
 
     void ReadJsonStr::nest_begin(TypeTag<CppNestType::Struct>, std::size_t n)
     {
-        mem_nest_context_.push({});
+        mem_nest_context_.push(root_);
+        key_index_.clear();
+
         auto begin = root_->left_child_->get_this();
         auto i = begin;
         while (i != begin)
         {
             auto key = to_cstring(i->get_ref_str_(i->key_));
-            mem_nest_context_.top().insert({key, i});
+            key_index_.insert({key, i});
             i = i->right_bro_->get_this();
         }
     }
@@ -170,34 +164,39 @@ namespace lsf
     void ReadJsonStr::nest_end(TypeTag<CppNestType::Struct>)
     {
         mem_nest_context_.pop();
+        root_ = mem_nest_context_.top();
     }
 
     void ReadJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
     {
+        mem_nest_context_.push(root_);
+
         if (root_->ele_type_ != NodeC::Arr)
         {
             throw DeserializeError("序列化std::vector: 期待json Array");
         }
-        arr_size_ = static_cast<const Jnode<NodeC::Arr> *>(root_)->n_;
-        arr_nest_context_.push(root_);
+        arr_size_ = static_cast<const Jnode<NodeC::Arr> *>(root_)->n_; // 可以是0
+        root_ = root_->left_child_->get_this();
     }
 
     void ReadJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
     {
-        arr_nest_context_.pop();
+        mem_nest_context_.pop();
+        root_ = mem_nest_context_.top();
     }
 
     void ReadJsonStr::find_obj_mem(std::string s)
     {
-        if (mem_nest_context_.top().find(s) == mem_nest_context_.top().end())
+        if (key_index_.find(s) == key_index_.end())
         {
             return;
         }
-        root_ = mem_nest_context_.top()[s];
+        root_ = key_index_.at(s);
     }
 
     void ReadJsonStr::find_arr_mem()
     {
+        root_ = root_->right_bro_->get_this();
     }
 
     export class WriteJsonStr : public FetchCppType
