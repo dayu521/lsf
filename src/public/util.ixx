@@ -164,8 +164,8 @@ namespace lsf
 
     void ReadJsonStr::nest_end(TypeTag<CppNestType::Struct>)
     {
-        mem_nest_context_.pop();
         root_ = mem_nest_context_.top();
+        mem_nest_context_.pop();
     }
 
     void ReadJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
@@ -177,13 +177,13 @@ namespace lsf
             throw DeserializeError("序列化std::vector: 期待json Array");
         }
         arr_size_ = static_cast<const Jnode<NodeC::Arr> *>(root_)->n_; // 可以是0
-        // root_ = root_->left_child_->get_this();
+        root_ = root_->left_child_->get_this();
     }
 
     void ReadJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
     {
-        mem_nest_context_.pop();
         root_ = mem_nest_context_.top();
+        mem_nest_context_.pop();
     }
 
     void ReadJsonStr::find_obj_mem(std::string s)
