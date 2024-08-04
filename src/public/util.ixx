@@ -65,9 +65,10 @@ namespace lsf
     export class ReadJsonStr : public FetchCppType
     {
     public:
-        ReadJsonStr(Visitable *root): root_(root)
+        ReadJsonStr(Visitable *root)
         {
             mem_nest_context_.push(root);
+            root_ = root;
         }
         virtual ~ReadJsonStr();
 
@@ -153,12 +154,12 @@ namespace lsf
 
         auto begin = root_->left_child_->get_this();
         auto i = begin;
-        while (i != begin)
+        do
         {
             auto key = to_cstring(i->get_ref_str_(i->key_));
             key_index_.insert({key, i});
             i = i->right_bro_->get_this();
-        }
+        } while (i != begin);
     }
 
     void ReadJsonStr::nest_end(TypeTag<CppNestType::Struct>)
@@ -176,7 +177,7 @@ namespace lsf
             throw DeserializeError("序列化std::vector: 期待json Array");
         }
         arr_size_ = static_cast<const Jnode<NodeC::Arr> *>(root_)->n_; // 可以是0
-        root_ = root_->left_child_->get_this();
+        // root_ = root_->left_child_->get_this();
     }
 
     void ReadJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
