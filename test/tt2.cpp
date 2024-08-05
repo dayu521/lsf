@@ -18,7 +18,7 @@ struct Pet
 
 struct People
 {
-    int age;
+    int age=77;
     bool is_fat;
     std::vector<Pet> pets;
     // 也可以指定一个key
@@ -46,11 +46,12 @@ TEST_CASE("Test 1")
 
 TEST_CASE("Test 2")
 {
+    People lf;
     lsf::Json j;
     auto res2 = j.run(std::make_unique<lsf::StrSource>(R"(
     {
-        "age": 18,
-        "is_fat": true,
+        // "age": 18,
+        // "is_fat": true,
         "friends": [
             {
                 "name": "dog",
@@ -73,15 +74,14 @@ TEST_CASE("Test 2")
         CHECK(false);
         return;
     }
-    auto root = std::get<0>((*res2)->get_ast());
-    lsf::ReadJsonStr rj(root);
+    // auto root = std::get<0>((*res2)->get_ast());
+    // lsf::ReadJsonStr rj(root);
+    // lsf::parse_cpp_type(lf, rj);
 
-    People lf;
-    lsf::parse_cpp_type(lf, rj);
+    lsf::ReadJsonStrExt rj2((*res2)->get_ast());
+    lsf::parse_cpp_type(lf, rj2);
 
     lsf::WriteJsonStr wj;
-
     lsf::parse_cpp_type(lf, wj);
-
     std::cout << wj.get_jsonstring() << std::endl;
 }

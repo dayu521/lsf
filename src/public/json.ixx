@@ -80,7 +80,8 @@ namespace lsf
     void json_to_struct_ignore_absence(std::shared_ptr<TreeBuilder> builder, S &s)
     {
         LocaleGuard lg;
-        deserialize(s, std::get<0>(builder->get_ast()),true);
+        lsf::ReadJsonStrExt rje(builder->get_ast());
+        lsf::parse_cpp_type(s, rje);
     }
 
 } // namespace lsf

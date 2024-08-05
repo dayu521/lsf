@@ -90,7 +90,7 @@ namespace lsf
         virtual void find_obj_mem(std::string s) override;
         virtual void find_arr_mem() override;
 
-    private:
+    protected:
         Visitable *root_;
 
         std::stack<Visitable *> mem_nest_context_;
@@ -198,6 +198,72 @@ namespace lsf
     void ReadJsonStr::find_arr_mem()
     {
         root_ = root_->right_bro_->get_this();
+    }
+
+    export class ReadJsonStrExt : public ReadJsonStr
+    {
+    public:
+        virtual void find(bool &b) override;
+        virtual void find(long &l) override;
+        virtual void find(double &d) override;
+        virtual void find(std::string &s) override;
+
+        virtual void find_obj_mem(std::string s) override;
+
+    public:
+        ReadJsonStrExt(Tree t) : ReadJsonStr(std::get<0>(t)), sentinel_(std::get<1>(t)) {}
+        virtual ~ReadJsonStrExt();
+
+    protected:
+        Visitable *sentinel_;
+    };
+
+    ReadJsonStrExt::~ReadJsonStrExt() = default;
+
+    void ReadJsonStrExt::find(bool &b)
+    {
+        if (root_ == sentinel_)
+        {
+            return;
+        }
+        ReadJsonStr::find(b);
+    }
+
+    void ReadJsonStrExt::find(long &l)
+    {
+        if (root_ == sentinel_)
+        {
+            return;
+        }
+        ReadJsonStr::find(l);
+    }
+
+    void ReadJsonStrExt::find(double &d)
+    {
+        if (root_ == sentinel_)
+        {
+            return;
+        }
+        ReadJsonStr::find(d);
+    }
+
+    void ReadJsonStrExt::find(std::string &s)
+    {
+        if (root_ == sentinel_)
+        {
+            return;
+        }
+        ReadJsonStr::find(s);
+    }
+
+    void ReadJsonStrExt::find_obj_mem(std::string s)
+    {
+        auto old = root_;
+        ReadJsonStr::find_obj_mem(s);
+        if (old == root_)
+        {
+            root_ = sentinel_;
+        }
     }
 
     export class WriteJsonStr : public FetchCppType
