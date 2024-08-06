@@ -63,8 +63,19 @@ auto json_str=R"(
 
 #### cmake
 
-TODO
+需要cmake3.28,在你的工程目录clone当前项目,然后添加以下内容到你的CMakeLists.txt
 
+```text
+
+# 自己的模块库,目前需要c++版本一致,所以需要设置库版本
+add_subdirectory(lsf)
+# 默认使用c++20,如果你使用更高的标准,你可以使用下述修改.
+# 这是必须的,目前,库和你的应用的标准需要一致.
+# set_property(TARGET lsf PROPERTY CXX_STANDARD 23)
+
+target_link_libraries(${appname} lsf)
+
+```
 #### 说明 ####
 
 目前支持:
