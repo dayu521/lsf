@@ -80,25 +80,21 @@ target_link_libraries(${appname} lsf)
 
 目前支持:
 
-* `std::string`   <->json string
-* `double`  <->json number
-* `int`  <->json number
+* `int|long|double`  <->json number
 * `bool`   <-> json true false
+* `std::string`   <->json string
 * `std::vector`  <-> json array
 * 指针(不建议使用) <->json object | null
 * 普通struct(聚合类型aggregate)  <->json object
 
-如果需要支持其他**基本类型**(非std::vector和普通struct类型)，需要特化:
+如果需要支持其他**类型**(非std::vector和普通struct类型,目前未提供替换它们的方式),如`char *`等，需要特化:
 
 ```cpp
-//从TreeNode中反序列化到类型T
-template<typename T>
-void lsf::Deserialize(T & s,const TreeNode * t);
-
-//序列化T类型到json字符串
-template<typename T>
-void lsf::write_value(const T & v,SerializeBuilder & builder);
+    export template <typename T>
+    void parse_cpp_type(T &s, FetchCppType &fct);
 ```
+
+如果需要增加其他功能,则继承`FetchCppType`类.
 
 #### 说明 ####
 
