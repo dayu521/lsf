@@ -44,7 +44,6 @@ endif()
 # endif()
 
 file(GLOB module_src  "src/public/*.ixx" "src/public2/*.ixx" )
-file(GLOB module_imp  "src/module_impl/*.cppm")
 
 set(target_name2 ${PROJECT_NAME})
 add_library(${target_name2} "src/module_impl/json_i.cpp" "src/module_impl/json_m.cpp")
@@ -53,7 +52,7 @@ target_include_directories(${target_name2} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/sr
 
 target_sources(${target_name2} PUBLIC
 FILE_SET CXX_MODULES
-FILES  ${module_src} ${module_imp})
+FILES  ${module_src})
 
 target_compile_definitions(${target_name2} PRIVATE BUFFER_ARRAY_SIZE=256)
 
