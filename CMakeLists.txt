@@ -43,16 +43,17 @@ endif()
 #     set(CMAKE_CXX_EXTENSIONS OFF)
 # endif()
 
-file(GLOB module_src  "src/public/*.ixx" "src/public2/*.ixx" )
+file(GLOB module_ixx  "src/public/*.ixx" "src/public2/*.ixx" )
+file(GLOB module_cpp  "src/module_impl/*.cpp")
 
 set(target_name2 ${PROJECT_NAME})
-add_library(${target_name2} "src/module_impl/json_i.cpp" "src/module_impl/json_m.cpp")
+add_library(${target_name2} ${module_cpp})
 
 target_include_directories(${target_name2} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_sources(${target_name2} PUBLIC
 FILE_SET CXX_MODULES
-FILES  ${module_src})
+FILES  ${module_ixx})
 
 target_compile_definitions(${target_name2} PRIVATE BUFFER_ARRAY_SIZE=256)
 
