@@ -67,6 +67,8 @@ namespace lsf
             return -1;
         }
         next_p_ += size;
+        //BUG 发现bug
+        std::cout<<to_cstring<64>(std::wstring(buff, size));
         return size;
     }
 

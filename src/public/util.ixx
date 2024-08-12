@@ -67,7 +67,7 @@ namespace lsf
     public:
         ReadJsonStr(Visitable *root)
         {
-            mem_nest_context_.push(root);
+            // mem_nest_context_.push(root);
             root_ = root;
         }
         virtual ~ReadJsonStr();
