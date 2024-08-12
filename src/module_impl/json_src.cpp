@@ -55,7 +55,7 @@ namespace lsf
         const char *strp = src_.data() + next_p_;
 
         // BUG 这里转换时需要设置区域信息,否则中文有问题.但肯定不能在这块设置
-        // 一方面这里不合适,另一方面不知道何时恢复
+        // 一方面这里不合适,另一方面不知道何时恢复to_cstring
         // 如果之前没有设置,这块是最后的机会了
 
         // 还有一种解决是提前自己转换好,这样区域就可以直接恢复
@@ -66,9 +66,8 @@ namespace lsf
         {
             return -1;
         }
-        next_p_ += size;
-        //BUG 发现bug
-        std::cout<<to_cstring<64>(std::wstring(buff, size));
+        //https://zh.cppreference.com/w/cpp/string/multibyte/mbsrtowcs
+        next_p_ += strp-(src_.data()+next_p_);
         return size;
     }
 

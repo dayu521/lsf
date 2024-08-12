@@ -190,13 +190,21 @@ TEST_CASE("Test 3")
         // ]
     auto res2 = j.run(std::make_unique<lsf::StrSource>(R"(
     {
-                "dns_provider_": [
+        "port_":55555,
+        "ca_cert_path_": "~/.config/hcpp/ca.cert.pem",
+        "ca_pkey_path_": "~/.config/hcpp/ca.key.pem",
+        "host_mapping_path_": "", //hm.json
+        "dns_provider_": [
             {
                 "provider_": "1.1.1.1", //取一个名字
+                // "host_": "1.1.1.1"
                 "host_": "9.9.9.9"
             }
-        ]
-                        ,
+        ],
+        "mitm_server_":{
+            "port_":55556   //暂未使用
+        },
+        "proxy_service_path_": "",  //放到文件中
         "proxy_service_": [
             {
                 "host_":"github.com",
