@@ -30,29 +30,29 @@ namespace lsf
         using BaseError::BaseError;
     };
 
-    namespace CppNestType
+    namespace JsonType
     {
-        struct Struct
+        struct Obj
         {
         };
 
-        struct STD_VECTOR
+        struct Arr
         {
         };
     };
 
     export class FetchCppType : public BaseGuard<void, bool, long, double, std::string>,
-                                public BaseNest<void, CppNestType::Struct, CppNestType::STD_VECTOR>
+                                public BaseNest<void, JsonType::Obj, JsonType::Arr>
     {
     public:
         virtual ~FetchCppType();
 
     public:
-        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override {}
-        virtual void nest_end(TypeTag<CppNestType::Struct>) override {}
+        virtual void nest_begin(TypeTag<JsonType::Obj>, std::size_t n) override {}
+        virtual void nest_end(TypeTag<JsonType::Obj>) override {}
 
-        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override {}
-        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override {}
+        virtual void nest_begin(TypeTag<JsonType::Arr>, std::size_t n) override {}
+        virtual void nest_end(TypeTag<JsonType::Arr>) override {}
 
     public:
         virtual void find_obj_mem(std::string s) = 0;
@@ -61,6 +61,21 @@ namespace lsf
     };
 
     FetchCppType::~FetchCppType() = default;
+
+    template <typename T = JsonType::Obj>
+    struct stack_data;
+
+    template <>
+    struct stack_data<JsonType::Arr>
+    {
+        Visitable *root_;
+    };
+
+    template <>
+    struct stack_data<JsonType::Obj>: public stack_data<JsonType::Arr>
+    {
+        std::unordered_map<std::string, Visitable *> key_index_;
+    };
 
     export class ReadJsonStr : public FetchCppType
     {
@@ -80,11 +95,11 @@ namespace lsf
         virtual std::size_t arr_size() override;
 
     public:
-        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override;
-        virtual void nest_end(TypeTag<CppNestType::Struct>) override;
+        virtual void nest_begin(TypeTag<JsonType::Obj>, std::size_t n) override;
+        virtual void nest_end(TypeTag<JsonType::Obj>) override;
 
-        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
-        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual void nest_begin(TypeTag<JsonType::Arr>, std::size_t n) override;
+        virtual void nest_end(TypeTag<JsonType::Arr>) override;
 
     public:
         virtual void find_obj_mem(std::string s) override;
@@ -92,9 +107,10 @@ namespace lsf
 
     protected:
         Visitable *root_;
-
-        std::stack<Visitable *> mem_nest_context_;
         std::unordered_map<std::string, Visitable *> key_index_;
+
+        std::stack<stack_data<JsonType::Obj>> obj_d_;
+        std::stack<stack_data<JsonType::Arr>> arr_d_;
         bool has_key_ = false;
 
         std::size_t arr_size_;
@@ -147,9 +163,9 @@ namespace lsf
             throw DeserializeError("序列化std::string: 期待json String");
     }
 
-    void ReadJsonStr::nest_begin(TypeTag<CppNestType::Struct>, std::size_t n)
+    void ReadJsonStr::nest_begin(TypeTag<JsonType::Obj>, std::size_t n)
     {
-        mem_nest_context_.push(root_);
+        obj_d_.push({root_,key_index_});
         key_index_.clear();
 
         auto begin = root_->left_child_->get_this();
@@ -162,15 +178,16 @@ namespace lsf
         } while (i != begin);
     }
 
-    void ReadJsonStr::nest_end(TypeTag<CppNestType::Struct>)
+    void ReadJsonStr::nest_end(TypeTag<JsonType::Obj>)
     {
-        root_ = mem_nest_context_.top();
-        mem_nest_context_.pop();
+        root_ = obj_d_.top().root_;
+        key_index_ = obj_d_.top().key_index_;
+        obj_d_.pop();
     }
 
-    void ReadJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
+    void ReadJsonStr::nest_begin(TypeTag<JsonType::Arr>, std::size_t n)
     {
-        mem_nest_context_.push(root_);
+        arr_d_.push({root_});
 
         if (root_->ele_type_ != NodeC::Arr)
         {
@@ -180,14 +197,15 @@ namespace lsf
         root_ = root_->left_child_->get_this();
     }
 
-    void ReadJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
+    void ReadJsonStr::nest_end(TypeTag<JsonType::Arr>)
     {
-        root_ = mem_nest_context_.top();
-        mem_nest_context_.pop();
+        root_ = arr_d_.top().root_;
+        arr_d_.pop();
     }
 
     void ReadJsonStr::find_obj_mem(std::string s)
     {
+        // BUG 未入栈
         if (key_index_.find(s) == key_index_.end())
         {
             return;
@@ -278,11 +296,11 @@ namespace lsf
         virtual void find_arr_mem() override;
 
     public:
-        virtual void nest_begin(TypeTag<CppNestType::Struct>, std::size_t n) override;
-        virtual void nest_end(TypeTag<CppNestType::Struct>) override;
+        virtual void nest_begin(TypeTag<JsonType::Obj>, std::size_t n) override;
+        virtual void nest_end(TypeTag<JsonType::Obj>) override;
 
-        virtual void nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n) override;
-        virtual void nest_end(TypeTag<CppNestType::STD_VECTOR>) override;
+        virtual void nest_begin(TypeTag<JsonType::Arr>, std::size_t n) override;
+        virtual void nest_end(TypeTag<JsonType::Arr>) override;
         virtual std::size_t arr_size() override;
 
     public:
@@ -346,7 +364,7 @@ namespace lsf
         }
     }
 
-    void WriteJsonStr::nest_begin(TypeTag<CppNestType::Struct>, std::size_t n)
+    void WriteJsonStr::nest_begin(TypeTag<JsonType::Obj>, std::size_t n)
     {
         // 初始化环境
         mem_index_ = 0;
@@ -365,7 +383,7 @@ namespace lsf
         }
     }
 
-    void WriteJsonStr::nest_end(TypeTag<CppNestType::Struct>)
+    void WriteJsonStr::nest_end(TypeTag<JsonType::Obj>)
     {
         out_ += '\n';
         auto i = indent_.top();
@@ -378,18 +396,18 @@ namespace lsf
         out_ += '}';
     }
 
-    void WriteJsonStr::nest_begin(TypeTag<CppNestType::STD_VECTOR>, std::size_t n)
+    void WriteJsonStr::nest_begin(TypeTag<JsonType::Arr>, std::size_t n)
     {
         auto old_index = out_.size();
 
-        nest_begin(TypeTag<CppNestType::Struct>(), n);
+        nest_begin(TypeTag<JsonType::Obj>(), n);
 
         out_[old_index] = '[';
     }
 
-    void WriteJsonStr::nest_end(TypeTag<CppNestType::STD_VECTOR>)
+    void WriteJsonStr::nest_end(TypeTag<JsonType::Arr>)
     {
-        nest_end(TypeTag<CppNestType::Struct>());
+        nest_end(TypeTag<JsonType::Obj>());
         out_.back() = ']';
     }
 
@@ -449,26 +467,26 @@ namespace lsf
     {
         auto member_info = T::template JsonStructBase<T>::js_static_meta_data_info();
 
-        fct.nest_begin(TypeTag<CppNestType::Struct>{}, std::tuple_size<decltype(member_info)>::value);
+        fct.nest_begin(TypeTag<JsonType::Obj>{}, std::tuple_size<decltype(member_info)>::value);
 
         std::apply([&](auto &&...args)
                    { ((fct.find_obj_mem(args.name), parse_cpp_type(s.*(args.member), fct)), ...); },
                    member_info);
 
-        fct.nest_end(TypeTag<CppNestType::Struct>{});
+        fct.nest_end(TypeTag<JsonType::Obj>{});
     }
 
     export template <typename T>
     void parse_cpp_type(std::vector<T> &s, FetchCppType &fct)
     {
-        fct.nest_begin(TypeTag<CppNestType::STD_VECTOR>{}, s.size());
+        fct.nest_begin(TypeTag<JsonType::Arr>{}, s.size());
         s.resize(fct.arr_size());
         for (auto &v : s)
         {
             fct.find_arr_mem();
             parse_cpp_type(v, fct);
         }
-        fct.nest_end(TypeTag<CppNestType::STD_VECTOR>{});
+        fct.nest_end(TypeTag<JsonType::Arr>{});
     }
 
     export template <>

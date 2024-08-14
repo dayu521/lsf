@@ -231,6 +231,6 @@ TEST_CASE("Test 3")
 
     //  把json表示转换成struct
     config_struct cs;
-    // lsf::json_to_struct(*res2, peo);
-    lsf::json_to_struct_ignore_absence(*res2, cs);
+    // lsf::json_to_struct_ignore_absence(*res2, cs);
+    lsf::json_to_struct(*res2, cs);
 }
