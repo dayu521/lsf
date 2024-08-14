@@ -72,9 +72,6 @@ namespace lsf
     export template <typename S>
     void json_to_struct(std::shared_ptr<TreeBuilder> builder, S &s)
     {
-        // LocaleGuard lg;
-        // deserialize(s, std::get<0>(builder->get_ast()));
-
         LocaleGuard lg;
         lsf::ReadJsonStr rje(std::get<0>(builder->get_ast()));
         lsf::parse_cpp_type(s, rje);

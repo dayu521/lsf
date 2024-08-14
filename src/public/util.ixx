@@ -525,14 +525,6 @@ namespace lsf
         fct.find(s);
     }
 
-    // TODO 新的名字
-    export template <typename T>
-    void write_cpp_type(const T &v, SerializeBuilder &builder);
-
-    // TODO 新的名字
-    export template <typename T>
-    void read_cpp_type(T &s, const Visitable *t);
-
     export template <typename T>
     void write_value(const T &v, SerializeBuilder &builder);
 
@@ -636,62 +628,6 @@ namespace lsf
             n = 0;
             std::apply([&](auto &&...args)
                        { (deserialize(obj.*(args.member), vs[n++]), ...); },
-                       member_info);
-        }
-        else
-            Deserialize(obj, t);
-    }
-
-    template <typename T>
-    void deserialize(T &obj, const Visitable *t, bool ignore_absence_tag)
-    {
-        auto temp = t->left_child_->get_this();
-        if (temp == t)
-        {
-            throw DeserializeError("json 过早结束");
-        }
-        using TT = std::decay_t<T>;
-        if constexpr (std::is_pointer_v<TT>)
-        { // if constexpr间接提供了"函数偏特化"
-            static_assert(!std::is_pointer_v<std::decay_t<decltype(*t)>>, "不支持多级指针");
-            if (t == nullptr)
-            {
-                throw DeserializeError("struct成员为nullptr");
-            }
-            deserialize(*obj, t);
-        }
-        else if constexpr (std::is_aggregate_v<TT> && !std::is_union_v<TT>)
-        {
-            auto member_info = TT::template JsonStructBase<TT>::js_static_meta_data_info();
-            if (t->ele_type_ == NodeC::Null)
-            {
-                obj = {};
-                return;
-            }
-            if (t->ele_type_ != NodeC::Obj)
-            {
-                throw DeserializeError("期待json对象");
-            }
-
-            std::vector<Visitable *> vss;
-            do
-            {
-                vss.push_back(temp);
-                temp = temp->right_bro_->get_this();
-            } while (temp != t->left_child_);
-            auto try_deserialize = [&vss](auto &&arg, auto &&key)
-            {
-                for (auto i : vss)
-                {
-                    if (key == to_cstring(i->get_ref_str_(i->key_)))
-                    {
-                        deserialize(arg, i);
-                        return;
-                    }
-                }
-            };
-            std::apply([&](auto &&...args)
-                       { (try_deserialize(obj.*(args.member), args.name), ...); },
                        member_info);
         }
         else

@@ -211,7 +211,7 @@ TEST_CASE("Test 3")
                 "svc_":"443",   //端口或服务名.例如 http https
                 "url_":"",      //暂未使用
                 "mitm_":true,   //使用mimt代理
-                "doh_":true,
+                // "doh_":true,
                 "sni_host_":"www.baidu.com",     //假的主机名
                 "close_sni_":false  //默认就是false.设置为true时,优先级高于sni_host_
             }
@@ -231,6 +231,7 @@ TEST_CASE("Test 3")
 
     //  把json表示转换成struct
     config_struct cs;
-    // lsf::json_to_struct_ignore_absence(*res2, cs);
-    lsf::json_to_struct(*res2, cs);
+    lsf::json_to_struct_ignore_absence(*res2, cs);
+    // lsf::json_to_struct(*res2, cs);
+    return ;
 }
